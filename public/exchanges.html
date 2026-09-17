@@ -23,6 +23,21 @@
       <h1 data-i18n="exchanges.title">Top Cryptocurrency Exchanges</h1>
     </div>
     
+    <div class="toolbar" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+      <input type="search" class="input" id="exSearch" placeholder="Search exchanges" data-i18n-placeholder="exchanges.searchPlaceholder" style="width:260px" autocomplete="off">
+      <select class="select" id="exSort" style="width:auto">
+        <option value="trust" data-i18n="exchanges.sortTrust">Trust rank</option>
+        <option value="volume" data-i18n="exchanges.sortVolume">24h volume</option>
+        <option value="year" data-i18n="exchanges.sortYear">Oldest first</option>
+        <option value="name" data-i18n="exchanges.sortName">Name A–Z</option>
+      </select>
+      <select class="select" id="exType" style="width:auto">
+        <option value="all" data-i18n="exchanges.typeAll">All exchanges</option>
+        <option value="cex" data-i18n="exchange.cex">Centralized</option>
+        <option value="dex" data-i18n="exchange.dex">Decentralized</option>
+      </select>
+      <span class="muted small" id="exCount"></span>
+    </div>
     <div id="exTable"></div>
     <div id="exPagination" style="margin-top: 24px; display: flex; justify-content: center;"></div>
   </main>

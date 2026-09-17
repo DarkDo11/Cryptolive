@@ -15,7 +15,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Heatmap**: Squarified treemap visualization sized by Market Cap or 24h Volume, color-coded by 1h, 24h, or 7d price change percentage with responsive resizing.
 - **Gainers & Losers**: Highlights top 20 gainers and top 20 losers across 1h, 24h, and 7d horizons (minimum $50k volume filter).
 - **Categories**: Market sectors table sorted by market cap with 24h changes and top 3 coins preview; drill down to explore category-specific coin markets.
-- **Exchanges**: Directory of top cryptocurrency exchanges with trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
+- **Exchanges**: Directory of the top 250 exchanges with search, sorting (trust rank / volume / age / name), a CEX/DEX filter, trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.

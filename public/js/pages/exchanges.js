@@ -1,4 +1,4 @@
-import { initLayout, qs } from '../layout.js';
+import { initLayout, qs, debounce } from '../layout.js';
 import { api } from '../api.js';
 import { renderPagination, skeletonRows } from '../components.js';
 import { fmtCurrency, fmtNumber, escapeHtml } from '../format.js';
@@ -11,6 +11,35 @@ const exTable = qs('#exTable');
 const exPagination = qs('#exPagination');
 
 let currentPage = 1;
+const PER_PAGE = 50;
+let allRows = [];        // up to 250 exchanges, fetched once per currency
+let btcPrice = 0;
+let query = '';
+let sortBy = 'trust';
+let typeFilter = 'all';
+
+function isDex(ex) {
+  // CoinGecko has no explicit flag on the list endpoint; DEXes carry no country/year and typically no trust rank.
+  const DEX_NAME = /swap|dex|dao|protocol|finance|curve|balancer|raydium|orca|jupiter|dydx|hyperliquid|aerodrome|velodrome|1inch|osmosis|thorchain|meteora|joe|camelot|kyber|dodo|gmx|maverick|ambient|fluid|ekubo|lifinity|phoenix|drift|vertex|\(.*(ethereum|bsc|base|arbitrum|solana|polygon|optimism|avalanche|sui|aptos)\)/i;
+  return ex.centralized === false || (!ex.country && DEX_NAME.test(ex.name || ''));
+}
+
+function filteredRows() {
+  const q = query.trim().toLowerCase();
+  let rows = allRows.filter(ex => {
+    if (q && !(String(ex.name || '').toLowerCase().includes(q) || String(ex.country || '').toLowerCase().includes(q) || String(ex.id || '').includes(q))) return false;
+    if (typeFilter === 'dex' && !isDex(ex)) return false;
+    if (typeFilter === 'cex' && isDex(ex)) return false;
+    return true;
+  });
+  const cmp = {
+    trust: (a, b) => (a.trust_score_rank ?? 1e9) - (b.trust_score_rank ?? 1e9),
+    volume: (a, b) => (b.trade_volume_24h_btc || 0) - (a.trade_volume_24h_btc || 0),
+    year: (a, b) => (a.year_established || 9999) - (b.year_established || 9999),
+    name: (a, b) => String(a.name || '').localeCompare(String(b.name || ''))
+  }[sortBy] || (() => 0);
+  return rows.sort(cmp);
+}
 
 async function loadData() {
   exTable.innerHTML = `
@@ -26,13 +55,35 @@ async function loadData() {
   const cur = settings.get().currency || 'usd';
 
   try {
-    const [btcPriceData, rows] = await Promise.all([
-      api.simplePrice('bitcoin', cur),
-      api.exchanges(currentPage, 50)
-    ]);
+    if (allRows.length === 0) {
+      const [btcPriceData, rows] = await Promise.all([
+        api.simplePrice('bitcoin', cur).catch(() => ({})),
+        api.exchanges(1, 250)
+      ]);
+      btcPrice = (btcPriceData.bitcoin && btcPriceData.bitcoin[cur]) || 0;
+      allRows = rows;
+    }
+    renderTable();
+  } catch (err) {
+    console.error('Exchanges load error', err);
+    exTable.innerHTML = `
+      <div class="card" style="padding: 32px; text-align: center;">
+        <p style="color: var(--red); margin-bottom: 16px;">${t('js.failed_to_load_exchanges')}</p>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
+      </div>
+    `;
+    exPagination.innerHTML = '';
+  }
+}
 
-    const btcPrice = (btcPriceData.bitcoin && btcPriceData.bitcoin[cur]) || 0;
-    
+function renderTable() {
+  const cur = settings.get().currency || 'usd';
+  const rowsAll = filteredRows();
+  const totalPages = Math.max(1, Math.ceil(rowsAll.length / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const rows = rowsAll.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  qs('#exCount').textContent = t('exchanges.count', { n: rowsAll.length });
+  {
     let tbody = '';
     
     rows.forEach(ex => {
@@ -94,28 +145,26 @@ async function loadData() {
       </div>
     `;
 
+    if (rows.length === 0) {
+      exTable.innerHTML = `<div class="card" style="padding:32px; text-align:center; color:var(--muted)">${t('exchanges.noMatch')}</div>`;
+    }
+
     renderPagination(exPagination, {
       page: currentPage,
-      totalPages: 10,
+      totalPages,
       onChange: (p) => {
         currentPage = p;
         window.scrollTo(0, 0);
-        loadData();
+        renderTable();
       }
     });
-
-  } catch (err) {
-    console.error('Exchanges load error', err);
-    exTable.innerHTML = `
-      <div class="card" style="padding: 32px; text-align: center;">
-        <p style="color: var(--red); margin-bottom: 16px;">${t('js.failed_to_load_exchanges')}</p>
-        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
-      </div>
-    `;
-    exPagination.innerHTML = '';
   }
 }
 
-window.addEventListener('currency:change', loadData);
+qs('#exSearch').addEventListener('input', debounce((e) => { query = e.target.value; currentPage = 1; renderTable(); }, 150));
+qs('#exSort').addEventListener('change', (e) => { sortBy = e.target.value; currentPage = 1; renderTable(); });
+qs('#exType').addEventListener('change', (e) => { typeFilter = e.target.value; currentPage = 1; renderTable(); });
+
+window.addEventListener('currency:change', () => { allRows = []; loadData(); });
 
 loadData();
