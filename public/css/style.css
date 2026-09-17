@@ -1388,3 +1388,8 @@ body.is-private #holdingsTable tbody td:nth-child(n+3):not(:last-child),
 body.is-private #txTable tbody td:nth-child(4), body.is-private #txTable tbody td:nth-child(6),
 body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); user-select: none; pointer-events: none; }
 #privacyBtn.is-active { color: var(--blue); }
+
+/* Heatmap: sector tiles */
+.heatmap-tile.is-cat .tile-symbol { font-size: 0.78rem; font-weight: 600; white-space: normal; text-align: center; line-height: 1.15; padding: 0 4px; }
+.heatmap-tile.is-cat.is-small .tile-symbol { display: none; }
+.range-btn:disabled { opacity: .4; cursor: not-allowed; }

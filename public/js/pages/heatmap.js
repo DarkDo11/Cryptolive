@@ -11,6 +11,7 @@ let fx = 1;
 let topN = 100;
 let colorBy = '24h'; // 1h, 24h, 7d
 let sizeBy = 'marketCap'; // marketCap, volume
+let mode = 'coins'; // coins | categories
 let resizeObserver = null;
 
 async function loadFx() {
@@ -22,8 +23,24 @@ async function loadData() {
   container.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100%;"><div class="skeleton" style="width:100%;height:100%"></div></div>`;
   
   try {
-    const res = await api.markets({ perPage: 250 });
-    data = res.map(normalizeCoin);
+    if (mode === 'categories') {
+      const cats = await api.categories();
+      data = (cats || []).filter(c => c.market_cap > 0).map(c => ({
+        id: c.id,
+        name: c.name,
+        symbol: c.name,
+        price: null,
+        marketCap: c.market_cap * fx,
+        volume: (c.volume_24h || 0) * fx,
+        change1h: null,
+        change24h: c.market_cap_change_24h ?? 0,
+        change7d: null,
+        isCategory: true
+      }));
+    } else {
+      const res = await api.markets({ perPage: 250 });
+      data = res.map(normalizeCoin);
+    }
     render();
   } catch (e) {
     console.error('Heatmap load error', e);
@@ -134,14 +151,15 @@ function render() {
     
     const tooltipData = escapeHtml(JSON.stringify({
       name: c.name,
-      price: c.price * fx,
+      price: c.price == null ? null : c.price * fx,
       mcap: c.marketCap,
       change,
       id: c.id
     }));
     
+    const href = c.isCategory ? `/categories?c=${encodeURIComponent(c.id)}` : `/coin/${escapeHtml(c.id)}`;
     html += `
-      <a class="heatmap-tile ${cls} ${sizeCls}" href="/coin/${escapeHtml(c.id)}" 
+      <a class="heatmap-tile ${cls} ${sizeCls} ${c.isCategory ? 'is-cat' : ''}" href="${href}" 
          style="left:${block.x}px; top:${block.y}px; width:${block.w}px; height:${block.h}px; --tint:${tint}"
          data-tooltip="${tooltipData}"
          data-id="${escapeHtml(c.id)}">
@@ -158,9 +176,9 @@ function render() {
       const d = JSON.parse(tile.dataset.tooltip);
       tooltip.innerHTML = `
         <div style="font-weight:600; margin-bottom:4px">${escapeHtml(d.name)}</div>
-        <div>Price: <span data-live-price="${escapeHtml(d.id)}" data-price-usd="${d.price/fx}">${fmtCurrency(d.price, cur)}</span></div>
-        <div>Market Cap: ${fmtCurrency(d.mcap, cur, { compact: false })}</div>
-        <div>${colorBy} Change: ${changeBadge(d.change, `data-live-change="${escapeHtml(d.id)}"`)}</div>
+        ${d.price != null ? `<div>${t('js.price')}: <span data-live-price="${escapeHtml(d.id)}" data-price-usd="${d.price/fx}">${fmtCurrency(d.price, cur)}</span></div>` : ''}
+        <div>${t('js.market_cap')}: ${fmtCurrency(d.mcap, cur, { compact: false })}</div>
+        <div>${colorBy}: ${changeBadge(d.change, `data-live-change="${escapeHtml(d.id)}"`)}</div>
       `;
       tooltip.style.display = 'block';
     });
@@ -190,6 +208,24 @@ async function init() {
       t.classList.add('is-active');
       topN = parseInt(t.dataset.top, 10);
       render();
+    });
+  });
+
+  qsa('#modeGroup .range-btn').forEach(b => {
+    b.addEventListener('click', async () => {
+      if (b.dataset.mode === mode) return;
+      qsa('#modeGroup .range-btn').forEach(x => x.classList.remove('is-active'));
+      b.classList.add('is-active');
+      mode = b.dataset.mode;
+      // Sectors only carry a 24h change: pin the colour toggle and disable the other ranges.
+      const cats = mode === 'categories';
+      qsa('#cbGroup .range-btn').forEach(x => {
+        const only24 = x.dataset.cb === '24h';
+        x.disabled = cats && !only24;
+        x.classList.toggle('is-active', cats ? only24 : x.dataset.cb === colorBy);
+      });
+      if (cats) colorBy = '24h';
+      await loadData();
     });
   });
 

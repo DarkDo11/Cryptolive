@@ -174,6 +174,8 @@ export default {
   'heatmap.top100': "Top 100",
   'heatmap.top250': "Top 250",
   'heatmap.top50': "Top 50",
+  'heatmap.coins': "Coins",
+  'heatmap.sectors': "Sectors",
   'overview.breadth': "Market Breadth (top 100)",
   'overview.dominance': "Market Dominance",
   'overview.fng': "Fear & Greed Index",

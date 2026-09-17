@@ -174,6 +174,8 @@ export default {
   'heatmap.top100': "Топ 100",
   'heatmap.top250': "Топ 250",
   'heatmap.top50': "Топ 50",
+  'heatmap.coins': "Монеты",
+  'heatmap.sectors': "Секторы",
   'overview.breadth': "Ширина рынка (топ‑100)",
   'overview.dominance': "Доминация на рынке",
   'overview.fng': "Индекс страха и жадности",

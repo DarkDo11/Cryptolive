@@ -26,6 +26,10 @@
           <p class="hero-sub" data-i18n="heatmap.sub">Visualize market caps and volume</p>
         </div>
         <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+          <div class="toggle-group" id="modeGroup">
+            <button class="range-btn is-active" data-mode="coins" data-i18n="heatmap.coins">Coins</button>
+            <button class="range-btn" data-mode="categories" data-i18n="heatmap.sectors">Sectors</button>
+          </div>
           <div class="tabs" style="margin:0; border:none; gap:12px;" id="topTabs">
             <div class="tab" data-top="50" data-i18n="heatmap.top50">Top 50</div>
             <div class="tab is-active" data-top="100" data-i18n="heatmap.top100">Top 100</div>
