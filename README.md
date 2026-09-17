@@ -72,6 +72,8 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 
 ## API
 
+A public, self-documenting copy of this table with a "try it" console and an SSE demo is served at `/api-docs`.
+
 ### REST Endpoints
 
 All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe`, or `fallback`) along with `Cache-Control` headers. Error `503` is returned when upstream is in cooldown.
@@ -93,7 +95,7 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/exchange/:id/volume` | `days` (7/14/30/90) | 900s | Daily/hourly BTC volume series for the exchange |
 | `GET /api/coin/:id/similar` | `vs` | universe | Coins ranked next to the coin by market cap (served from the universe, no upstream call) |
 | `GET /api/simple-price` | `ids`, `vs` | 60s | Simple prices and 24h change (served from universe if cached) |
-| `GET /api/currencies` | — | 3600s (static) | Supported display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH) |
+| `GET /api/currencies` | — | 3600s (static) | Supported display currencies (18: fiat + BTC/ETH) |
 | `GET /healthz` | — | — | Health JSON: version, uptime, memory, cache counters, upstream counters/cooldown, live feed state (rendered by `/status`) |
 
 ### Live Price Stream (`/api/stream`)
@@ -133,6 +135,7 @@ Cryptolive/
 │   ├── overview.html       # Market overview dashboard (/overview)
 │   ├── trending.html       # Trending coins / categories / NFTs (/trending)
 │   ├── status.html         # Service status (/status)
+│   ├── api-docs.html       # Public API reference with try-it console (/api-docs)
 │   ├── settings.html       # Settings & data backup (/settings)
 │   ├── coin.html           # Coin detail & interactive charts (/coin/:id)
 │   ├── compare.html        # Side-by-side coin comparison (/compare)

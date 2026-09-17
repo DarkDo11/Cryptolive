@@ -90,7 +90,8 @@ const STATIC_ROUTES = {
   '/overview': '/overview.html',
   '/trending': '/trending.html',
   '/settings': '/settings.html',
-  '/status': '/status.html'
+  '/status': '/status.html',
+  '/api-docs': '/api-docs.html'
 };
 
 const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";

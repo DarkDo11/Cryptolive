@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>API · Cryptolive</title>
+  <meta name="description" content="Public JSON API of this Cryptolive instance: market data, coins, exchanges, search and a Server-Sent Events price stream.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/api-docs.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="margin-bottom:24px">
+      <h1 data-i18n="apiDocs.title">API</h1>
+      <p class="hero-sub" data-i18n="apiDocs.sub">This instance exposes a read-only JSON API — the same endpoints the site itself uses. No key required; requests are rate limited per IP and served through a caching proxy in front of CoinGecko.</p>
+    </div>
+
+    <div class="grid-2" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items:start;">
+      <section class="card">
+        <div class="card-head" data-i18n="apiDocs.rest">REST endpoints</div>
+        <div class="table-frame">
+          <table class="data-table is-plain api-table">
+            <thead><tr><th data-i18n="apiDocs.route">Route</th><th data-i18n="apiDocs.params">Parameters</th><th>TTL</th><th data-i18n="apiDocs.description">Description</th><th></th></tr></thead>
+            <tbody>
+        <tr><td><code>GET /api/global</code></td><td>—</td><td>120s</td><td>Global market stats (market cap, volume, BTC/ETH dominance)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/global">Try</button></td></tr>
+        <tr><td><code>GET /api/fng</code></td><td>—</td><td>600s</td><td>Fear &amp; Greed Index current value and 30-day historical points</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/fng">Try</button></td></tr>
+        <tr><td><code>GET /api/trending</code></td><td>—</td><td>300s</td><td>Trending coins from CoinGecko search</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/trending">Try</button></td></tr>
+        <tr><td><code>GET /api/markets</code></td><td>vs, page, per_page, ids, category, order</td><td>60s</td><td>Market coin list with sparklines; served from universe when applicable</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/markets?vs=usd&amp;per_page=10">Try</button></td></tr>
+        <tr><td><code>GET /api/coin/:id</code></td><td>:id</td><td>120s</td><td>Coin metadata, market stats, ATH/ATL, description, and links</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/coin/bitcoin">Try</button></td></tr>
+        <tr><td><code>GET /api/coin/:id/chart</code></td><td>vs, days (1, 7, 30, 90, 365, max)</td><td>120s (1d) / 900s</td><td>Historical price, market cap, and volume series</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/coin/bitcoin/chart?vs=usd&amp;days=7">Try</button></td></tr>
+        <tr><td><code>GET /api/coin/:id/ohlc</code></td><td>vs, days (1, 7, 14, 30, 90, 180, 365)</td><td>300s</td><td>OHLC candlestick data</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/coin/bitcoin/ohlc?vs=usd&amp;days=7">Try</button></td></tr>
+        <tr><td><code>GET /api/coin/:id/tickers</code></td><td>page</td><td>300s</td><td>Exchange trading pairs, volumes, trust scores, and trade URLs</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/coin/bitcoin/tickers?page=1">Try</button></td></tr>
+        <tr><td><code>GET /api/search</code></td><td>q</td><td>600s</td><td>Multi-category search (coins, categories, exchanges)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/search?q=sol">Try</button></td></tr>
+        <tr><td><code>GET /api/categories</code></td><td>—</td><td>600s</td><td>Cryptocurrency category market caps and 24h performance</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/categories">Try</button></td></tr>
+        <tr><td><code>GET /api/exchanges</code></td><td>page, per_page</td><td>600s</td><td>Exchange list with trust scores and 24h trading volume</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/exchanges?per_page=10">Try</button></td></tr>
+        <tr><td><code>GET /api/exchange/:id</code></td><td>—</td><td>600s</td><td>Exchange profile (trust, volume, links, description) and top 100 tickers</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/exchange/binance">Try</button></td></tr>
+        <tr><td><code>GET /api/exchange/:id/volume</code></td><td>days (7/14/30/90)</td><td>900s</td><td>Daily/hourly BTC volume series for the exchange</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/exchange/binance/volume?days=7">Try</button></td></tr>
+        <tr><td><code>GET /api/coin/:id/similar</code></td><td>vs</td><td>universe</td><td>Coins ranked next to the coin by market cap (served from the universe, no upstream call)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/coin/ethereum/similar?vs=usd">Try</button></td></tr>
+        <tr><td><code>GET /api/simple-price</code></td><td>ids, vs</td><td>60s</td><td>Simple prices and 24h change (served from universe if cached)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/simple-price?ids=bitcoin,ethereum&amp;vs=usd,eur">Try</button></td></tr>
+        <tr><td><code>GET /api/currencies</code></td><td>—</td><td>3600s (static)</td><td>Supported display currencies (18: fiat + BTC/ETH)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/currencies">Try</button></td></tr>
+        <tr><td><code>GET /healthz</code></td><td>—</td><td>—</td><td>Health JSON: version, uptime, memory, cache counters, upstream counters/cooldown, live feed state (rendered by /status)</td><td><button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/healthz">Try</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-body muted small" data-i18n-html="apiDocs.notes">Every response carries <code>X-Cache</code> (<code>hit</code>, <code>miss</code>, <code>stale</code>, <code>universe</code>, <code>fallback</code>) and <code>Cache-Control</code>. While the data provider is in cooldown the API answers <code>503</code> with <code>Retry-After</code>; per-IP limits answer <code>429</code> with <code>X-RateLimit-Remaining</code>. Currency codes for <code>vs</code>: see <code>/api/currencies</code>.</div>
+      </section>
+
+      <div>
+        <section class="card" id="tryCard">
+          <div class="card-head" data-i18n="apiDocs.try">Try it</div>
+          <div class="card-body">
+            <form id="tryForm" class="try-form">
+              <input class="input" id="tryUrl" value="/api/markets?vs=usd&amp;per_page=5" autocomplete="off" spellcheck="false">
+              <button class="btn btn-primary" type="submit" data-i18n="apiDocs.send">Send</button>
+            </form>
+            <div class="try-meta muted small" id="tryMeta"></div>
+            <pre class="try-output" id="tryOutput"></pre>
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:16px">
+          <div class="card-head" data-i18n="apiDocs.stream">Live price stream</div>
+          <div class="card-body">
+            <p class="muted small" data-i18n-html="apiDocs.streamText"><code>GET /api/stream</code> is a Server-Sent Events endpoint. <code>event: hello</code> lists the tracked coin ids, <code>event: tick</code> arrives at most once per second with USD prices (<code>p</code>) and 24h change (<code>c</code>).</p>
+<pre class="try-output" style="margin-top:8px">event: hello
+data: {"symbols":["bitcoin","ethereum","solana"]}
+
+event: tick
+data: {"ts":1710000000000,"prices":{"bitcoin":{"p":76318.9,"c":0.46}}}</pre>
+            <button type="button" class="btn btn-ghost btn-sm" id="streamBtn" style="margin-top:10px" data-i18n="apiDocs.streamStart">Listen for 10 seconds</button>
+            <pre class="try-output" id="streamOutput" style="margin-top:8px; max-height:180px" hidden></pre>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

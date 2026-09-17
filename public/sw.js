@@ -29,7 +29,8 @@ const PRECACHE_URLS = [
   '/js/pages/trending.js',
   '/js/pages/watchlist.js',
   '/js/pages/settings.js',
-  '/js/pages/status.js'
+  '/js/pages/status.js',
+  '/js/pages/api-docs.js'
 ];
 
 self.addEventListener('install', (event) => {
