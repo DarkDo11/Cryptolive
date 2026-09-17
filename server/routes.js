@@ -272,6 +272,52 @@ export async function handleApi(req, res, url, ctx) {
     const { page, per_page } = getPageParams();
     targetUrl = `${COINGECKO_BASE}/exchanges?per_page=${per_page}&page=${page}`;
     ttlMs = 600 * 1000;
+  } else if (path.startsWith('/api/exchange/')) {
+    const parts = path.split('/');
+    const exId = parts[3];
+    if (!exId || !/^[a-z0-9_-]{1,60}$/.test(exId)) badRequest('Invalid exchange id');
+    if (!parts[4]) {
+      targetUrl = `${COINGECKO_BASE}/exchanges/${exId}`;
+      ttlMs = 600 * 1000;
+      transform = (d) => ({
+        id: exId,
+        name: d.name,
+        year_established: d.year_established ?? null,
+        country: d.country ?? null,
+        description: d.description || '',
+        url: d.url || null,
+        image: d.image || null,
+        facebook_url: d.facebook_url || null,
+        reddit_url: d.reddit_url || null,
+        twitter_handle: d.twitter_handle || null,
+        centralized: d.centralized ?? null,
+        trust_score: d.trust_score ?? null,
+        trust_score_rank: d.trust_score_rank ?? null,
+        trade_volume_24h_btc: d.trade_volume_24h_btc ?? null,
+        trade_volume_24h_btc_normalized: d.trade_volume_24h_btc_normalized ?? null,
+        tickers: (d.tickers || []).slice(0, 100).map(t => ({
+          base: t.base,
+          target: t.target,
+          coin_id: t.coin_id || null,
+          target_coin_id: t.target_coin_id || null,
+          last_usd: t.converted_last?.usd ?? null,
+          volume_usd: t.converted_volume?.usd ?? null,
+          trust_score: t.trust_score ?? null,
+          spread: t.bid_ask_spread_percentage ?? null,
+          trade_url: t.trade_url || null
+        }))
+      });
+    } else if (parts[4] === 'volume') {
+      const days = url.searchParams.get('days') || '30';
+      if (!new Set(['7', '14', '30', '90']).has(days)) badRequest('Invalid days');
+      targetUrl = `${COINGECKO_BASE}/exchanges/${exId}/volume_chart?days=${days}`;
+      ttlMs = 900 * 1000;
+      transform = (d) => (Array.isArray(d) ? d.map(([ts, v]) => [ts, Number(v)]) : []);
+    } else {
+      const e = new Error('Not Found');
+      e.status = 404;
+      throw e;
+    }
   } else if (path === '/api/simple-price') {
     const ids = getIds();
     if (!ids) badRequest('Missing ids');

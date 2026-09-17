@@ -6,16 +6,16 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 
 - **Overview**: Market Overview dashboard featuring a Fear & Greed gauge + 30-day history, market dominance doughnut, top sectors bar chart, market breadth, and a watchlist snapshot.
 - **Markets**: Global stats bar (total market cap, 24h volume, BTC/ETH dominance, Fear & Greed Index), trending and top gainers/losers highlight cards, sortable top-N coin table with 7-day sparklines, quick filter tabs (All, Watchlist, Gainers, Losers), per-page selector (50/100/250), and live price update flashes.
-- **Coin Detail**: Interactive line and candlestick charts with timeframe ranges (24h to Max) and logarithmic scale toggle, price vs. market cap toggle, key stats (circulating/total/max supply, volume/market cap), ATH/ATL metrics with percentage change and dates, 24h low/high range bar, mini-converter, multi-timeframe price performance, historical data table + CSV export, exchange tickers with trust scores and trade links, coin description, official links, and a "Set alert" button.
+- **Coin Detail**: Interactive line and candlestick charts with timeframe ranges (24h to Max) and logarithmic scale toggle, price vs. market cap toggle, key stats (circulating/total/max supply, volume/market cap), ATH/ATL metrics with percentage change and dates, 24h low/high range bar, mini-converter, multi-timeframe price performance, historical data table + CSV export, exchange tickers with trust scores and trade links, coin description, official links, a "Similar coins" card (rank neighbours with live prices) and a "Set alert" button. Coin pages are served with per-coin `<title>`, description, canonical and Open Graph tags filled server-side from the universe snapshot, and the sitemap lists every coin in the universe.
 - **Compare**: Up to 4 coins side-by-side comparison with a normalized performance chart.
 - **Alerts**: Price alerts (above/below rules checked against the live stream + 60 s polling fallback) triggering toasts and browser Notifications; triggered alerts can be re-armed; stored in `localStorage`.
 - **Watchlist**: Track favorite coins locally via `localStorage` with JSON import and export capability.
-- **Portfolio**: Transaction-based portfolio tracker with buy/sell logging, holdings balances, average buy price, profit & loss (P&L) tracking, asset allocation doughnut chart, and JSON import/export.
+- **Portfolio**: Transaction-based portfolio tracker with buy/sell logging, holdings balances, average buy price, profit & loss (P&L) tracking, asset allocation doughnut chart, a portfolio value vs. invested history chart (7d/30d/90d), and JSON import/export.
 - **Converter**: Real-time crypto↔crypto, crypto↔fiat, and fiat↔fiat conversions with URL state synchronization (`?from=&to=&amount=`) and quick-pick popular conversions.
 - **Heatmap**: Squarified treemap visualization sized by Market Cap or 24h Volume, color-coded by 1h, 24h, or 7d price change percentage with responsive resizing.
 - **Gainers & Losers**: Highlights top 20 gainers and top 20 losers across 1h, 24h, and 7d horizons (minimum $50k volume filter).
 - **Categories**: Market sectors table sorted by market cap with 24h changes and top 3 coins preview; drill down to explore category-specific coin markets.
-- **Exchanges**: Directory of top cryptocurrency exchanges with trust scores, country of origin, 24h BTC volume, and direct links.
+- **Exchanges**: Directory of top cryptocurrency exchanges with trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 8 display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
@@ -27,7 +27,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Server Resilience & Caching**: 
   - **Caching & Flow**: In-memory stale-while-revalidate cache with request coalescing. On-disk cache snapshot (`CACHE_FILE`, written every 30 s and on shutdown, restored on start; Docker volume `cryptolive-cache`).
   - **Upstream Protection**: Upstream cooldown after a 429 (fails fast with 503 + Retry-After instead of hammering; cache serves stale). Global concurrency limiter (maximum 3 parallel requests).
-  - **Degraded Mode**: Degraded coin payload from the universe (`X-Cache: fallback`, `partial: true`) so coin pages still render during throttling.
+  - **Degraded Mode**: Degraded coin payload from the universe (`X-Cache: fallback`, `partial: true`) so coin pages still render during throttling; `/api/search` likewise falls back to a name/symbol search over the universe. Throttled API responses carry `Retry-After`, and the browser client waits once (≤20 s) and retries before showing an error.
   - **API Rate Limiting**: Per-IP API rate limit (`API_RATE_LIMIT`, 429 + Retry-After, `X-RateLimit-Remaining`).
   - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (includes `upstream: {throttled, throttledForMs}`).
 - **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top 500 coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` (default order) and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
@@ -87,6 +87,9 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/search` | `q` | 600s | Multi-category search (coins, categories, exchanges) |
 | `GET /api/categories` | — | 600s | Cryptocurrency category market caps and 24h performance |
 | `GET /api/exchanges` | `page`, `per_page` | 600s | Exchange list with trust scores and 24h trading volume |
+| `GET /api/exchange/:id` | — | 600s | Exchange profile (trust, volume, links, description) and top 100 tickers |
+| `GET /api/exchange/:id/volume` | `days` (7/14/30/90) | 900s | Daily/hourly BTC volume series for the exchange |
+| `GET /api/coin/:id/similar` | `vs` | universe | Coins ranked next to the coin by market cap (served from the universe, no upstream call) |
 | `GET /api/simple-price` | `ids`, `vs` | 60s | Simple prices and 24h change (served from universe if cached) |
 | `GET /api/currencies` | — | 3600s (static) | Supported display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH) |
 | `GET /healthz` | — | — | Health check with server uptime, cache stats, and live stream status |
@@ -135,6 +138,7 @@ Cryptolive/
 │   ├── gainers-losers.html # Top gainers and losers (/gainers-losers)
 │   ├── categories.html     # Crypto categories (/categories)
 │   ├── exchanges.html      # Exchanges list (/exchanges)
+│   ├── exchange.html       # Exchange detail (/exchange/:id)
 │   ├── 404.html            # 404 error page
 │   ├── css/style.css       # Unified CSS design system
 │   ├── sw.js               # Service worker (app-shell cache, same-origin only)

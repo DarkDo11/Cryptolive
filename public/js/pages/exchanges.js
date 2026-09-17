@@ -56,7 +56,7 @@ async function loadData() {
             <div style="display: flex; align-items: center; gap: 12px;">
               <img src="${escapeHtml(ex.image)}" alt="${escapeHtml(ex.name)}" width="24" height="24" style="border-radius: 50%;" loading="lazy" referrerpolicy="no-referrer">
               <div>
-                <div style="font-weight: 500;">${escapeHtml(ex.name)}</div>
+                <div style="font-weight: 500;"><a href="/exchange/${encodeURIComponent(ex.id)}" class="ex-link">${escapeHtml(ex.name)}</a></div>
                 ${country}
               </div>
             </div>

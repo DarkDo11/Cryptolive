@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Exchange · Cryptolive</title>
+  <meta name="description" content="Exchange overview, volume and trading pairs">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <!-- only on pages with charts: -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/pages/exchange.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div id="exHeader" class="coin-header card">
+      <div class="card-body">
+        <div class="skeleton" style="height: 40px; width: 300px; margin-bottom: 16px;"></div>
+        <div class="skeleton" style="height: 60px; width: 200px;"></div>
+      </div>
+    </div>
+    
+    <div class="grid-2" style="grid-template-columns: 2fr 1fr;">
+      <div>
+        <section class="card" id="volumeCard">
+          <div class="card-head">
+            <h3 data-i18n="exchange.volume">Trading volume (BTC)</h3>
+            <div class="toggle-group" id="volRange">
+              <button type="button" class="range-btn" data-days="7">7d</button>
+              <button type="button" class="range-btn is-active" data-days="30">30d</button>
+              <button type="button" class="range-btn" data-days="90">90d</button>
+            </div>
+          </div>
+          <div class="card-body" style="position:relative;height:280px">
+            <canvas id="volumeChart"></canvas>
+          </div>
+        </section>
+        
+        <section class="card" id="pairsCard" style="margin-top:16px">
+          <div class="card-head">
+            <h3 data-i18n="exchange.pairs">Top trading pairs</h3>
+            <input class="input" id="pairFilter" type="search" data-i18n-placeholder="exchange.filterPairs" placeholder="Filter pairs" style="max-width:220px">
+          </div>
+          <div id="pairsBody" style="padding:0"></div>
+        </section>
+      </div>
+      
+      <div>
+        <section class="card" id="infoCard">
+          <div class="card-head" data-i18n="exchange.info">Information</div>
+          <div id="infoBody" class="card-body"></div>
+        </section>
+        
+        <section class="card" id="aboutCard" style="margin-top:16px">
+          <div class="card-head" data-i18n="coin.about">About</div>
+          <div id="aboutBody" class="card-body"></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="notFound" class="card" hidden>
+      <div class="card-body">
+        <h2 data-i18n="exchange.notFound">Exchange not found</h2>
+        <a class="btn btn-primary" href="/exchanges" data-i18n="exchange.backToList">All exchanges</a>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

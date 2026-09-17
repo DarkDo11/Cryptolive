@@ -27,9 +27,17 @@ export const api = {
       return cached.data;
     }
 
-    const res = await fetch(url);
+    let res = await fetch(url);
     let data = null;
     try { data = await res.json(); } catch { data = null; }
+
+    // Upstream cooldown (503 + Retry-After): wait once, bounded, and retry instead of failing the page.
+    if (res.status === 503) {
+      const wait = Math.min(Math.max(parseInt(res.headers.get('Retry-After') || '5', 10) || 5, 2), 20) * 1000;
+      await new Promise((r) => setTimeout(r, wait));
+      res = await fetch(url);
+      try { data = await res.json(); } catch { data = null; }
+    }
     
     if (!res.ok) {
       throw new ApiError(res.status, (data && data.error) || res.statusText || `HTTP ${res.status}`);
@@ -69,6 +77,8 @@ export const api = {
   search(q) { return this.get('/search', { q }); },
   categories() { return this.get('/categories'); },
   exchanges(page = 1, perPage = 100) { return this.get('/exchanges', { page, per_page: perPage }); },
+  exchange(id) { return this.get(`/exchange/${id}`); },
+  exchangeVolume(id, days = 30) { return this.get(`/exchange/${id}/volume`, { days }); },
   
   simplePrice(ids, vs) { return this.get('/simple-price', { ids, vs }); },
   

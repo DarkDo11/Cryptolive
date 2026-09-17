@@ -143,7 +143,10 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/sitemap.xml') {
       const baseUrl = process.env.PUBLIC_URL || 'http://localhost:8080';
-      const urls = Object.keys(STATIC_ROUTES).concat(['/coin']);
+      const urls = Object.keys(STATIC_ROUTES);
+      // Top coins from the universe snapshot (bounded wait; the sitemap must never hang on upstream).
+      const uni = await Promise.race([getUniverse({ cache }).catch(() => null), new Promise(r => setTimeout(() => r(null), 1500))]);
+      for (const row of uni?.rows || []) urls.push(`/coin/${encodeURIComponent(row.id)}`);
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${baseUrl}${u === '/' ? '' : u}</loc></url>`).join('\n')}\n</urlset>`;
       send(req, res, 200, { 'Content-Type': 'application/xml; charset=utf-8' }, xml);
       return;
@@ -172,7 +175,9 @@ const server = http.createServer(async (req, res) => {
         send(req, res, result.status, result.headers, result.body);
       } catch (err) {
         statusCode = err.status || 500;
-        send(req, res, statusCode, { 'Content-Type': 'application/json' }, JSON.stringify({ error: err.message || 'Internal Server Error' }));
+        const headers = { 'Content-Type': 'application/json' };
+        if (err.retryAfter) headers['Retry-After'] = String(err.retryAfter);
+        send(req, res, statusCode, headers, JSON.stringify({ error: err.message || 'Internal Server Error' }));
       }
       return;
     }
@@ -183,6 +188,8 @@ const server = http.createServer(async (req, res) => {
       targetFile = STATIC_ROUTES[pathname];
     } else if (pathname.startsWith('/coin/')) {
       targetFile = '/coin.html';
+    } else if (pathname.startsWith('/exchange/')) {
+      targetFile = '/exchange.html';
     }
 
     let filePath = path.join(PUBLIC_DIR, targetFile);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cryptolive-v2';
+const CACHE_NAME = 'cryptolive-v3';
 
 const PRECACHE_URLS = [
   '/',
@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   '/js/pages/coin.js',
   '/js/pages/compare.js',
   '/js/pages/converter.js',
+  '/js/pages/exchange.js',
   '/js/pages/exchanges.js',
   '/js/pages/gainers-losers.js',
   '/js/pages/heatmap.js',
