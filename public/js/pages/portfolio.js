@@ -702,6 +702,18 @@ async function init() {
 
   qs('#addTxBtn').addEventListener('click', () => openModal());
 
+  // Privacy mode: blur every monetary figure (persisted in settings.privacy).
+  const privacyBtn = qs('#privacyBtn');
+  const applyPrivacy = () => {
+    const on = settings.get().privacy === true;
+    document.body.classList.toggle('is-private', on);
+    privacyBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    privacyBtn.classList.toggle('is-active', on);
+    privacyBtn.title = on ? t('portfolio.privacyOff') : t('portfolio.privacy');
+  };
+  privacyBtn.addEventListener('click', () => { settings.set({ privacy: !(settings.get().privacy === true) }); applyPrivacy(); });
+  applyPrivacy();
+
   // Deep link from coin pages: /portfolio?add=<coinId> opens the transaction modal pre-filled.
   const addId = new URLSearchParams(location.search).get('add');
   if (addId && /^[a-z0-9-]{1,100}$/.test(addId)) {

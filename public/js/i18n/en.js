@@ -177,6 +177,8 @@ export default {
   'portfolio.holdings': "Holdings",
   'portfolio.sub': "Track your cryptocurrency holdings",
   'portfolio.title': "My Portfolio",
+  'portfolio.privacy': "Hide balances",
+  'portfolio.privacyOff': "Show balances",
   'portfolio.transactions': "Transactions",
   'portfolio.history': "Portfolio value",
   'portfolio.value': "Value",

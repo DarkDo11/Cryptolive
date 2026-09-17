@@ -1381,3 +1381,10 @@ td.is-best {
 .cat-stat { display: flex; flex-direction: column; gap: 2px; }
 .cat-stat-label { color: var(--muted); font-size: 0.78rem; }
 .cat-stat-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Portfolio privacy mode */
+body.is-private #portfolioSummary .card-body > div:not(:first-child),
+body.is-private #holdingsTable tbody td:nth-child(n+3):not(:last-child),
+body.is-private #txTable tbody td:nth-child(4), body.is-private #txTable tbody td:nth-child(6),
+body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); user-select: none; pointer-events: none; }
+#privacyBtn.is-active { color: var(--blue); }

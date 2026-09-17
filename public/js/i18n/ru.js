@@ -177,6 +177,8 @@ export default {
   'portfolio.holdings': "Активы",
   'portfolio.sub': "Отслеживайте свои криптоактивы",
   'portfolio.title': "Мой портфель",
+  'portfolio.privacy': "Скрыть суммы",
+  'portfolio.privacyOff': "Показать суммы",
   'portfolio.transactions': "Сделки",
   'portfolio.history': "Стоимость портфеля",
   'portfolio.value': "Стоимость",
