@@ -107,6 +107,7 @@ export default {
   'coin.about': "About",
   'coin.candles': "Candles",
   'coin.history': "Historical data",
+  'coin.filterMarkets': "Filter by exchange or pair",
   'coin.line': "Line",
   'coin.log': "Log",
   'coin.markets': "Markets",

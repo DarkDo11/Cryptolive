@@ -107,6 +107,7 @@ export default {
   'coin.about': "О проекте",
   'coin.candles': "Свечи",
   'coin.history': "Исторические данные",
+  'coin.filterMarkets': "Фильтр по бирже или паре",
   'coin.line': "Линия",
   'coin.log': "Лог",
   'coin.markets': "Рынки",

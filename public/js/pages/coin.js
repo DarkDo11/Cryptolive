@@ -438,7 +438,7 @@ async function loadTickers() {
       const tradeLink = tk.trade_url ? `<a href="${escapeHtml(tk.trade_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">${t('js.trade')}</a>` : '—';
       
       html += `
-        <tr>
+        <tr data-search="${escapeHtml(`${tk.exchange} ${tk.base}/${tk.target}`.toLowerCase())}">
           <td>${num}</td>
           <td><div style="display:flex; align-items:center; gap:8px">${logo}<span>${escapeHtml(tk.exchange)}</span></div></td>
           <td style="color:var(--blue)">${escapeHtml(tk.base)}/${escapeHtml(tk.target)}</td>
@@ -454,12 +454,14 @@ async function loadTickers() {
     const tBodyEl = qs('#tickersTbody');
     if (tickersPage === 1) {
       tBodyEl.innerHTML = html;
+      applyTickerFilter();
       if (tickers.length === 0) {
         tbody.innerHTML = emptyState(t('js.no_markets_found'));
         qs('#loadMoreTickers').style.display = 'none';
       }
     } else {
       tBodyEl.insertAdjacentHTML('beforeend', html);
+      applyTickerFilter();
     }
     
     if (tickers.length < 100) {
@@ -477,6 +479,12 @@ async function loadTickers() {
 }
 
 qs('#loadMoreTickers').addEventListener('click', loadTickers);
+
+function applyTickerFilter() {
+  const q = (qs('#tickerFilter')?.value || '').trim().toLowerCase();
+  qsa('#tickersTbody tr[data-search]').forEach(tr => { tr.hidden = q !== '' && !tr.dataset.search.includes(q); });
+}
+qs('#tickerFilter')?.addEventListener('input', debounce(applyTickerFilter, 120));
 
 function setupHistoryControls() {
   qsa('#historyRange .range-btn').forEach(btn => {

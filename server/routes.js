@@ -202,7 +202,7 @@ export async function handleApi(req, res, url, ctx) {
       ttlMs = 300 * 1000;
     } else if (subRoute === 'tickers') {
       const page = parseInt(url.searchParams.get('page')) || 1;
-      targetUrl = `${COINGECKO_BASE}/coins/${coinId}/tickers?page=${page}&order=volume_desc&depth=false`;
+      targetUrl = `${COINGECKO_BASE}/coins/${coinId}/tickers?page=${page}&order=volume_desc&depth=false&include_exchange_logo=true`;
       ttlMs = 300 * 1000;
       transform = (data) => ({
         tickers: (data.tickers || []).map(t => ({
