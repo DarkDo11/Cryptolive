@@ -94,6 +94,29 @@ export function similarFromUniverse({ universe, ratio, id, limit = 8 }) {
 }
 
 /**
+ * Case-insensitive search over the universe: exact symbol → prefix matches → substring matches,
+ * each group ordered by market cap rank. Returns `/search`-shaped coin rows (max `limit`).
+ */
+export function searchUniverse(universe, query, limit = 20) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return [];
+  const score = (r) => {
+    const name = String(r.name || '').toLowerCase();
+    const sym = String(r.symbol || '').toLowerCase();
+    if (sym === q || name === q) return 0;
+    if (sym.startsWith(q) || name.startsWith(q)) return 1;
+    if (name.includes(q) || String(r.id || '').includes(q)) return 2;
+    return -1;
+  };
+  return universe.rows
+    .map(r => ({ r, s: score(r) }))
+    .filter(x => x.s >= 0)
+    .sort((a, b) => a.s - b.s || (a.r.market_cap_rank ?? 1e9) - (b.r.market_cap_rank ?? 1e9))
+    .slice(0, limit)
+    .map(({ r }) => ({ id: r.id, name: r.name, symbol: r.symbol, thumb: r.image, rank: r.market_cap_rank ?? null }));
+}
+
+/**
  * Build a partial `/coins/{id}`-shaped payload from a universe row so the coin page can still render
  * (header, stats, performance) while CoinGecko is throttled. Marked with `partial: true`.
  */

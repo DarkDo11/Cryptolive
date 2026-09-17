@@ -1,5 +1,5 @@
 import { COINGECKO_BASE, fetchUpstream, badRequest, cacheKey } from './upstream.js';
-import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, coinFromUniverse, VS_CURRENCIES } from './universe.js';
+import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, searchUniverse, coinFromUniverse, VS_CURRENCIES } from './universe.js';
 
 const FNG_BASE = process.env.UPSTREAM_FNG || 'https://api.alternative.me/fng/';
 
@@ -228,6 +228,11 @@ export async function handleApi(req, res, url, ctx) {
     if (!q) badRequest('Missing query');
     targetUrl = `${COINGECKO_BASE}/search?query=${encodeURIComponent(q)}`;
     ttlMs = 600 * 1000;
+    // While CoinGecko is throttled, answer from the universe (top-500 by name/symbol) so ⌘K keeps working.
+    fallback = async () => {
+      const uni = await getUniverse(ctx);
+      return { coins: searchUniverse(uni, q), categories: [], exchanges: [], partial: true };
+    };
     transform = (data) => ({
       coins: (data.coins || []).slice(0, 20).map(c => ({
         id: c.id,
