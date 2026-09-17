@@ -375,6 +375,27 @@ Empty-state with "Page not found" and link home. Also loads layout.
 - Coin page extras: historical daily OHLC table + CSV export; degraded "partial" mode when upstream is throttled.
 - i18n: `public/js/i18n.js` (`t()`, `applyTranslations()`, `data-i18n*` attributes) with dictionaries in `public/js/i18n/{en,ru}.js`; language stored in `settings.lang`, switch in the header reloads the page.
 
+## 4c. Third iteration (exchange pages, status, resilience)
+
+Server:
+- `GET /api/coin/:id/similar?vs=` — rank neighbours from the universe (`similarFromUniverse`), never hits upstream.
+- `GET /api/exchange/:id` (profile + top 100 tickers, TTL 600 s) and `GET /api/exchange/:id/volume?days=7|14|30|90` (TTL 900 s).
+- `GET /api/search` falls back to `searchUniverse()` (exact symbol → prefix → substring, by rank) when upstream is throttled; response carries `partial: true`, `X-Cache: fallback`. Fallback payloads skip the route `transform`.
+- `/coin/:id` HTML is decorated server-side (`server/seo.js`): title, description, canonical, Open Graph / Twitter tags from the universe row (bounded 1.5 s wait, never throws). `/sitemap.xml` lists all universe coins.
+- `/healthz` reports version, memory, cache counters (hit/stale/miss/error + hitRatio), upstream counters (requests/ok/429/errors, last timestamps, cooldown, key configured) and live-feed state (symbols, pricesKnown, lastMessageAt, reconnects). Throttled API errors send `Retry-After`.
+- Static routes: `/exchange/*` → `exchange.html`, `/status` → `status.html`.
+
+Client:
+- `api.get` retries once after a 503 (waits `Retry-After`, 2–20 s).
+- Coin page: "Similar coins" card (`#similarCard`, live prices), `recentCoins.push(id)` on load.
+- Markets: "Recently viewed" strip (`#recentStrip`, ids from `cryptolive:recent-coins`, prices via `/api/markets?ids=`).
+- Portfolio: value vs. invested history chart (`#historyCard`, 7/30/90 d) built from `portfolio.list()` and `api.chart` per holding (≤10, `Promise.allSettled`).
+- Exchange page `/exchange/:id` (`pages/exchange.js`): header with trust/rank/type chips, BTC volume bar chart, info list, filterable pairs table (base links to `/coin/:id`).
+- Status page `/status` (`pages/status.js`): renders `/healthz`, verdict ok/degraded/down (idle live feed with zero subscribers is healthy), auto-refresh 15 s.
+- Watchlist: "Share link" copies `/watchlist?ids=a,b`; opening such a link shows a notice with "Add to my watchlist".
+- Alerts: conditions `change_up` / `change_down` with `percent` (checked against tick `c` / `usd_24h_change`); `describeCondition()` / `describeTarget()` helpers.
+- a11y: skip link, `aria-label` on header selects, toast stack is `role=status aria-live=polite`.
+
 ## 5. Non-functional
 - No inline event handlers; escape all interpolated text (`escapeHtml`). Images: `loading="lazy"`,
   `referrerpolicy="no-referrer"`, fallback to a lettered circle on error.
