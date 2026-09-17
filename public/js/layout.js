@@ -25,6 +25,8 @@ export function toast(message, { type = 'info' } = {}) {
   if (!toastStack) {
     toastStack = document.createElement('div');
     toastStack.className = 'toast-stack';
+    toastStack.setAttribute('role', 'status');
+    toastStack.setAttribute('aria-live', 'polite');
     document.body.appendChild(toastStack);
   }
   
@@ -85,8 +87,8 @@ function renderHeader(active) {
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
           <span>${t('common.search')} ⌘K</span>
         </button>
-        <select class="currency-select" id="currencySelect"></select>
-        <select class="currency-select" id="langSelect" aria-label="Language">
+        <select class="currency-select" id="currencySelect" aria-label="${t('nav.currency')}"></select>
+        <select class="currency-select" id="langSelect" aria-label="${t('nav.language')}">
           ${LANGS.map(l => `<option value="${l.code}" title="${escapeHtml(l.label)}">${l.code.toUpperCase()}</option>`).join('')}
         </select>
         <a href="/settings" class="theme-toggle" aria-label="${t('nav.settings')}" style="margin-right:-4px;">
@@ -408,6 +410,7 @@ export function initLayout({ active = '' } = {}) {
   const headerContainer = qs('#app-header');
   if (headerContainer) {
     headerContainer.innerHTML = `
+      <a class="skip-link" href="#main">${t('nav.skip')}</a>
       <header class="site-header">
         ${renderHeader(active)}
       </header>

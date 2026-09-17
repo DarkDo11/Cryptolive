@@ -1363,3 +1363,7 @@ td.is-best {
 .recent-chip img { border-radius: 50%; }
 .recent-sym { font-weight: 600; }
 .recent-chip .change-badge { font-size: 0.75rem; }
+
+/* Accessibility: skip link (visible only when focused) */
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 1000; padding: 8px 12px; background: var(--blue); color: #fff; border-radius: var(--radius); font-weight: 600; text-decoration: none; transition: top .15s; }
+.skip-link:focus { top: 12px; outline: 2px solid #fff; }

@@ -418,4 +418,7 @@ export default {
   'js.up': "up",
   'js.down': "down",
   'nav.more': "More",
+  'nav.currency': "Currency",
+  'nav.language': "Language",
+  'nav.skip': "Skip to content",
 };

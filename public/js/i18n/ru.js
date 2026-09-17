@@ -418,4 +418,7 @@ export default {
   'js.up': "растут",
   'js.down': "падают",
   'nav.more': "Ещё",
+  'nav.currency': "Валюта",
+  'nav.language': "Язык",
+  'nav.skip': "К содержимому",
 };
