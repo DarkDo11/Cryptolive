@@ -472,6 +472,7 @@ async function loadTickers() {
     
     tickersPage++;
   } catch (err) {
+    console.error('Tickers load error', err);
     if (tickersPage === 1) tbody.innerHTML = emptyState(t('js.failed_to_load_markets'));
     qs('#loadMoreTickers').textContent = t('common.loadMore');
   }
@@ -555,6 +556,7 @@ async function loadHistory(days = 30) {
       URL.revokeObjectURL(url);
     });
   } catch (err) {
+    console.error('History load error', err);
     body.innerHTML = emptyState('', t('js.unavailable_right_now'));
   }
 }

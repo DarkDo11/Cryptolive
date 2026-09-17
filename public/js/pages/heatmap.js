@@ -26,6 +26,7 @@ async function loadData() {
     data = res.map(normalizeCoin);
     render();
   } catch (e) {
+    console.error('Heatmap load error', e);
     container.innerHTML = emptyState(t('js.error'), t('js.failed_to_load_heatmap_data_try_again_la'));
   }
 }
