@@ -29,6 +29,7 @@ export default {
   'markets.mcapMid': 'Средние ($1B–$10B)',
   'markets.mcapSmall': 'Малые ($100M–$1B)',
   'markets.resetFilters': 'Сбросить фильтры',
+  'markets.recentlyViewed': "Недавно просмотренные",
   'markets.searchPlaceholder': 'Фильтр по названию или тикеру',
   'markets.showHighlights': 'Показать обзор',
   'markets.showingOf': 'Показано {shown} из {total} монет',

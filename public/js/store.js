@@ -85,6 +85,21 @@ export const watchlist = {
   }
 };
 
+/** Recently viewed coin ids (most recent first, max 8) — feeds the "Recently viewed" strip on Markets. */
+export const recentCoins = {
+  list() {
+    return safeGet('cryptolive:recent-coins', []);
+  },
+  push(id) {
+    if (!id) return;
+    const list = [id].concat(this.list().filter((x) => x !== id)).slice(0, 8);
+    safeSet('cryptolive:recent-coins', list);
+  },
+  clear() {
+    safeSet('cryptolive:recent-coins', []);
+  }
+};
+
 export const portfolio = {
   list() {
     return safeGet('cryptolive:portfolio', []);

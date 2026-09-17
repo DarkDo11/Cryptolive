@@ -1,5 +1,5 @@
 import { initLayout, setTitle, toast, qs, qsa, debounce } from '../layout.js';
-import { settings, watchlist } from '../store.js';
+import { settings, watchlist, recentCoins } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { fmtCurrency, fmtCompact, fmtPercent, fmtSupply, fmtDate, fmtDateTime, fmtTime, escapeHtml } from '../format.js';
@@ -63,6 +63,7 @@ async function load() {
   }
   
   const md = coinData.market_data;
+  recentCoins.push(coinId);
   setTitle(`${coinData.name} (${coinData.symbol.toUpperCase()}) price today`);
   
   renderHeader(coinData, md, cur);

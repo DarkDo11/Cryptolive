@@ -2,7 +2,7 @@ import { initLayout, qs, qsa, toast, setTitle } from '../layout.js';
 import { api, normalizeCoin } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { renderCoinTable, renderPagination, skeletonRows, sortCoins, changeBadge } from '../components.js';
-import { settings, watchlist } from '../store.js';
+import { settings, watchlist, recentCoins } from '../store.js';
 import { fmtCurrency, fmtCompact, escapeHtml, fmtTime } from '../format.js';
 import { t } from '../i18n.js';
 
@@ -198,6 +198,32 @@ function updateUrl() {
   window.history.replaceState(null, '', url.toString());
 }
 
+/** "Recently viewed" chips above the table (ids from localStorage, prices from the universe). */
+async function renderRecent() {
+  const strip = qs('#recentStrip');
+  const box = qs('#recentChips');
+  if (!strip || !box) return;
+  const ids = recentCoins.list();
+  if (ids.length === 0) { strip.hidden = true; box.innerHTML = ''; return; }
+  const cur = settings.get().currency || 'usd';
+  let rows = [];
+  try { rows = await api.markets({ ids: ids.join(','), perPage: 50 }); } catch { rows = []; }
+  const byId = new Map(rows.map(r => [r.id, r]));
+  const chips = ids.map(id => byId.get(id)).filter(Boolean);
+  if (chips.length === 0) { strip.hidden = true; return; }
+  const ratio = Number.isFinite(fx) && fx > 0 ? fx : 1;
+  box.innerHTML = chips.map(c => `
+    <a class="recent-chip" href="/coin/${encodeURIComponent(c.id)}">
+      <img src="${escapeHtml(c.image || '')}" alt="" width="18" height="18" loading="lazy">
+      <span class="recent-sym">${escapeHtml(String(c.symbol || '').toUpperCase())}</span>
+      <span class="recent-price" data-live-price="${escapeHtml(c.id)}" data-price-usd="${c.current_price / ratio}">${fmtCurrency(c.current_price, cur)}</span>
+      ${changeBadge(c.price_change_percentage_24h, `data-live-change="${escapeHtml(c.id)}"`)}
+    </a>`).join('');
+  strip.hidden = false;
+}
+
+qs('#recentClear')?.addEventListener('click', () => { recentCoins.clear(); renderRecent(); });
+
 function renderHighlightRow(id, name, symbol, image, priceUsd, change24h) {
   const cur = settings.get().currency || 'usd';
   const price = priceUsd * fx;
@@ -264,11 +290,13 @@ async function load() {
 
     renderTable();
     updatedAt.textContent = t('common.updated', { time: fmtTime(Date.now()) });
+    renderRecent().catch(() => {});
 
     if (!unsubLive) {
       unsubLive = live.subscribe(tick => {
         applyLiveTick(qs('#marketsTable'), tick, fx);
         applyLiveTick(qs('#highlights'), tick, fx);
+        applyLiveTick(qs('#recentStrip'), tick, fx);
       });
     }
 

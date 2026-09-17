@@ -1353,3 +1353,13 @@ td.is-best {
 .notice.is-ok { border-color: var(--green); background: var(--green-soft); }
 .notice.is-warn { border-color: var(--amber); }
 .notice.is-error { border-color: var(--red); background: var(--red-soft); }
+
+/* Markets: recently viewed strip */
+.recent-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.recent-label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+.recent-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.recent-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); text-decoration: none; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.recent-chip:hover { border-color: var(--line-strong); background: var(--panel-soft); }
+.recent-chip img { border-radius: 50%; }
+.recent-sym { font-weight: 600; }
+.recent-chip .change-badge { font-size: 0.75rem; }

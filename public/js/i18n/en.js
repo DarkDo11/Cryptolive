@@ -29,6 +29,7 @@ export default {
   'markets.mcapMid': 'Mid ($1B–$10B)',
   'markets.mcapSmall': 'Small ($100M–$1B)',
   'markets.resetFilters': 'Reset filters',
+  'markets.recentlyViewed': "Recently viewed",
   'markets.searchPlaceholder': 'Filter by name or symbol',
   'markets.showHighlights': 'Show highlights',
   'markets.showingOf': 'Showing {shown} of {total} coins',
