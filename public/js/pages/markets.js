@@ -27,6 +27,9 @@ let category = urlParams.get('category') || null;
 let columnsState = settings.get().columns || ['change1h','change7d','volume','marketCap','sparkline'];
 let topCategories = [];
 
+const compareSelection = new Set();
+const coinSymbols = new Map();
+
 const heroSub = qs('#heroSub');
 const highlights = qs('#highlights');
 const trendingList = qs('#trendingList');
@@ -47,6 +50,26 @@ const columnsPopover = qs('#columnsPopover');
 const columnsCheckboxes = qsa('#columnsPopover input[type="checkbox"]');
 const resetFiltersBtn = qs('#resetFiltersBtn');
 const filterSummary = qs('#filterSummary');
+
+function updateCompareBar() {
+  const bar = qs('#compareBar');
+  if (!bar) return;
+  if (compareSelection.size === 0) {
+    bar.hidden = true;
+  } else {
+    bar.hidden = false;
+    const symbols = [...compareSelection].map(id => coinSymbols.get(id) || id);
+    qs('#compareBarText').textContent = symbols.join(', ');
+    qs('#compareBarLink').textContent = t('markets.compareSelected', { n: compareSelection.size });
+    qs('#compareBarLink').href = `/compare?coins=${[...compareSelection].join(',')}`;
+  }
+}
+
+qs('#compareBarClear')?.addEventListener('click', () => {
+  compareSelection.clear();
+  renderTable();
+  updateCompareBar();
+});
 
 function renderCategoryChips() {
   let html = `<button type="button" class="chip-btn ${category === null ? 'is-active' : ''}" data-cat="all">${t('markets.all')}</button>`;
@@ -275,6 +298,7 @@ async function load() {
     }
 
     coins = marketsRes.value.map(normalizeCoin);
+    coins.forEach(c => coinSymbols.set(c.id, (c.symbol || '').toUpperCase()));
 
     // Compute gainers and losers from loaded coins
     const volFiltered = coins.filter(c => (c.volume || 0) > 50000 && c.change24h != null);
@@ -378,6 +402,21 @@ function renderTable() {
     sortKey,
     sortDir,
     columns: cols,
+    selectable: true,
+    selected: compareSelection,
+    onSelect: (id, checked) => {
+      if (checked) {
+        if (compareSelection.size >= 4) {
+          toast(t('markets.selectHint'), { type: 'info' });
+          renderTable();
+          return;
+        }
+        compareSelection.add(id);
+      } else {
+        compareSelection.delete(id);
+      }
+      updateCompareBar();
+    },
     onSort: (key) => {
       if (sortKey === key) {
         sortDir = sortDir === 'asc' ? 'desc' : 'asc';

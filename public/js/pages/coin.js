@@ -814,15 +814,37 @@ async function renderChart() {
       labels.push(chartState.days === '1' ? fmtTime(p[0]) : fmtDate(p[0]));
       data.push(v);
     });
+
+    const hasVolumes = Array.isArray(chartDataRaw.total_volumes);
+    const volumes = hasVolumes ? arr.map((_, i) => chartDataRaw.total_volumes[i]?.[1] ?? null) : [];
+    const maxVolume = hasVolumes ? Math.max(0, ...volumes.filter(v => Number.isFinite(v))) : 0;
+    const datasets = [{
+      data, borderColor: strokeColor, backgroundColor: grad,
+      pointRadius: 0, borderWidth: 2, tension: 0.3, fill: true,
+      order: 1, label: chartState.metric === 'marketCap' ? t('js.market_cap') : t('js.price')
+    }];
+    if (hasVolumes) {
+      datasets.push({
+        type: 'bar', data: volumes, yAxisID: 'yVol',
+        backgroundColor: volumes.map((_, i) => (i > 0 && data[i] < data[i - 1]) ? 'rgba(255, 92, 115, 0.5)' : 'rgba(32, 201, 151, 0.5)'),
+        borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1,
+        order: 2, label: t('coin.volume')
+      });
+    }
+
+    const scales = {
+      x: { ticks: { color: colorMuted, maxTicksLimit: 8 }, grid: { display: false } },
+      y: { position: 'right', type: chartState.log ? 'logarithmic' : 'linear', ticks: { color: colorMuted, callback: v => fmtCompact(v, cur) }, grid: { color: colorLine } }
+    };
+    if (hasVolumes) {
+      scales.yVol = { position: 'left', display: false, beginAtZero: true, max: maxVolume * 4, grid: { display: false } };
+    }
     
     config = {
       type: 'line',
       data: {
         labels,
-        datasets: [{
-          data, borderColor: strokeColor, backgroundColor: grad,
-          pointRadius: 0, borderWidth: 2, tension: 0.3, fill: true
-        }]
+        datasets
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -832,14 +854,11 @@ async function renderChart() {
           tooltip: {
             callbacks: {
               title: ctx => fmtDateTime(arr[ctx[0].dataIndex][0]),
-              label: ctx => ' ' + fmtCurrency(ctx.raw, cur)
+              label: ctx => `${ctx.dataset.label}: ${ctx.datasetIndex === 1 ? fmtCompact(ctx.raw, cur) : fmtCurrency(ctx.raw, cur)}`
             }
           }
         },
-        scales: {
-          x: { ticks: { color: colorMuted, maxTicksLimit: 8 }, grid: { display: false } },
-          y: { position: 'right', type: chartState.log ? 'logarithmic' : 'linear', ticks: { color: colorMuted, callback: v => fmtCompact(v, cur) }, grid: { color: colorLine } }
-        }
+        scales
       }
     };
   }

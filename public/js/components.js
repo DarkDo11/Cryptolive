@@ -61,6 +61,7 @@ export function renderCoinTable(container, coins, opts = {}) {
   const columns = opts.columns || allCols;
   
   let thead = '<tr>';
+  if (opts.selectable) thead += '<th class="col-select"></th>';
   if (opts.showStar !== false) thead += '<th class="col-star"></th>';
   
   const heads = {
@@ -106,6 +107,10 @@ export function renderCoinTable(container, coins, opts = {}) {
     const starFill = isStar ? 'currentColor' : 'none';
 
     tbody += `<tr data-coin-id="${coinId}" data-symbol="${coinSymbol}" tabindex="0" style="cursor:pointer">`;
+    if (opts.selectable) {
+      const isSelected = opts.selected && opts.selected.has(coinId);
+      tbody += `<td class="col-select"><input type="checkbox" class="select-box" data-id="${coinId}" ${isSelected ? 'checked' : ''} aria-label="Select"></td>`;
+    }
     if (opts.showStar !== false) {
       tbody += `<td class="col-star"><button type="button" class="star-btn ${starActive}" data-id="${coinId}" aria-label="${t('table.toggleWatchlist')}" aria-pressed="${starPressed}"><svg width="16" height="16" viewBox="0 0 24 24" fill="${starFill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button></td>`;
     }
@@ -195,7 +200,7 @@ export function renderCoinTable(container, coins, opts = {}) {
       return;
     }
 
-    if (e.target.closest('a, button')) {
+    if (e.target.closest('a, button, .select-box, .col-select')) {
       return;
     }
 
@@ -209,6 +214,20 @@ export function renderCoinTable(container, coins, opts = {}) {
   };
 
   container.addEventListener('click', container.__coinTableHandler);
+
+  // Delegated change handler
+  if (container.__coinTableChangeHandler) {
+    container.removeEventListener('change', container.__coinTableChangeHandler);
+  }
+
+  container.__coinTableChangeHandler = (e) => {
+    if (e.target.classList.contains('select-box')) {
+      if (opts.onSelect) {
+        opts.onSelect(e.target.dataset.id, e.target.checked);
+      }
+    }
+  };
+  container.addEventListener('change', container.__coinTableChangeHandler);
 
   // Keyboard navigation
   if (container.__coinTableKeyHandler) {

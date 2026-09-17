@@ -2,7 +2,7 @@ import { initLayout, qs, qsa, toast } from '../layout.js';
 import { api } from '../api.js';
 import { settings, watchlist, portfolio } from '../store.js';
 import { alerts, requestNotificationPermission } from '../alerts.js';
-import { t } from '../i18n.js';
+import { t, LANGS, getLang, setLang } from '../i18n.js';
 
 initLayout({ active: 'settings' });
 
@@ -45,6 +45,14 @@ async function loadCurrencies() {
   });
 }
 loadCurrencies();
+
+const langSel = qs('#settingsLang');
+langSel.innerHTML = LANGS.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
+langSel.value = getLang();
+langSel.addEventListener('change', e => {
+  setLang(e.target.value);
+  location.reload();
+});
 
 const perPageSel = qs('#settingsPerPage');
 perPageSel.value = String(s.perPage || 100);
