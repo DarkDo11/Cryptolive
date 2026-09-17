@@ -2,7 +2,7 @@ import { initLayout, qs, debounce, setTitle } from '../layout.js';
 import { api, normalizeCoin } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { renderCoinTable, skeletonRows, sortCoins, changeBadge, bindSortableTable } from '../components.js';
-import { fmtCurrency, escapeHtml, fmtCompact } from '../format.js';
+import { fmtCurrency, escapeHtml, fmtCompact, fmtPercent } from '../format.js';
 import { settings } from '../store.js';
 import { t } from '../i18n.js';
 
@@ -21,6 +21,8 @@ let categoriesData = [];
 let sortKey = 'marketCap';
 let sortDir = 'desc';
 let fx = 1;
+let globalMcapUsd = 0;
+api.global().then(g => { globalMcapUsd = g?.data?.total_market_cap?.usd || 0; }).catch(() => {});
 let filterText = '';
 
 let detailUnsubLive = null;
@@ -182,6 +184,7 @@ async function openCategory(id, isPopState = false) {
   
   const cat = categoriesData.find(c => c.id === id);
   catDetailTitle.textContent = cat ? cat.name : id;
+  renderCatStats(cat);
   setTitle(cat ? cat.name : 'Category');
   window.scrollTo(0, 0);
 
@@ -210,6 +213,22 @@ async function openCategory(id, isPopState = false) {
       </div>
     `;
   }
+}
+
+function renderCatStats(cat) {
+  const box = qs('#catStats');
+  if (!box) return;
+  if (!cat) { box.hidden = true; return; }
+  const cur = settings.get().currency || 'usd';
+  const ratio = Number.isFinite(fx) && fx > 0 ? fx : 1;
+  const stat = (label, value) => `<div class="cat-stat"><span class="cat-stat-label">${label}</span><span class="cat-stat-value">${value}</span></div>`;
+  box.innerHTML = [
+    stat(t('js.market_cap'), cat.marketCap ? fmtCurrency(cat.marketCap * ratio, cur, { compact: true }) : '—'),
+    stat(t('js.24h'), typeof cat.change24h === 'number' ? changeBadge(cat.change24h) : '—'),
+    stat(t('js.24h_volume'), cat.volume ? fmtCurrency(cat.volume * ratio, cur, { compact: true }) : '—'),
+    stat(t('categories.share'), cat.marketCap && globalMcapUsd ? fmtPercent(cat.marketCap / globalMcapUsd * 100).replace('+', '') : '—')
+  ].join('');
+  box.hidden = false;
 }
 
 function renderDetailTable() {

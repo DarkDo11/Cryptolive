@@ -102,6 +102,8 @@ export default {
   'alerts.triggered': "Triggered Alerts",
   'categories.back': "← Back to all categories",
   'categories.title': "Cryptocurrency Categories",
+  'categories.share': "Share of market",
+  'categories.searchPlaceholder': "Search categories...",
   'coin.about': "About",
   'coin.candles': "Candles",
   'coin.history': "Historical data",

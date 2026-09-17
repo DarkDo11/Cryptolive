@@ -102,6 +102,8 @@ export default {
   'alerts.triggered': "Сработавшие алерты",
   'categories.back': "← Ко всем категориям",
   'categories.title': "Категории криптовалют",
+  'categories.share': "Доля рынка",
+  'categories.searchPlaceholder': "Поиск категорий...",
   'coin.about': "О проекте",
   'coin.candles': "Свечи",
   'coin.history': "Исторические данные",
