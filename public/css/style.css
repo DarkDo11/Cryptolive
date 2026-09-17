@@ -122,6 +122,7 @@ a:hover {
   align-items: center;
   gap: 18px;
   min-width: 0;
+  overflow: hidden; /* overflow is detected by layout.js and switches to the compact drawer */
 }
 .nav a {
   display: inline-flex;
@@ -203,25 +204,26 @@ a:hover {
 @media (max-width: 1120px) and (min-width: 781px) {
   .live-pill span { display: none; }
 }
-@media (max-width: 1180px) {
-  .nav {
-    display: none;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    background: var(--panel);
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px;
-    gap: 16px;
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 4px 12px var(--shadow);
-  }
-  .nav.is-open { display: flex; }
-  .nav a { padding: 6px 0; font-size: 1rem; }
-  .nav a .chip { display: inline-flex; }
-  .nav-burger { display: block; }
+/* Compact header: the drawer nav + burger. Toggled by layout.js when the inline nav does not fit
+   (narrow screens or long translated labels). */
+.site-header.nav-compact .nav {
+  display: none;
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.site-header.nav-compact .nav.is-open { display: flex; }
+.site-header.nav-compact .nav a { padding: 6px 0; font-size: 1rem; }
+.site-header.nav-compact .nav a .chip { display: inline-flex; }
+.site-header.nav-compact .nav-burger { display: block; }
 }
 @media (max-width: 780px) {
   .header-inner { gap: 8px; }
@@ -329,6 +331,7 @@ a:hover {
   align-items: center;
   font-weight: 600;
 }
+.card-head h2, .card-head h3 { margin: 0; font-size: 1rem; font-weight: 600; }
 .card-body {
   padding: 16px;
 }
@@ -524,6 +527,7 @@ th.is-sortable[data-sort]:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 8px 16px;
   border-radius: var(--radius);
   font-weight: 600;
@@ -1287,3 +1291,43 @@ td.is-best {
 .chip-btn.is-active { background: var(--blue-soft); border-color: var(--blue); color: var(--text); }
 .popover { position:absolute; right:0; top: calc(100% + 6px); z-index: 50; background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 30px var(--shadow); padding: 10px 12px; min-width: 180px; }
 .filter-summary { font-size:.8rem; color: var(--muted); }
+
+/* "More" dropdown in the main nav */
+.nav-more { position: relative; display: flex; align-items: center; }
+.nav-more-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: transparent; border: 0; padding: 0; cursor: pointer;
+  color: var(--muted-strong); font: inherit; font-size: 0.9rem; font-weight: 500; white-space: nowrap;
+}
+.nav-more-btn:hover, .nav-more-btn.is-active { color: var(--text); }
+.nav-more-btn .caret { font-size: 0.7rem; }
+.nav-more-menu {
+  display: none; position: absolute; top: calc(100% + 12px); left: -12px; z-index: 120;
+  flex-direction: column; gap: 2px; min-width: 200px; padding: 8px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 14px 34px var(--shadow);
+}
+.nav-more.is-open .nav-more-menu { display: flex; }
+.nav-more-menu a { padding: 8px 10px; border-radius: 6px; }
+.nav-more-menu a:hover { background: var(--panel-soft); }
+.site-header.nav-compact .nav-more { display: contents; }
+.site-header.nav-compact .nav-more-btn { display: none; }
+.site-header.nav-compact .nav-more-menu { display: flex; position: static; border: 0; padding: 0; box-shadow: none; background: transparent; gap: 16px; min-width: 0; }
+.site-header.nav-compact .nav-more-menu a { padding: 6px 0; }
+@media (max-width: 1440px) { .nav-more-btn { font-size: 0.86rem; } }
+@media (max-width: 1240px) { .nav-more-btn { font-size: 0.82rem; } }
+
+/* Mobile header: keep everything on one 60px row */
+@media (max-width: 780px) {
+  .site-header .live-pill { display: none !important; }
+  .header-inner { padding: 0 10px; }
+  .header-actions .theme-toggle { padding: 2px; }
+  .currency-select { max-width: 78px; }
+  #langSelect { max-width: 58px; }
+}
+@media (max-width: 480px) {
+  .logo span { display: none; }
+  .currency-select { font-size: 0.75rem; padding: 5px 2px; max-width: 66px; }
+  #langSelect { max-width: 50px; }
+  .header-actions { gap: 4px; }
+}

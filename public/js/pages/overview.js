@@ -4,7 +4,7 @@ import { live, applyLiveTick } from '../live.js';
 import { settings, watchlist } from '../store.js';
 import { fmtCurrency, fmtCompact, fmtDate, escapeHtml } from '../format.js';
 import { gaugeSvg, renderCoinTable, changeBadge, coinChip, normalizeCoin } from '../components.js';
-import { t } from '../i18n.js';
+import { t, fngLabel } from '../i18n.js';
 
 let fx = 1;
 let charts = {};
@@ -143,7 +143,7 @@ function renderKPIs() {
     kpis.innerHTML = `
       <div class="card kpi-card">
         <div class="card-body">
-          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Total Market Cap</div>
+          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.total_market_cap')}</div>
           <div style="display:flex; align-items:center; gap:8px">
             <span style="font-size:1.5rem; font-weight:700">${fmtCompact(tmc, cur)}</span>
             ${changeBadge(tmcChange)}
@@ -152,25 +152,25 @@ function renderKPIs() {
       </div>
       <div class="card kpi-card">
         <div class="card-body">
-          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">24h Volume</div>
+          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.24h_volume')}</div>
           <div style="font-size:1.5rem; font-weight:700">${fmtCompact(vol, cur)}</div>
         </div>
       </div>
       <div class="card kpi-card">
         <div class="card-body">
-          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Active Coins</div>
+          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.active_coins')}</div>
           <div style="font-size:1.5rem; font-weight:700">${coins.toLocaleString()}</div>
         </div>
       </div>
       <div class="card kpi-card">
         <div class="card-body">
-          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Exchanges / Markets</div>
+          <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.exchanges_markets')}</div>
           <div style="font-size:1.5rem; font-weight:700">${marketsCount.toLocaleString()}</div>
         </div>
       </div>
     `;
   } else {
-    kpis.innerHTML = '<div class="card" style="width:100%"><div class="card-body" style="color:var(--red); text-align:center;">KPIs unavailable right now</div></div>';
+    kpis.innerHTML = `<div class="card" style="width:100%"><div class="card-body" style="color:var(--red); text-align:center;">${t('js.kpis_unavailable_right_now')}</div></div>`;
   }
 }
 
@@ -202,9 +202,9 @@ function renderFng() {
       
       histHtml = `
         <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted);">
-          <span>Now: <b>${escapeHtml(String(value))}</b></span>
-          <span>Yesterday: <b>${escapeHtml(String(yest))}</b></span>
-          <span>Last week: <b>${escapeHtml(String(lastWk))}</b></span>
+          <span>${t('js.now')}: <b>${escapeHtml(String(value))}</b></span>
+          <span>${t('js.yesterday')}: <b>${escapeHtml(String(yest))}</b></span>
+          <span>${t('js.last_week')}: <b>${escapeHtml(String(lastWk))}</b></span>
         </div>
       `;
     }
@@ -215,7 +215,7 @@ function renderFng() {
       ${histHtml}
     `;
     
-    qs('#fngGauge').innerHTML = gaugeSvg(value, classification);
+    qs('#fngGauge').innerHTML = gaugeSvg(value, fngLabel(classification));
     
     if (history && history.length > 0) {
       destroyChart('fng');
@@ -379,16 +379,16 @@ function renderBreadth() {
     
     card.innerHTML = `
       <div class="breadth-text">
-        <span style="color:var(--green)">${up} up</span> &middot; 
-        <span style="color:var(--red)">${down} down</span>
+        <span style="color:var(--green)">${up} ${t('js.up')}</span> &middot; 
+        <span style="color:var(--red)">${down} ${t('js.down')}</span>
       </div>
       <div style="height: 40px; position:relative; margin: 8px 0;">
         <canvas id="breadthChart"></canvas>
       </div>
       <div style="text-align:center; color:var(--muted); font-size:0.9rem; margin-bottom: 16px;">
-        Average 24h change: ${changeBadge(avgChange)}
+        ${t('js.avg_24h_change')}: ${changeBadge(avgChange)}
       </div>
-      <div style="font-size:0.85rem; color:var(--muted); margin-bottom:8px;">Highest 24h Volume</div>
+      <div style="font-size:0.85rem; color:var(--muted); margin-bottom:8px;">${t('js.highest_24h_volume')}</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
         ${volCoins.map(c => {
           const cur = settings.get().currency || 'usd';

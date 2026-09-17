@@ -33,7 +33,7 @@ async function loadCategories() {
   catTable.innerHTML = `
     <div class="table-frame">
       <table class="data-table is-plain">
-        <thead><tr><th>#</th><th>${t('js.category')}</th><th>${t('js.top_3_coins')}</th><th>24h %</th><th>${t('js.market_cap')}</th><th>24h Volume</th></tr></thead>
+        <thead><tr><th>#</th><th>${t('js.category')}</th><th>${t('js.top_3_coins')}</th><th>${t('js.24h')}</th><th>${t('js.market_cap')}</th><th>${t('js.24h_volume')}</th></tr></thead>
         <tbody>${skeletonRows(20, 6)}</tbody>
       </table>
     </div>
@@ -63,7 +63,7 @@ async function loadCategories() {
     catTable.innerHTML = `
       <div class="card" style="padding: 32px; text-align: center;">
         <p style="color: var(--red); margin-bottom: 16px;">${t('js.failed_to_load_categories')}</p>
-        <button class="btn btn-primary" data-action="retry">Retry</button>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
       </div>
     `;
   }
@@ -109,11 +109,11 @@ function renderCategories() {
         <thead>
           <tr>
             <th>#</th>
-            ${th('Category', 'name')}
+            ${th(t('js.category'), 'name')}
             <th>${t('js.top_3_coins')}</th>
-            ${th('24h %', 'change24h')}
-            ${th('Market Cap', 'marketCap')}
-            ${th('24h Volume', 'volume')}
+            ${th(t('js.24h'), 'change24h')}
+            ${th(t('js.market_cap'), 'marketCap')}
+            ${th(t('js.24h_volume'), 'volume')}
           </tr>
         </thead>
         <tbody>${tbody}</tbody>
@@ -174,7 +174,7 @@ async function openCategory(id, isPopState = false) {
   catCoins.innerHTML = `
     <div class="table-frame">
       <table class="data-table is-plain">
-        <thead><tr><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>24h %</th><th>7d %</th><th>24h Volume</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead>
+        <thead><tr><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead>
         <tbody>${skeletonRows(20, 9)}</tbody>
       </table>
     </div>

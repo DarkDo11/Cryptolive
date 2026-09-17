@@ -74,20 +74,20 @@ function updateNotifStatus() {
   if (typeof Notification === 'undefined') {
     st.textContent = 'Unsupported';
     btn.style.display = 'none';
-    hint.textContent = 'Your browser does not support notifications.';
+    hint.textContent = t('settings.notifUnsupported');
     return;
   }
   
   st.textContent = Notification.permission;
   if (Notification.permission === 'default') {
     btn.style.display = 'inline-flex';
-    hint.textContent = 'Enable to receive price alerts.';
+    hint.textContent = t('settings.notifDefault');
   } else if (Notification.permission === 'denied') {
     btn.style.display = 'none';
-    hint.textContent = 'You have blocked notifications. Unblock them in your browser settings to receive price alerts.';
+    hint.textContent = t('settings.notifDenied');
   } else {
     btn.style.display = 'none';
-    hint.textContent = 'Notifications are active for price alerts.';
+    hint.textContent = t('settings.notifGranted');
   }
 }
 updateNotifStatus();

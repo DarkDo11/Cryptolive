@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { live } from './live.js';
 import { fmtCurrency, fmtCompact, fmtNumber, escapeHtml, fmtPercent } from './format.js';
 import { startAlertEngine, alerts } from './alerts.js';
-import { t, getLang, setLang, LANGS, applyTranslations } from './i18n.js';
+import { t, getLang, setLang, LANGS, applyTranslations, fngLabel } from './i18n.js';
 
 export const qs = (s, ctx = document) => ctx.querySelector(s);
 export const qsa = (s, ctx = document) => Array.from(ctx.querySelectorAll(s));
@@ -55,25 +55,30 @@ function renderHeader(active) {
           <rect width="24" height="24" rx="6"/>
           <path d="M16 12a4 4 0 11-8 0 4 4 0 018 0z" fill="#fff"/>
         </svg>
-        Cryptolive
+        <span>Cryptolive</span>
       </a>
       <nav class="nav" id="mainNav">
         <a href="/" class="${active === 'markets' ? 'is-active' : ''}">${t('nav.markets')}</a>
         <a href="/overview" class="${active === 'overview' ? 'is-active' : ''}">${t('nav.overview')}</a>
         <a href="/trending" class="${active === 'trending' ? 'is-active' : ''}">${t('nav.trending')}</a>
-        <a href="/gainers-losers" class="${active === 'gainers-losers' ? 'is-active' : ''}">${t('nav.gainersLosers')}</a>
         <a href="/heatmap" class="${active === 'heatmap' ? 'is-active' : ''}">${t('nav.heatmap')}</a>
-        <a href="/categories" class="${active === 'categories' ? 'is-active' : ''}">${t('nav.categories')}</a>
-        <a href="/exchanges" class="${active === 'exchanges' ? 'is-active' : ''}">${t('nav.exchanges')}</a>
         <a href="/watchlist" class="${active === 'watchlist' ? 'is-active' : ''}">
           ${t('nav.watchlist')} <span id="navWatchlistBadge" class="chip">0</span>
         </a>
         <a href="/portfolio" class="${active === 'portfolio' ? 'is-active' : ''}">${t('nav.portfolio')}</a>
-        <a href="/converter" class="${active === 'converter' ? 'is-active' : ''}">${t('nav.converter')}</a>
-        <a href="/compare" class="${active === 'compare' ? 'is-active' : ''}">${t('nav.compare')}</a>
-        <a href="/alerts" class="${active === 'alerts' ? 'is-active' : ''}">
-          ${t('nav.alerts')} <span id="navAlertsBadge" class="chip">0</span>
-        </a>
+        <div class="nav-more" id="navMore">
+          <button type="button" class="nav-more-btn ${['gainers-losers','categories','exchanges','converter','compare','alerts'].includes(active) ? 'is-active' : ''}" id="navMoreBtn" aria-haspopup="true" aria-expanded="false">${t('nav.more')} <span class="caret" aria-hidden="true">▾</span></button>
+          <div class="nav-more-menu" id="navMoreMenu" role="menu">
+            <a href="/gainers-losers" class="${active === 'gainers-losers' ? 'is-active' : ''}">${t('nav.gainersLosers')}</a>
+            <a href="/categories" class="${active === 'categories' ? 'is-active' : ''}">${t('nav.categories')}</a>
+            <a href="/exchanges" class="${active === 'exchanges' ? 'is-active' : ''}">${t('nav.exchanges')}</a>
+            <a href="/converter" class="${active === 'converter' ? 'is-active' : ''}">${t('nav.converter')}</a>
+            <a href="/compare" class="${active === 'compare' ? 'is-active' : ''}">${t('nav.compare')}</a>
+            <a href="/alerts" class="${active === 'alerts' ? 'is-active' : ''}">
+              ${t('nav.alerts')} <span id="navAlertsBadge" class="chip">0</span>
+            </a>
+          </div>
+        </div>
       </nav>
       <div class="header-actions">
         <button class="search-trigger" id="searchTrigger">
@@ -82,7 +87,7 @@ function renderHeader(active) {
         </button>
         <select class="currency-select" id="currencySelect"></select>
         <select class="currency-select" id="langSelect" aria-label="Language">
-          ${LANGS.map(l => `<option value="${l.code}">${l.label}</option>`).join('')}
+          ${LANGS.map(l => `<option value="${l.code}" title="${escapeHtml(l.label)}">${l.code.toUpperCase()}</option>`).join('')}
         </select>
         <a href="/settings" class="theme-toggle" aria-label="${t('nav.settings')}" style="margin-right:-4px;">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.376l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/></svg>
@@ -139,7 +144,7 @@ async function loadTickerBar() {
       const mcap = d.total_market_cap[cur] || d.total_market_cap['usd'];
       const vol = d.total_volume[cur] || d.total_volume['usd'];
       const mcapChange = d.market_cap_change_percentage_24h_usd;
-      const fngText = fng && Number.isFinite(fng.value) ? `${fng.value} &middot; ${escapeHtml(fng.classification || '')}` : '—';
+      const fngText = fng && Number.isFinite(fng.value) ? `${fng.value} &middot; ${escapeHtml(fngLabel(fng.classification))}` : '—';
       const fngClass = !fng || !Number.isFinite(fng.value) ? '' : fng.value >= 55 ? 'is-up' : fng.value <= 45 ? 'is-down' : '';
       
       bar.innerHTML = `
@@ -484,13 +489,35 @@ export function initLayout({ active = '' } = {}) {
     });
   }
 
-  // Mobile Nav
+  // "More" dropdown
+  const more = qs('#navMore');
+  const moreBtn = qs('#navMoreBtn');
+  if (more && moreBtn) {
+    const setOpen = (open) => { more.classList.toggle('is-open', open); moreBtn.setAttribute('aria-expanded', String(open)); };
+    moreBtn.addEventListener('click', (e) => { e.stopPropagation(); setOpen(!more.classList.contains('is-open')); });
+    document.addEventListener('click', (e) => { if (!more.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  }
+
+  // Mobile / overflow nav: switch to the burger drawer whenever the inline nav does not fit.
   const burger = qs('#navBurger');
   const nav = qs('#mainNav');
-  if (burger && nav) {
+  const header = qs('.site-header');
+  if (burger && nav && header) {
     burger.addEventListener('click', () => {
       nav.classList.toggle('is-open');
     });
+    const checkNavFit = () => {
+      header.classList.remove('nav-compact');
+      const inner = qs('.header-inner');
+      const overflow = nav.scrollWidth > nav.clientWidth + 1 || inner.scrollWidth > inner.clientWidth + 1;
+      if (overflow || window.innerWidth <= 1024) header.classList.add('nav-compact');
+      else nav.classList.remove('is-open');
+    };
+    checkNavFit();
+    let resizeTimer = null;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(checkNavFit, 80); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(checkNavFit);
   }
   
   // Language Select

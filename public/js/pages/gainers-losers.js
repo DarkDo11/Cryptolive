@@ -21,7 +21,7 @@ async function loadData() {
     const skel = `
       <div class="table-frame">
         <table class="data-table">
-          <thead><tr><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>${t('js.change')}</th><th>24h Volume</th><th>${t('js.market_cap')}</th></tr></thead>
+          <thead><tr><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>${t('js.change')}</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th></tr></thead>
           <tbody>${skeletonRows(20, 6)}</tbody>
         </table>
       </div>

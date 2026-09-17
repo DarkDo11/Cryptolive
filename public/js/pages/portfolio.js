@@ -79,13 +79,13 @@ async function load() {
   sumContainer.innerHTML = `
     <div class="card" style="flex:1; min-width:200px">
       <div class="card-body">
-        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Total Balance</div>
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.total_balance')}</div>
         <div style="font-size:1.5rem; font-weight:700" id="totalBalanceVal">${fmtCurrency(totalValue, cur)}</div>
       </div>
     </div>
     <div class="card" style="flex:1; min-width:200px">
       <div class="card-body">
-        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">24h Change</div>
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.24h_change')}</div>
         <div style="display:flex; align-items:center; gap:8px">
           <span style="font-size:1.2rem; font-weight:600" id="total24hVal">${fmtCurrency(Math.abs(total24hChangeAbs), cur)}</span>
           ${changeBadge(totalValue > 0 ? (total24hChangeAbs/totalValue)*100 : 0, 'id="total24hBadge"')}
@@ -94,7 +94,7 @@ async function load() {
     </div>
     <div class="card" style="flex:1; min-width:200px">
       <div class="card-body">
-        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Total P&L</div>
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.total_p_l')}</div>
         <div style="display:flex; align-items:center; gap:8px">
           <span style="font-size:1.2rem; font-weight:600" id="totalPnlVal">${fmtCurrency(Math.abs(totalPnl), cur)}</span>
           ${changeBadge(totalPnlPct, 'id="totalPnlBadge"')}
@@ -103,7 +103,7 @@ async function load() {
     </div>
     <div class="card" style="flex:1; min-width:120px">
       <div class="card-body">
-        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">Holdings Count</div>
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.holdings_count')}</div>
         <div style="font-size:1.5rem; font-weight:700">${rows.length}</div>
       </div>
     </div>
@@ -156,7 +156,7 @@ async function load() {
               <th>${t('js.holdings')}</th>
               <th>${t('js.avg_buy_price')}</th>
               <th>${t('js.p_l')}</th>
-              <th>24h %</th>
+              <th>${t('js.24h')}</th>
               <th style="text-align:right">${t('js.actions')}</th>
             </tr>
           </thead>
@@ -239,7 +239,7 @@ function renderTransactions() {
       container.innerHTML = emptyState(t('js.no_transactions_found'), t('js.no_transactions_match_the_current_filter'));
     } else {
       container.innerHTML = emptyState(t('js.no_transactions_yet'), t('js.add_your_first_buy_to_start_tracking'));
-      container.innerHTML += `<div style="text-align:center; padding-bottom:32px;"><button class="btn btn-primary action-add-empty">Add transaction</button></div>`;
+      container.innerHTML += `<div style="text-align:center; padding-bottom:32px;"><button class="btn btn-primary action-add-empty">${t('js.add_transaction')}</button></div>`;
     }
     return;
   }
@@ -264,7 +264,7 @@ function renderTransactions() {
         <td>${fmtCurrency(total, cur)}</td>
         <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis" title="${escapeHtml(t.note || '')}">${escapeHtml(t.note || '-')}</td>
         <td>
-          <button class="btn btn-ghost btn-sm tx-del" data-id="${escapeHtml(t.id)}" style="color:var(--red)">Delete</button>
+          <button class="btn btn-ghost btn-sm tx-del" data-id="${escapeHtml(t.id)}" style="color:var(--red)">${t('js.delete')}</button>
         </td>
       </tr>
     `;
@@ -316,8 +316,8 @@ function buildModal() {
             <div class="field full-width">
               <label>${t('js.type')}</label>
               <div class="toggle-group" style="width:100%; display:flex;">
-                <button type="button" class="range-btn is-active" style="flex:1" data-val="buy">Buy</button>
-                <button type="button" class="range-btn" style="flex:1" data-val="sell">Sell</button>
+                <button type="button" class="range-btn is-active" style="flex:1" data-val="buy">${t('js.buy')}</button>
+                <button type="button" class="range-btn" style="flex:1" data-val="sell">${t('js.sell')}</button>
               </div>
               <input type="hidden" id="txType" value="buy">
             </div>
@@ -327,7 +327,7 @@ function buildModal() {
               <input type="number" class="input" id="txAmount" step="any" min="0" required>
             </div>
             <div class="field">
-              <label>Price per coin</label>
+              <label>${t('js.price_per_coin')}</label>
               <input type="number" class="input" id="txPrice" step="any" min="0" required>
             </div>
             
@@ -336,14 +336,14 @@ function buildModal() {
               <input type="datetime-local" class="input" id="txDate" required>
             </div>
             <div class="field">
-              <label>Note (optional)</label>
+              <label>${t('js.note_optional')}</label>
               <input type="text" class="input" id="txNote">
             </div>
           </form>
         </div>
         <div class="modal-foot">
-          <button class="btn btn-ghost" id="txModalCancel">Cancel</button>
-          <button class="btn btn-primary" id="txModalSave">Save</button>
+          <button class="btn btn-ghost" id="txModalCancel">${t('js.cancel')}</button>
+          <button class="btn btn-primary" id="txModalSave">${t('js.save')}</button>
         </div>
       </div>
     </div>

@@ -134,15 +134,15 @@ function renderHeader(data, md, cur) {
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button class="btn btn-ghost btn-sm star-btn ${isStar ? 'is-active' : ''}" data-id="${escapeHtml(data.id)}" aria-label="Toggle watchlist" aria-pressed="${isStar ? 'true' : 'false'}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="${isStar ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span style="margin-left:4px; font-size:0.8rem; font-family:Inter">Watch</span>
+            <span style="margin-left:4px; font-size:0.8rem; font-family:Inter">${t('js.watch')}</span>
           </button>
           <button class="btn btn-ghost btn-sm" id="setAlertBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            <span style="margin-left:4px">Set alert</span>
+            <span style="margin-left:4px">${t('js.set_alert')}</span>
           </button>
           <button class="btn btn-ghost btn-sm" id="copyLinkBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            <span style="margin-left:4px">Copy link</span>
+            <span style="margin-left:4px">${t('js.copy_link')}</span>
           </button>
         </div>
       </div>
@@ -192,7 +192,7 @@ function renderPartialNotice(isPartial) {
     banner = document.createElement('div');
     banner.id = 'partialNotice';
     banner.className = 'notice';
-    banner.innerHTML = 'Showing a cached market snapshot — the data provider is rate limiting right now. Description, links and exchange markets will appear once it recovers. <button type="button" class="btn btn-ghost btn-sm" data-action="retry">Reload</button>';
+    banner.innerHTML = `${t('coin.partialNotice')} <button type="button" class="btn btn-ghost btn-sm" data-action="retry">${t('js.reload')}</button>`;
     qs('#coinHeader').before(banner);
   }
   banner.hidden = !isPartial;
@@ -213,14 +213,14 @@ function renderStats(md, cur) {
   const html = `
     <div class="stat-list">
       <div class="stat-row"><dt>${t('js.market_cap')}</dt><dd>${md.market_cap[cur] ? fmtCurrency(md.market_cap[cur], cur) : '—'} <div style="font-size:0.8rem; font-weight:normal">${changeBadge(md.market_cap_change_percentage_24h)}</div></dd></div>
-      <div class="stat-row"><dt>Fully Diluted Valuation</dt><dd>${md.fully_diluted_valuation && md.fully_diluted_valuation[cur] ? fmtCurrency(md.fully_diluted_valuation[cur], cur) : '—'}</dd></div>
-      <div class="stat-row"><dt>24h Volume</dt><dd>${md.total_volume[cur] ? fmtCurrency(md.total_volume[cur], cur) : '—'}</dd></div>
-      <div class="stat-row"><dt>Volume / Market Cap</dt><dd>${volMc.replace('+', '')}</dd></div>
-      <div class="stat-row"><dt>Circulating Supply</dt><dd>${circHtml}</dd></div>
-      <div class="stat-row"><dt>Total Supply</dt><dd>${md.total_supply ? fmtSupply(md.total_supply, coinData.symbol) : '—'}</dd></div>
-      <div class="stat-row"><dt>Max Supply</dt><dd>${md.max_supply === null ? '∞' : (md.max_supply ? fmtSupply(md.max_supply, coinData.symbol) : '—')}</dd></div>
-      <div class="stat-row"><dt>All-Time High</dt><dd>${md.ath[cur] ? fmtCurrency(md.ath[cur], cur) : '—'} <div style="font-size:0.8rem; font-weight:normal">${changeBadge(md.ath_change_percentage[cur])} &middot; <span style="color:var(--muted)">${md.ath_date[cur] ? fmtDate(new Date(md.ath_date[cur]).getTime()) : ''}</span></div></dd></div>
-      <div class="stat-row"><dt>All-Time Low</dt><dd>${md.atl[cur] ? fmtCurrency(md.atl[cur], cur) : '—'} <div style="font-size:0.8rem; font-weight:normal">${changeBadge(md.atl_change_percentage[cur])} &middot; <span style="color:var(--muted)">${md.atl_date[cur] ? fmtDate(new Date(md.atl_date[cur]).getTime()) : ''}</span></div></dd></div>
+      <div class="stat-row"><dt>${t('js.fully_diluted_valuation')}</dt><dd>${md.fully_diluted_valuation && md.fully_diluted_valuation[cur] ? fmtCurrency(md.fully_diluted_valuation[cur], cur) : '—'}</dd></div>
+      <div class="stat-row"><dt>${t('js.24h_volume')}</dt><dd>${md.total_volume[cur] ? fmtCurrency(md.total_volume[cur], cur) : '—'}</dd></div>
+      <div class="stat-row"><dt>${t('js.volume_market_cap')}</dt><dd>${volMc.replace('+', '')}</dd></div>
+      <div class="stat-row"><dt>${t('js.circulating_supply')}</dt><dd>${circHtml}</dd></div>
+      <div class="stat-row"><dt>${t('js.total_supply')}</dt><dd>${md.total_supply ? fmtSupply(md.total_supply, coinData.symbol) : '—'}</dd></div>
+      <div class="stat-row"><dt>${t('js.max_supply')}</dt><dd>${md.max_supply === null ? '∞' : (md.max_supply ? fmtSupply(md.max_supply, coinData.symbol) : '—')}</dd></div>
+      <div class="stat-row"><dt>${t('js.all_time_high')}</dt><dd>${md.ath[cur] ? fmtCurrency(md.ath[cur], cur) : '—'} <div style="font-size:0.8rem; font-weight:normal">${changeBadge(md.ath_change_percentage[cur])} &middot; <span style="color:var(--muted)">${md.ath_date[cur] ? fmtDate(new Date(md.ath_date[cur]).getTime()) : ''}</span></div></dd></div>
+      <div class="stat-row"><dt>${t('js.all_time_low')}</dt><dd>${md.atl[cur] ? fmtCurrency(md.atl[cur], cur) : '—'} <div style="font-size:0.8rem; font-weight:normal">${changeBadge(md.atl_change_percentage[cur])} &middot; <span style="color:var(--muted)">${md.atl_date[cur] ? fmtDate(new Date(md.atl_date[cur]).getTime()) : ''}</span></div></dd></div>
     </div>
   `;
   qs('#statsBody').innerHTML = html;
@@ -347,8 +347,8 @@ function renderAbout(data) {
   if (l.whitepaper) mkLink(l.whitepaper, 'Whitepaper');
   
   let metaHtml = '';
-  if (data.genesis_date) metaHtml += `<div class="stat-row"><dt>Genesis Date</dt><dd>${escapeHtml(data.genesis_date)}</dd></div>`;
-  if (data.hashing_algorithm) metaHtml += `<div class="stat-row"><dt>Hashing Algorithm</dt><dd>${escapeHtml(data.hashing_algorithm)}</dd></div>`;
+  if (data.genesis_date) metaHtml += `<div class="stat-row"><dt>${t('js.genesis_date')}</dt><dd>${escapeHtml(data.genesis_date)}</dd></div>`;
+  if (data.hashing_algorithm) metaHtml += `<div class="stat-row"><dt>${t('js.hashing_algorithm')}</dt><dd>${escapeHtml(data.hashing_algorithm)}</dd></div>`;
   
   let descHtml = '';
   if (data.description && data.description.en) {
@@ -386,9 +386,9 @@ async function loadTickers() {
   const tbody = qs('#tickersBody');
   
   if (tickersPage === 1) {
-    tbody.innerHTML = `<div class="table-frame"><table class="data-table is-plain"><thead><tr><th>#</th><th>${t('js.exchange')}</th><th>${t('js.pair')}</th><th>${t('js.price')}</th><th>24h Volume</th><th>${t('js.trust')}</th><th>${t('js.spread')}</th><th>${t('js.action')}</th></tr></thead><tbody id="tickersTbody">${skeletonRows(5, 8)}</tbody></table></div>`;
+    tbody.innerHTML = `<div class="table-frame"><table class="data-table is-plain"><thead><tr><th>#</th><th>${t('js.exchange')}</th><th>${t('js.pair')}</th><th>${t('js.price')}</th><th>${t('js.24h_volume')}</th><th>${t('js.trust')}</th><th>${t('js.spread')}</th><th>${t('js.action')}</th></tr></thead><tbody id="tickersTbody">${skeletonRows(5, 8)}</tbody></table></div>`;
   } else {
-    qs('#loadMoreTickers').textContent = 'Loading...';
+    qs('#loadMoreTickers').textContent = t('js.loading');
   }
   
   try {
@@ -404,7 +404,7 @@ async function loadTickers() {
       const vol = fmtCurrency(t.volume_usd * fx, cur);
       const trustClass = t.trust_score === 'green' ? 'is-green' : (t.trust_score === 'yellow' ? 'is-yellow' : (t.trust_score === 'red' ? 'is-red' : 'is-grey'));
       const spread = t.spread != null ? fmtPercent(t.spread).replace('+', '') : '—';
-      const tradeLink = t.trade_url ? `<a href="${escapeHtml(t.trade_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Trade</a>` : '—';
+      const tradeLink = t.trade_url ? `<a href="${escapeHtml(t.trade_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">${t('js.trade')}</a>` : '—';
       
       html += `
         <tr>
@@ -434,13 +434,13 @@ async function loadTickers() {
     if (tickers.length < 100) {
       qs('#loadMoreTickers').style.display = 'none';
     } else {
-      qs('#loadMoreTickers').textContent = 'Load more';
+      qs('#loadMoreTickers').textContent = t('common.loadMore');
     }
     
     tickersPage++;
   } catch (err) {
     if (tickersPage === 1) tbody.innerHTML = emptyState(t('js.failed_to_load_markets'));
-    qs('#loadMoreTickers').textContent = 'Load more';
+    qs('#loadMoreTickers').textContent = t('common.loadMore');
   }
   loadingTickers = false;
 }
@@ -501,7 +501,7 @@ async function loadHistory(days = 30) {
       </tr>`;
       csvRows.push(`${new Date(row.ts).toISOString().split('T')[0]},${row.o},${row.h},${row.l},${row.c},${change !== null ? change.toFixed(2) : ''}`);
     });
-    html += '</tbody></table></div><div class="card-body" style="text-align:center; border-top:1px solid var(--line);"><button type="button" class="btn btn-ghost" id="dlCsvBtn">Download CSV</button></div>';
+    html += `</tbody></table></div><div class="card-body" style="text-align:center; border-top:1px solid var(--line);"><button type="button" class="btn btn-ghost" id="dlCsvBtn">${t('js.download_csv')}</button></div>`;
     body.innerHTML = html;
     
     qs('#dlCsvBtn').addEventListener('click', () => {

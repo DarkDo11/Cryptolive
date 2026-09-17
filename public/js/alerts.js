@@ -2,6 +2,7 @@ import { api } from './api.js';
 import { live } from './live.js';
 import { settings } from './store.js';
 import { fmtCurrency, escapeHtml } from './format.js';
+import { t } from './i18n.js';
 
 // Local helpers
 const qs = (s, ctx = document) => ctx.querySelector(s);
@@ -142,8 +143,8 @@ function buildAlertModal() {
             <div class="field full-width">
               <label>Condition</label>
               <div class="toggle-group" style="width:100%; display:flex;">
-                <button type="button" class="range-btn is-active" style="flex:1" data-val="above">Above</button>
-                <button type="button" class="range-btn" style="flex:1" data-val="below">Below</button>
+                <button type="button" class="range-btn is-active" style="flex:1" data-val="above">${t('js.above')}</button>
+                <button type="button" class="range-btn" style="flex:1" data-val="below">${t('js.below')}</button>
               </div>
               <input type="hidden" id="alertCondition" value="above">
             </div>
@@ -154,15 +155,15 @@ function buildAlertModal() {
             </div>
             
             <div class="field full-width">
-              <label>Note (optional)</label>
+              <label>${t('js.note_optional')}</label>
               <input type="text" class="input" id="alertNote">
             </div>
           </form>
           <div id="alertError" style="color:var(--red); font-size:0.9rem; margin-top:12px; display:none"></div>
         </div>
         <div class="modal-foot">
-          <button class="btn btn-ghost" id="alertModalCancel">Cancel</button>
-          <button class="btn btn-primary" id="alertModalSave">Save</button>
+          <button class="btn btn-ghost" id="alertModalCancel">${t('js.cancel')}</button>
+          <button class="btn btn-primary" id="alertModalSave">${t('js.save')}</button>
         </div>
       </div>
     </div>

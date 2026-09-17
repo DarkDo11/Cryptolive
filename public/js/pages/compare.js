@@ -102,7 +102,7 @@ async function load() {
     qs('#statsTable').innerHTML = `
       <div class="card" style="text-align:center; padding: 24px;">
         <div style="color:var(--red); margin-bottom: 16px;">${t('js.failed_to_load_data')}</div>
-        <button class="btn btn-primary" data-action="retry">Retry</button>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
       </div>
     `;
     qs('[data-action="retry"]')?.addEventListener('click', load);
@@ -133,18 +133,18 @@ function renderStatsTable() {
   const rows = [
     { key: 'price', label: 'Price' },
     { key: 'change1h', label: '1h %', isChange: true },
-    { key: 'change24h', label: '24h %', isChange: true, isLiveChange: true },
+    { key: 'change24h', label: t('js.24h'), isChange: true, isLiveChange: true },
     { key: 'change7d', label: '7d %', isChange: true },
-    { key: 'marketCap', label: 'Market Cap', isValue: true },
-    { key: 'rank', label: 'Rank', isValue: true },
-    { key: 'fdv', label: 'FDV', isValue: true },
-    { key: 'volume', label: '24h Volume', isValue: true },
-    { key: 'volMcap', label: 'Vol/MCap' },
-    { key: 'circulating', label: 'Circulating Supply', isSupply: true },
-    { key: 'max', label: 'Max Supply', isSupply: true },
-    { key: 'ath', label: 'ATH', isValue: true },
-    { key: 'fromAth', label: 'From ATH %' },
-    { key: 'lowHigh', label: '24h Low/High' }
+    { key: 'marketCap', label: t('js.market_cap'), isValue: true },
+    { key: 'rank', label: t('js.rank'), isValue: true },
+    { key: 'fdv', label: t('js.fdv'), isValue: true },
+    { key: 'volume', label: t('js.24h_volume'), isValue: true },
+    { key: 'volMcap', label: t('js.vol_mcap') },
+    { key: 'circulating', label: t('js.circulating_supply'), isSupply: true },
+    { key: 'max', label: t('js.max_supply'), isSupply: true },
+    { key: 'ath', label: t('js.ath'), isValue: true },
+    { key: 'fromAth', label: t('js.from_ath') },
+    { key: 'lowHigh', label: t('js.24h_low_high') }
   ];
   
   rows.forEach(r => {

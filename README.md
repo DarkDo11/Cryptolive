@@ -16,7 +16,9 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Gainers & Losers**: Highlights top 20 gainers and top 20 losers across 1h, 24h, and 7d horizons (minimum $50k volume filter).
 - **Categories**: Market sectors table sorted by market cap with 24h changes and top 3 coins preview; drill down to explore category-specific coin markets.
 - **Exchanges**: Directory of top cryptocurrency exchanges with trust scores, country of origin, 24h BTC volume, and direct links.
-- **Global Search & UI**: Command palette (`⌘K` or `/`) searching coins, categories, and exchanges; 8 display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH); dark and light themes; responsive mobile-friendly design.
+- **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
+- **Settings**: theme (dark / light / system), display currency, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
+- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 8 display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
 
 ## Architecture
 
@@ -121,6 +123,8 @@ Cryptolive/
 ├── public/                 # Static frontend assets (no build step)
 │   ├── index.html          # Markets overview (home)
 │   ├── overview.html       # Market overview dashboard (/overview)
+│   ├── trending.html       # Trending coins / categories / NFTs (/trending)
+│   ├── settings.html       # Settings & data backup (/settings)
 │   ├── coin.html           # Coin detail & interactive charts (/coin/:id)
 │   ├── compare.html        # Side-by-side coin comparison (/compare)
 │   ├── alerts.html         # Price alerts manager (/alerts)
@@ -133,7 +137,8 @@ Cryptolive/
 │   ├── exchanges.html      # Exchanges list (/exchanges)
 │   ├── 404.html            # 404 error page
 │   ├── css/style.css       # Unified CSS design system
-│   └── js/                 # Vanilla ES modules (api, store, format, live, layout, pages, alerts)
+│   ├── sw.js               # Service worker (app-shell cache, same-origin only)
+│   └── js/                 # Vanilla ES modules (api, store, format, live, layout, alerts, i18n + i18n/{en,ru}.js, pages/)
 ├── server/                 # Node.js backend (Node >= 22)
 │   ├── server.js           # HTTP server, clean URLs, static serving, healthz
 │   ├── cache.js            # In-memory TTL cache with coalescing & stale fallback

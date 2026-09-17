@@ -78,7 +78,7 @@ async function load() {
           <td data-alert-dist="${escapeHtml(a.id)}" data-target-price="${a.price}">${currentPrice > 0 ? fmtPercent(dist * 100) : '—'}</td>
           <td style="color:var(--muted)">${timeAgo(a.createdAt)}</td>
           <td style="text-align:right">
-            <button class="btn btn-ghost btn-sm action-delete" data-id="${escapeHtml(a.id)}" style="color:var(--red)">Delete</button>
+            <button class="btn btn-ghost btn-sm action-delete" data-id="${escapeHtml(a.id)}" style="color:var(--red)">${t('js.delete')}</button>
           </td>
         </tr>
       `;
@@ -134,8 +134,8 @@ async function load() {
           <td>${fmtCurrency(triggeredPrice, cur)}</td>
           <td style="text-align:right">
             <div style="display:flex; justify-content:flex-end; gap:8px">
-              <button class="btn btn-ghost btn-sm action-rearm" data-id="${escapeHtml(a.id)}">Re-arm</button>
-              <button class="btn btn-ghost btn-sm action-delete" data-id="${escapeHtml(a.id)}" style="color:var(--red)">Delete</button>
+              <button class="btn btn-ghost btn-sm action-rearm" data-id="${escapeHtml(a.id)}">${t('js.re_arm')}</button>
+              <button class="btn btn-ghost btn-sm action-delete" data-id="${escapeHtml(a.id)}" style="color:var(--red)">${t('js.delete')}</button>
             </div>
           </td>
         </tr>

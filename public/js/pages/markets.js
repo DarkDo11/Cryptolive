@@ -217,7 +217,7 @@ function renderHighlightRow(id, name, symbol, image, priceUsd, change24h) {
 }
 
 async function load() {
-  marketsTable.innerHTML = `<div class="table-frame"><table class="data-table"><thead><tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>24h %</th><th>7d %</th><th>24h Volume</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead><tbody>${skeletonRows(10, 10)}</tbody></table></div>`;
+  marketsTable.innerHTML = `<div class="table-frame"><table class="data-table"><thead><tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead><tbody>${skeletonRows(10, 10)}</tbody></table></div>`;
   marketsPagination.innerHTML = '';
   updatedAt.textContent = t('markets.updating');
 

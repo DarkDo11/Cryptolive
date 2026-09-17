@@ -68,7 +68,7 @@ function renderError(err) {
       <td colspan="10" style="text-align: center; padding: 48px 24px;">
         <h3 style="color: var(--red); margin-bottom: 8px;">${t('js.error')}</h3>
         <p style="color: var(--muted); margin-bottom: 16px;">${escapeHtml(err.message || 'Unknown error')}</p>
-        <button class="btn btn-primary" data-action="retry">Retry</button>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
       </td>
     </tr>
   `;

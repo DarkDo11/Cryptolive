@@ -30,7 +30,7 @@ async function loadData() {
     watchTableContainer.innerHTML = emptyState(
       'Your watchlist is empty',
       'Click the ☆ star next to any coin to track it here'
-    ) + `<div style="text-align: center; margin-top: 16px;"><a href="/" class="btn btn-primary">Browse markets</a></div>`;
+    ) + `<div style="text-align: center; margin-top: 16px;"><a href="/" class="btn btn-primary">${t('js.browse_markets')}</a></div>`;
     if (unsubLive) {
       unsubLive();
       unsubLive = null;
@@ -45,7 +45,7 @@ async function loadData() {
       <div class="table-frame">
         <table class="data-table">
           <thead>
-            <tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>24h %</th><th>7d %</th><th>24h Volume</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr>
+            <tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr>
           </thead>
           <tbody>${skeletonRows(ids.length, 10)}</tbody>
         </table>
@@ -89,7 +89,7 @@ async function loadData() {
     watchTableContainer.innerHTML = `
       <div class="card" style="padding: 32px; text-align: center;">
         <p style="color: var(--red); margin-bottom: 16px;">${t('js.failed_to_load_watchlist_data')}</p>
-        <button class="btn btn-primary" data-action="retry">Retry</button>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
       </div>
     `;
   }
@@ -131,11 +131,11 @@ function renderSummary() {
   watchSummary.style.display = 'flex';
   watchSummary.innerHTML = `
     <div class="card" style="padding: 16px; flex: 1; text-align: center;">
-      <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Combined Market Cap</div>
+      <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">${t('js.combined_market_cap')}</div>
       <div style="font-size: 20px; font-weight: 600;">${fmtCompact(totalCap, cur)}</div>
     </div>
     <div class="card" style="padding: 16px; flex: 1; text-align: center;">
-      <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Avg 24h Change</div>
+      <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">${t('js.avg_24h_change')}</div>
       <div style="font-size: 20px; font-weight: 600;">${changeBadge(avgChange)}</div>
     </div>
   `;

@@ -16,7 +16,7 @@ async function loadData() {
   exTable.innerHTML = `
     <div class="table-frame">
       <table class="data-table is-plain">
-        <thead><tr><th>#</th><th>${t('js.exchange')}</th><th>${t('js.trust_score')}</th><th>24h Volume</th><th>${t('js.year')}</th><th>${t('js.website')}</th></tr></thead>
+        <thead><tr><th>#</th><th>${t('js.exchange')}</th><th>${t('js.trust_score')}</th><th>${t('js.24h_volume')}</th><th>${t('js.year')}</th><th>${t('js.website')}</th></tr></thead>
         <tbody>${skeletonRows(50, 6)}</tbody>
       </table>
     </div>
@@ -84,7 +84,7 @@ async function loadData() {
               <th>#</th>
               <th>${t('js.exchange')}</th>
               <th>${t('js.trust_score')}</th>
-              <th>24h Volume</th>
+              <th>${t('js.24h_volume')}</th>
               <th>${t('js.year')}</th>
               <th>${t('js.website')}</th>
             </tr>
@@ -109,7 +109,7 @@ async function loadData() {
     exTable.innerHTML = `
       <div class="card" style="padding: 32px; text-align: center;">
         <p style="color: var(--red); margin-bottom: 16px;">${t('js.failed_to_load_exchanges')}</p>
-        <button class="btn btn-primary" data-action="retry">Retry</button>
+        <button class="btn btn-primary" data-action="retry">${t('js.retry')}</button>
       </div>
     `;
     exPagination.innerHTML = '';

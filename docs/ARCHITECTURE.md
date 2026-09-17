@@ -366,6 +366,15 @@ Empty-state with "Page not found" and link home. Also loads layout.
 
 ---
 
+## 4b. Pages added after the initial build
+- `/overview` — market dashboard: KPIs, Fear & Greed gauge + 30-day history, dominance doughnut, top sectors, breadth, watchlist snapshot.
+- `/trending` — trending coins / categories / NFTs (server maps `search/trending` incl. `categories` and `nfts`).
+- `/compare?coins=a,b,c,d` — side-by-side stats + normalised performance chart (max 4).
+- `/alerts` — price alerts (`public/js/alerts.js`: localStorage rules, live-tick engine, Notification API); "Set alert" on coin pages.
+- `/settings` — appearance, notifications, JSON backup/restore, clear data; PWA (`manifest.webmanifest`, `sw.js`).
+- Coin page extras: historical daily OHLC table + CSV export; degraded "partial" mode when upstream is throttled.
+- i18n: `public/js/i18n.js` (`t()`, `applyTranslations()`, `data-i18n*` attributes) with dictionaries in `public/js/i18n/{en,ru}.js`; language stored in `settings.lang`, switch in the header reloads the page.
+
 ## 5. Non-functional
 - No inline event handlers; escape all interpolated text (`escapeHtml`). Images: `loading="lazy"`,
   `referrerpolicy="no-referrer"`, fallback to a lettered circle on error.

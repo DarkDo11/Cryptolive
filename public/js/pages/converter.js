@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { fmtCurrency, escapeHtml, timeAgo } from '../format.js';
 import { changeBadge } from '../components.js';
+import { t } from '../i18n.js';
 
 let fxRates = {}; // fiat code -> usd rate
 let coinsMap = {}; // coinId -> price_usd
