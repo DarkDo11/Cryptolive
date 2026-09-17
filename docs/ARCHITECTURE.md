@@ -93,7 +93,7 @@ Cache semantics (`cache.js`):
 - Upstream retry: if 429, wait `Retry-After` or 2s and retry once.
 - Global concurrency limiter for upstream calls: max 3 parallel, FIFO queue.
 
-Routes (all GET, JSON; `vs` = vs_currency, default `usd`, allowed: usd, eur, gbp, rub, jpy, cny, btc, eth):
+Routes (all GET, JSON; `vs` = vs_currency, default `usd`, allowed: usd, eur, gbp, rub, jpy, cny, cad, aud, chf, krw, inr, brl, try, uah, pln, kzt, btc, eth — see `VS_CURRENCIES` in server/universe.js):
 
 | Route | Upstream | TTL |
 |---|---|---|

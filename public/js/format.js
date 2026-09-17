@@ -46,9 +46,10 @@ export function fmtCurrency(value, code = 'usd', { compact = false } = {}) {
     options.maximumFractionDigits = 8;
   } else {
     const abs = Math.abs(num);
+    const zeroDecimal = upperCode === 'JPY' || upperCode === 'KRW';
     if (abs >= 1000) {
       options.minimumFractionDigits = 0;
-      options.maximumFractionDigits = 2;
+      options.maximumFractionDigits = zeroDecimal ? 0 : 2;
     } else if (abs >= 1) {
       options.minimumFractionDigits = 2;
       options.maximumFractionDigits = 2;

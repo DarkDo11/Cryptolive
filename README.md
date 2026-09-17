@@ -19,7 +19,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.
-- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 8 display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
+- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
 
 ## Architecture
 

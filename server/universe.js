@@ -1,6 +1,6 @@
 import { fetchUpstream, COINGECKO_BASE, cacheKey } from './upstream.js';
 
-export const VS_CURRENCIES = ['usd', 'eur', 'gbp', 'rub', 'jpy', 'cny', 'btc', 'eth'];
+export const VS_CURRENCIES = ['usd', 'eur', 'gbp', 'rub', 'jpy', 'cny', 'cad', 'aud', 'chf', 'krw', 'inr', 'brl', 'try', 'uah', 'pln', 'kzt', 'btc', 'eth'];
 
 export async function getUniverse(ctx) {
   const url1 = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=1h,24h,7d`;
@@ -31,12 +31,12 @@ export async function getUniverse(ctx) {
 }
 
 export async function getFx(ctx) {
-  const url = `${COINGECKO_BASE}/simple/price?ids=bitcoin&vs_currencies=usd,eur,gbp,rub,jpy,cny,btc,eth`;
+  const url = `${COINGECKO_BASE}/simple/price?ids=bitcoin&vs_currencies=${VS_CURRENCIES.join(',')}`;
   const res = await ctx.cache.get(cacheKey(url), 300_000, () => fetchUpstream(url));
   const bitcoin = res.value.bitcoin;
   const ratio = {};
   for (const c of VS_CURRENCIES) {
-    ratio[c] = bitcoin[c] / bitcoin.usd;
+    if (typeof bitcoin[c] === 'number' && bitcoin.usd) ratio[c] = bitcoin[c] / bitcoin.usd;
   }
   return ratio;
 }

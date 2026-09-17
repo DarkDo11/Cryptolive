@@ -3,7 +3,7 @@ import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, searchUni
 
 const FNG_BASE = process.env.UPSTREAM_FNG || 'https://api.alternative.me/fng/';
 
-const ALLOWED_VS = new Set(['usd', 'eur', 'gbp', 'rub', 'jpy', 'cny', 'btc', 'eth']);
+const ALLOWED_VS = new Set(VS_CURRENCIES);
 const ALLOWED_DAYS_CHART = new Set(['1', '7', '30', '90', '365', 'max']);
 const ALLOWED_DAYS_OHLC = new Set(['1', '7', '14', '30', '90', '180', '365']);
 const COIN_ID_REGEX = /^[a-z0-9-]+$/;
@@ -373,6 +373,16 @@ export async function handleApi(req, res, url, ctx) {
       { code: "rub", symbol: "₽", name: "Russian Ruble" },
       { code: "jpy", symbol: "¥", name: "Japanese Yen" },
       { code: "cny", symbol: "¥", name: "Chinese Yuan" },
+      { code: "cad", symbol: "CA$", name: "Canadian Dollar" },
+      { code: "aud", symbol: "A$", name: "Australian Dollar" },
+      { code: "chf", symbol: "CHF", name: "Swiss Franc" },
+      { code: "krw", symbol: "₩", name: "South Korean Won" },
+      { code: "inr", symbol: "₹", name: "Indian Rupee" },
+      { code: "brl", symbol: "R$", name: "Brazilian Real" },
+      { code: "try", symbol: "₺", name: "Turkish Lira" },
+      { code: "uah", symbol: "₴", name: "Ukrainian Hryvnia" },
+      { code: "pln", symbol: "zł", name: "Polish Zloty" },
+      { code: "kzt", symbol: "₸", name: "Kazakhstani Tenge" },
       { code: "btc", symbol: "₿", name: "Bitcoin" },
       { code: "eth", symbol: "Ξ", name: "Ethereum" }
     ];
