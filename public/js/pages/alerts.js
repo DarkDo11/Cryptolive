@@ -65,13 +65,13 @@ async function load() {
               <img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.name)}" width="24" height="24" style="border-radius:50%">
               <span class="asset-copy">
                 <span class="asset-name">${escapeHtml(a.name)}</span>
-                <span class="asset-symbol">${escapeHtml(a.symbol.toUpperCase())}</span>
+                <span class="asset-symbol">${escapeHtml(String(a.symbol || "").toUpperCase())}</span>
               </span>
             </a>
             ${a.note ? `<div style="font-size:0.8rem; color:var(--muted); margin-top:4px">${escapeHtml(a.note)}</div>` : ''}
           </td>
           <td>
-            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(a.condition.toUpperCase())}</span>
+            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(String(a.condition || "").toUpperCase())}</span>
           </td>
           <td>${fmtCurrency(targetPrice, cur)}</td>
           <td class="price-cell" data-live-price="${escapeHtml(a.coinId)}" data-price-usd="${priceUsd}">${currentPrice > 0 ? fmtCurrency(currentPrice, cur) : '—'}</td>
@@ -121,13 +121,13 @@ async function load() {
               <img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.name)}" width="24" height="24" style="border-radius:50%">
               <span class="asset-copy">
                 <span class="asset-name">${escapeHtml(a.name)}</span>
-                <span class="asset-symbol">${escapeHtml(a.symbol.toUpperCase())}</span>
+                <span class="asset-symbol">${escapeHtml(String(a.symbol || "").toUpperCase())}</span>
               </span>
             </a>
             ${a.note ? `<div style="font-size:0.8rem; color:var(--muted); margin-top:4px">${escapeHtml(a.note)}</div>` : ''}
           </td>
           <td>
-            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(a.condition.toUpperCase())}</span>
+            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(String(a.condition || "").toUpperCase())}</span>
           </td>
           <td>${fmtCurrency(targetPrice, cur)}</td>
           <td>${fmtDateTime(a.triggeredAt)}</td>
