@@ -111,12 +111,15 @@ Server-Sent Events endpoint streaming real-time price updates:
 
 ## Testing
 
-Run tests with `npm test` (uses native `node:test`, no dependencies). Tests cover:
+Run `npm test` (native `node:test`, no dependencies). It first runs `npm run check` — a static pass over every
+JS/HTML file (syntax via `node --check`, inline event handlers that the CSP would block, escaped template
+literals, and i18n keys: RU/EN parity plus every `t('…')` / `data-i18n` key must exist) — then the unit tests:
 - `TtlCache`: hit/miss, coalescing of concurrent fetchers, stale-while-revalidate, stale-on-error
-- Universe: `convertRow` currency conversion and `marketsFromUniverse` paging / ids lookups
+- Universe: `convertRow` currency conversion, `marketsFromUniverse` paging / ids lookups, `similarFromUniverse`, `searchUniverse`
 - Per-IP rate limiter windows
 - Response compression (gzip when accepted, passthrough for small bodies)
-- API routes with a stubbed `fetch`: `/api/currencies`, parameter validation (400), Fear & Greed mapping
+- Server-side coin page SEO decoration (`decorateCoinPage`)
+- API routes with a stubbed `fetch`: `/api/currencies`, parameter validation (400), Fear & Greed mapping, `/api/coin/:id/similar`, `/api/exchange/:id` (+ volume), `/api/search` universe fallback under 429
 
 ## Project Layout
 
