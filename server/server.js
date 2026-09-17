@@ -9,7 +9,7 @@ import { getUniverse, getFx } from './universe.js';
 import { send } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
-import { decorateCoinPage } from './seo.js';
+import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -163,6 +163,8 @@ const server = http.createServer(async (req, res) => {
       // Top coins from the universe snapshot (bounded wait; the sitemap must never hang on upstream).
       const uni = await Promise.race([getUniverse({ cache }).catch(() => null), new Promise(r => setTimeout(() => r(null), 1500))]);
       for (const row of uni?.rows || []) urls.push(`/coin/${encodeURIComponent(row.id)}`);
+      const exchanges = await getExchangeList({ cache }).catch(() => null);
+      for (const ex of exchanges || []) if (ex?.id) urls.push(`/exchange/${encodeURIComponent(ex.id)}`);
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${baseUrl}${u === '/' ? '' : u}</loc></url>`).join('\n')}\n</urlset>`;
       send(req, res, 200, { 'Content-Type': 'application/xml; charset=utf-8' }, xml);
       return;
@@ -246,7 +248,10 @@ const server = http.createServer(async (req, res) => {
     const mtimeHex = stat.mtimeMs.toString(16);
     const coinPageId = targetFile === '/coin.html' && pathname.startsWith('/coin/')
       ? decodeURIComponent(pathname.split('/')[2] || '') : null;
-    const etag = `W/"${stat.size}-${mtimeHex}${coinPageId ? '-' + Math.floor(Date.now() / 60000) : ''}"`;
+    const exchangePageId = targetFile === '/exchange.html' && pathname.startsWith('/exchange/')
+      ? decodeURIComponent(pathname.split('/')[2] || '') : null;
+    const dynamicHead = coinPageId || exchangePageId;
+    const etag = `W/"${stat.size}-${mtimeHex}${dynamicHead ? '-' + Math.floor(Date.now() / 60000) : ''}"`;
 
     if (req.headers['if-none-match'] === etag) {
       statusCode = 304;
@@ -259,6 +264,10 @@ const server = http.createServer(async (req, res) => {
       content = await fs.readFile(filePath);
       if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
         content = await decorateCoinPage(content.toString('utf8'), coinPageId, {
+          cache, publicUrl: process.env.PUBLIC_URL || 'http://localhost:8080'
+        });
+      } else if (exchangePageId && /^[a-z0-9_-]{1,60}$/.test(exchangePageId)) {
+        content = await decorateExchangePage(content.toString('utf8'), exchangePageId, {
           cache, publicUrl: process.env.PUBLIC_URL || 'http://localhost:8080'
         });
       }

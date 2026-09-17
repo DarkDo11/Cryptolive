@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decorateCoinPage } from '../server/seo.js';
+import { decorateCoinPage, decorateExchangePage } from '../server/seo.js';
 
 const html = '<html><head><title>Coin · Cryptolive</title><meta name="description" content="x"></head><body></body></html>';
 
@@ -31,4 +31,14 @@ test('seo: escapes html in names and never throws on upstream failure', async ()
   const failing = { get: async () => { throw new Error('429'); } };
   const out2 = await decorateCoinPage(html, 'bitcoin', { cache: failing, publicUrl: 'http://x' });
   assert.match(out2, /<title>Coin · Cryptolive<\/title>/);
+});
+
+test('seo: exchange page gets title/description from the cached exchange list', async () => {
+  const list = [{ id: 'binance', name: 'Binance', trust_score: 10, trust_score_rank: 1, trade_volume_24h_btc: 152336.4, country: 'Cayman Islands', year_established: 2017, image: 'https://img/b.jpg' }];
+  const out = await decorateExchangePage(html, 'binance', { cache: fakeCache(list), publicUrl: 'https://example.com' });
+  assert.match(out, /<title>Binance exchange: volume, trust score and trading pairs · Cryptolive<\/title>/);
+  assert.match(out, /trust score 10\/10, rank #1, 24h volume 152,336 BTC, based in Cayman Islands, established 2017/);
+  assert.match(out, /canonical" href="https:\/\/example.com\/exchange\/binance"/);
+  const miss = await decorateExchangePage(html, 'nope', { cache: fakeCache(list), publicUrl: 'https://example.com' });
+  assert.match(miss, /<title>Coin · Cryptolive<\/title>/);
 });

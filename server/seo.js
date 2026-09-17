@@ -1,6 +1,7 @@
 // Server-side <head> decoration for /coin/:id pages: title, description, canonical and Open Graph tags
 // filled from the universe snapshot so crawlers and link previews see real data without running JS.
 import { getUniverse } from './universe.js';
+import { fetchUpstream, COINGECKO_BASE, cacheKey } from './upstream.js';
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -15,6 +16,60 @@ function withTimeout(promise, ms) {
     const timer = setTimeout(() => resolve(null), ms);
     promise.then((v) => { clearTimeout(timer); resolve(v); }, () => { clearTimeout(timer); resolve(null); });
   });
+}
+
+const EXCHANGES_URL = `${COINGECKO_BASE}/exchanges?per_page=250&page=1`;
+
+/** Top-250 exchange list (same cache entry the /api/exchanges route uses); null when unavailable. */
+export async function getExchangeList({ cache }, timeoutMs = 1500) {
+  const res = await withTimeout(cache.get(cacheKey(EXCHANGES_URL), 600_000, () => fetchUpstream(EXCHANGES_URL)), timeoutMs);
+  return Array.isArray(res?.value) ? res.value : null;
+}
+
+function headTags({ title, description, canonical, image }) {
+  return [
+    `<link rel="canonical" href="${escapeHtml(canonical)}">`,
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="Cryptolive">`,
+    `<meta property="og:title" content="${escapeHtml(title)}">`,
+    `<meta property="og:description" content="${escapeHtml(description)}">`,
+    `<meta property="og:url" content="${escapeHtml(canonical)}">`,
+    image ? `<meta property="og:image" content="${escapeHtml(image)}">` : null,
+    `<meta name="twitter:card" content="summary">`,
+    `<meta name="twitter:title" content="${escapeHtml(title)}">`,
+    `<meta name="twitter:description" content="${escapeHtml(description)}">`,
+    image ? `<meta name="twitter:image" content="${escapeHtml(image)}">` : null
+  ].filter(Boolean).map((l) => '  ' + l).join('\n');
+}
+
+function applyHead(html, { title, description, canonical, image }) {
+  return html
+    .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeHtml(description)}">`)
+    .replace('</head>', `${headTags({ title, description, canonical, image })}\n</head>`);
+}
+
+/**
+ * Exchange page: title/description from the cached exchange list. Never throws.
+ */
+export async function decorateExchangePage(html, exId, { cache, publicUrl, timeoutMs = 1500 }) {
+  const list = await getExchangeList({ cache }, timeoutMs);
+  const row = list?.find((e) => e.id === exId);
+  const canonical = `${publicUrl.replace(/\/$/, '')}/exchange/${encodeURIComponent(exId)}`;
+  if (!row) return html.replace('</head>', `  <link rel="canonical" href="${escapeHtml(canonical)}">\n</head>`);
+  const name = String(row.name || exId);
+  const vol = typeof row.trade_volume_24h_btc === 'number' ? Math.round(row.trade_volume_24h_btc).toLocaleString('en-US') + ' BTC' : null;
+  const title = `${name} exchange: volume, trust score and trading pairs · Cryptolive`;
+  const description = [
+    `${name} cryptocurrency exchange`,
+    row.trust_score != null ? `trust score ${row.trust_score}/10` : null,
+    row.trust_score_rank ? `rank #${row.trust_score_rank}` : null,
+    vol ? `24h volume ${vol}` : null,
+    row.country ? `based in ${row.country}` : null,
+    row.year_established ? `established ${row.year_established}` : null,
+    'live volume chart and top trading pairs.'
+  ].filter(Boolean).join(', ');
+  return applyHead(html, { title, description, canonical, image: row.image || null });
 }
 
 /**
