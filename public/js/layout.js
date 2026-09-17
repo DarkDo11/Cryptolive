@@ -291,7 +291,7 @@ async function populateCurrencies(selectEl) {
         const res = await api.search(q);
         const sCoins = (res.coins || []).slice(0, 8).map(c => ({...c, url: `/coin/${c.id}`, isCoin: true}));
         const sCats = (res.categories || []).slice(0, 4).map(c => ({...c, url: `/categories?c=${c.id}`}));
-        const sExchs = (res.exchanges || []).slice(0, 4).map(c => ({...c, url: `/exchanges`}));
+        const sExchs = (res.exchanges || []).slice(0, 4).map(c => ({...c, url: `/exchange/${encodeURIComponent(c.id)}`}));
         
         renderItems([
           [t('search.coins'), sCoins, (m, i) => `
