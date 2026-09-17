@@ -79,6 +79,21 @@ export function marketsFromUniverse({ universe, ratio, ids, page, perPage }) {
 }
 
 /**
+ * Coins ranked closest to `id` by market cap (half above, half below), excluding the coin itself.
+ * Returns [] when the coin is outside the universe.
+ */
+export function similarFromUniverse({ universe, ratio, id, limit = 8 }) {
+  const rows = universe.rows;
+  const idx = rows.findIndex(r => r.id === id);
+  if (idx < 0) return [];
+  const half = Math.ceil(limit / 2);
+  let start = Math.max(0, idx - half);
+  let end = Math.min(rows.length, start + limit + 1);
+  start = Math.max(0, end - limit - 1);
+  return rows.slice(start, end).filter(r => r.id !== id).slice(0, limit).map(r => convertRow(r, ratio));
+}
+
+/**
  * Build a partial `/coins/{id}`-shaped payload from a universe row so the coin page can still render
  * (header, stats, performance) while CoinGecko is throttled. Marked with `partial: true`.
  */

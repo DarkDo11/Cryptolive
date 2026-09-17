@@ -3,7 +3,7 @@ import { settings, watchlist } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { fmtCurrency, fmtCompact, fmtPercent, fmtSupply, fmtDate, fmtDateTime, fmtTime, escapeHtml } from '../format.js';
-import { changeBadge, emptyState, skeletonRows } from '../components.js';
+import { changeBadge, emptyState, skeletonRows, sparklineSvg } from '../components.js';
 import { openAlertModal } from '../alerts.js';
 import { t } from '../i18n.js';
 
@@ -71,6 +71,7 @@ async function load() {
   renderPerf(md, cur);
   renderAbout(coinData);
   renderPartialNotice(coinData.partial === true);
+  renderSimilar();
   
   tickersPage = 1;
   qs('#tickersBody').innerHTML = '';
@@ -199,6 +200,27 @@ function renderPartialNotice(isPartial) {
   qs('#aboutCard').hidden = isPartial;
   qs('#marketsCard').hidden = isPartial;
   if (qs('#historyCard')) qs('#historyCard').hidden = isPartial;
+}
+
+async function renderSimilar() {
+  const body = qs('#similarBody');
+  if (!body) return;
+  body.innerHTML = skeletonRows(4, 3);
+  const cur = settings.get().currency || 'usd';
+  let rows = [];
+  try { rows = await api.similar(coinId); } catch { rows = []; }
+  if (!Array.isArray(rows) || rows.length === 0) {
+    body.innerHTML = emptyState(t('coin.similarEmpty'), '');
+    return;
+  }
+  const ratio = Number.isFinite(fx) && fx > 0 ? fx : 1;
+  body.innerHTML = `<ul class="similar-list">${rows.map(c => `
+    <li><a class="similar-row" href="/coin/${encodeURIComponent(c.id)}">
+      <img class="coin-img" src="${escapeHtml(c.image || '')}" alt="" loading="lazy" width="24" height="24">
+      <span class="similar-name"><strong>${escapeHtml(c.name)}</strong><span class="muted small">${escapeHtml(String(c.symbol || '').toUpperCase())} · #${c.market_cap_rank ?? '—'}</span></span>
+      <span class="similar-spark">${sparklineSvg(c.sparkline_in_7d?.price || [], (c.price_change_percentage_7d_in_currency ?? 0) >= 0, { width: 64, height: 24 })}</span>
+      <span class="similar-price"><span data-live-price="${c.id}" data-price-usd="${c.current_price / ratio}">${fmtCurrency(c.current_price, cur)}</span>${changeBadge(c.price_change_percentage_24h, `data-live-change="${c.id}"`)}</span>
+    </a></li>`).join('')}</ul>`;
 }
 
 function renderStats(md, cur) {

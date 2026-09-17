@@ -57,6 +57,7 @@ export const api = {
   },
 
   coin(id) { return this.get(`/coin/${id}`); },
+  similar(id) { return this.get(`/coin/${id}/similar`, { vs: settings.get().currency || 'usd' }); },
   chart(id, days) { 
     return this.get(`/coin/${id}/chart`, { vs: settings.get().currency || 'usd', days }); 
   },

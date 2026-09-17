@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { convertRow, marketsFromUniverse } from '../server/universe.js';
+import { convertRow, marketsFromUniverse, similarFromUniverse } from '../server/universe.js';
 
 test('universe: convertRow', () => {
   const row = {
@@ -52,4 +52,21 @@ test('universe: marketsFromUniverse pagination and ids', () => {
 
   const p3 = marketsFromUniverse({ universe, ratio: 1, page: 3, perPage: 2 });
   assert.strictEqual(p3, null); // start >= length
+});
+
+test('universe: similarFromUniverse picks rank neighbours and excludes the coin', () => {
+  const rows = Array.from({ length: 20 }, (_, i) => ({ id: 'c' + i, market_cap_rank: i + 1, current_price: i + 1 }));
+  const universe = { rows, byId: new Map(rows.map(r => [r.id, r])) };
+
+  const mid = similarFromUniverse({ universe, ratio: 1, id: 'c10', limit: 4 });
+  assert.deepStrictEqual(mid.map(r => r.id), ['c8', 'c9', 'c11', 'c12']);
+
+  const top = similarFromUniverse({ universe, ratio: 1, id: 'c0', limit: 4 });
+  assert.deepStrictEqual(top.map(r => r.id), ['c1', 'c2', 'c3', 'c4']);
+
+  const bottom = similarFromUniverse({ universe, ratio: 2, id: 'c19', limit: 4 });
+  assert.deepStrictEqual(bottom.map(r => r.id), ['c15', 'c16', 'c17', 'c18']);
+  assert.strictEqual(bottom[0].current_price, 32);
+
+  assert.deepStrictEqual(similarFromUniverse({ universe, ratio: 1, id: 'nope', limit: 4 }), []);
 });

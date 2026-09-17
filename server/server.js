@@ -9,6 +9,7 @@ import { getUniverse, getFx } from './universe.js';
 import { send } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
+import { decorateCoinPage } from './seo.js';
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -220,7 +221,9 @@ const server = http.createServer(async (req, res) => {
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     const cacheControl = ext === '.html' ? 'no-cache' : 'public, max-age=3600';
     const mtimeHex = stat.mtimeMs.toString(16);
-    const etag = `W/"${stat.size}-${mtimeHex}"`;
+    const coinPageId = targetFile === '/coin.html' && pathname.startsWith('/coin/')
+      ? decodeURIComponent(pathname.split('/')[2] || '') : null;
+    const etag = `W/"${stat.size}-${mtimeHex}${coinPageId ? '-' + Math.floor(Date.now() / 60000) : ''}"`;
 
     if (req.headers['if-none-match'] === etag) {
       statusCode = 304;
@@ -231,6 +234,11 @@ const server = http.createServer(async (req, res) => {
     let content = '';
     if (req.method !== 'HEAD') {
       content = await fs.readFile(filePath);
+      if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
+        content = await decorateCoinPage(content.toString('utf8'), coinPageId, {
+          cache, publicUrl: process.env.PUBLIC_URL || 'http://localhost:8080'
+        });
+      }
     }
     
     send(req, res, 200, {

@@ -1,5 +1,5 @@
 import { COINGECKO_BASE, fetchUpstream, badRequest, cacheKey } from './upstream.js';
-import { getUniverse, getFx, marketsFromUniverse, coinFromUniverse, VS_CURRENCIES } from './universe.js';
+import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, coinFromUniverse, VS_CURRENCIES } from './universe.js';
 
 const FNG_BASE = process.env.UPSTREAM_FNG || 'https://api.alternative.me/fng/';
 
@@ -172,6 +172,21 @@ export async function handleApi(req, res, url, ctx) {
         const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
         const row = uni.byId.get(coinId);
         return row ? coinFromUniverse(row, fx) : null;
+      };
+    } else if (subRoute === 'similar') {
+      // Neighbours by market-cap rank, served from the universe (no upstream call).
+      const vs = getVs();
+      const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
+      const rows = similarFromUniverse({ universe: uni, ratio: fx[vs] ?? null, id: coinId, limit: 8 });
+      return {
+        status: 200,
+        cache: 'universe',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'X-Cache': 'universe',
+          'Cache-Control': 'public, max-age=60'
+        },
+        body: JSON.stringify(rows)
       };
     } else if (subRoute === 'chart') {
       const vs = getVs();
