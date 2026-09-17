@@ -406,6 +406,56 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-action="retry"]')) location.reload();
 });
 
+// Keyboard shortcuts: "?" opens the cheat sheet, "g <key>" jumps between pages, "t" toggles the theme.
+const SHORTCUT_TARGETS = { m: '/', o: '/overview', r: '/trending', h: '/heatmap', w: '/watchlist', p: '/portfolio', a: '/alerts', c: '/compare', e: '/exchanges', s: '/settings' };
+let pendingG = 0;
+function isTyping(e) {
+  const tag = e.target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+}
+function shortcutsSheet() {
+  let el = qs('#shortcutsBackdrop');
+  if (el) return el;
+  const rows = [
+    ['⌘K /', t('shortcuts.search')],
+    ['?', t('shortcuts.help')],
+    ['t', t('shortcuts.theme')],
+    ['g m', t('nav.markets')], ['g o', t('nav.overview')], ['g r', t('nav.trending')], ['g h', t('nav.heatmap')],
+    ['g w', t('nav.watchlist')], ['g p', t('nav.portfolio')], ['g a', t('nav.alerts')], ['g c', t('nav.compare')],
+    ['g e', t('nav.exchanges')], ['g s', t('nav.settings')],
+    ['Esc', t('shortcuts.close')]
+  ];
+  el = document.createElement('div');
+  el.className = 'modal-backdrop';
+  el.id = 'shortcutsBackdrop';
+  el.style.display = 'none';
+  el.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle" style="max-width:520px">
+      <div class="modal-head"><span id="shortcutsTitle">${t('shortcuts.title')}</span><button class="btn btn-ghost btn-sm" id="shortcutsClose" aria-label="${t('shortcuts.close')}">×</button></div>
+      <div class="modal-body"><div class="shortcuts-grid">${rows.map(([k, label]) => `<div class="shortcut-row"><span>${escapeHtml(label)}</span><span class="shortcut-keys">${k.split(' ').map(x => `<kbd>${escapeHtml(x)}</kbd>`).join(' ')}</span></div>`).join('')}</div></div>
+    </div>`;
+  document.body.appendChild(el);
+  const close = () => { el.style.display = 'none'; };
+  qs('#shortcutsClose', el).addEventListener('click', close);
+  el.addEventListener('click', (e) => { if (e.target === el) close(); });
+  return el;
+}
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e)) return;
+  const sheet = qs('#shortcutsBackdrop');
+  if (e.key === 'Escape' && sheet && sheet.style.display === 'flex') { sheet.style.display = 'none'; return; }
+  if (e.key === '?') { e.preventDefault(); const el = shortcutsSheet(); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; return; }
+  if (e.key === 't' && !pendingG) { qs('#themeToggle')?.click(); return; }
+  if (e.key === 'g') { pendingG = Date.now(); return; }
+  if (pendingG && Date.now() - pendingG < 1500 && SHORTCUT_TARGETS[e.key]) {
+    pendingG = 0;
+    const target = SHORTCUT_TARGETS[e.key];
+    if (location.pathname !== target) location.href = target;
+    return;
+  }
+  pendingG = 0;
+});
+
 export function initLayout({ active = '' } = {}) {
   const headerContainer = qs('#app-header');
   if (headerContainer) {
@@ -474,8 +524,9 @@ export function initLayout({ active = '' } = {}) {
   const themeBtn = qs('#themeToggle');
   if (themeBtn) {
     themeBtn.addEventListener('click', () => {
-      let cur = settings.get().theme;
-      if (cur === null) cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      // What is actually rendered wins (theme-boot resolves "system"/unset before first paint).
+      const cur = document.documentElement.dataset.theme
+        || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
       const next = cur === 'light' ? 'dark' : 'light';
       settings.set({ theme: next });
       document.documentElement.dataset.theme = next;

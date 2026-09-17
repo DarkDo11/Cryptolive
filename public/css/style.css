@@ -56,6 +56,8 @@ a:hover {
   text-decoration: underline;
 }
 
+[hidden] { display: none !important; }
+
 :focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
@@ -1367,3 +1369,9 @@ td.is-best {
 /* Accessibility: skip link (visible only when focused) */
 .skip-link { position: absolute; left: 12px; top: -48px; z-index: 1000; padding: 8px 12px; background: var(--blue); color: #fff; border-radius: var(--radius); font-weight: 600; text-decoration: none; transition: top .15s; }
 .skip-link:focus { top: 12px; outline: 2px solid #fff; }
+
+/* Keyboard shortcuts sheet */
+.shortcuts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+.shortcut-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.shortcut-keys kbd { display: inline-block; min-width: 22px; padding: 2px 6px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; background: var(--panel-soft); font: 600 0.75rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
+@media (max-width: 560px) { .shortcuts-grid { grid-template-columns: 1fr; } }
