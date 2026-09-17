@@ -32,7 +32,16 @@
         Import
         <input type="file" id="importInput" accept=".json" style="display: none;">
       </label>
+      <button class="btn btn-ghost btn-sm" id="shareBtn" data-i18n="watchlist.share">Share link</button>
       <button class="btn btn-ghost btn-sm" id="clearBtn" data-i18n="common.clear2">Clear</button>
+    </div>
+
+    <div class="notice" id="shareNotice" hidden>
+      <span id="shareNoticeText"></span>
+      <span style="display:inline-flex; gap:8px; margin-left:12px;">
+        <button class="btn btn-primary btn-sm" id="shareAddBtn" data-i18n="watchlist.shareAdd">Add to my watchlist</button>
+        <button class="btn btn-ghost btn-sm" id="shareDismissBtn" data-i18n="common.dismiss">Dismiss</button>
+      </span>
     </div>
     
     <div id="watchTable"></div>

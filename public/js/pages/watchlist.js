@@ -178,6 +178,43 @@ qs('#importInput').addEventListener('change', (e) => {
   reader.readAsText(file);
 });
 
+// Share: encode ids in the URL; opening such a link offers to merge them into the local watchlist.
+qs('#shareBtn').addEventListener('click', async () => {
+  const ids = watchlist.list();
+  if (ids.length === 0) return;
+  const url = `${location.origin}/watchlist?ids=${encodeURIComponent(ids.join(','))}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast(t('watchlist.shareCopied'), { type: 'success' });
+  } catch {
+    prompt(t('watchlist.shareCopyManual'), url);
+  }
+});
+
+const sharedIds = (new URLSearchParams(location.search).get('ids') || '')
+  .split(',').map(s => s.trim()).filter(id => /^[a-z0-9-]{1,100}$/.test(id));
+const newShared = sharedIds.filter(id => !watchlist.has(id));
+if (sharedIds.length > 0) {
+  const notice = qs('#shareNotice');
+  if (newShared.length === 0) {
+    toast(t('watchlist.shareAllPresent'), { type: 'info' });
+    history.replaceState(null, '', '/watchlist');
+  } else {
+    qs('#shareNoticeText').textContent = t('watchlist.shareNotice', { n: newShared.length, list: newShared.slice(0, 6).join(', ') + (newShared.length > 6 ? '…' : '') });
+    notice.hidden = false;
+    qs('#shareAddBtn').addEventListener('click', () => {
+      newShared.forEach(id => watchlist.add(id));
+      notice.hidden = true;
+      history.replaceState(null, '', '/watchlist');
+      toast(t('watchlist.shareAdded', { n: newShared.length }), { type: 'success' });
+    });
+    qs('#shareDismissBtn').addEventListener('click', () => {
+      notice.hidden = true;
+      history.replaceState(null, '', '/watchlist');
+    });
+  }
+}
+
 qs('#clearBtn').addEventListener('click', () => {
   if (confirm('Are you sure you want to clear your watchlist?')) {
     const ids = watchlist.list();
