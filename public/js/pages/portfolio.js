@@ -2,7 +2,7 @@ import { initLayout, setTitle, toast, qs, qsa, debounce } from '../layout.js';
 import { settings, portfolio } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { fmtCurrency, fmtPercent, fmtCompact, escapeHtml, fmtDate } from '../format.js';
+import { fmtCurrency, fmtPercent, fmtCompact, fmtNumber, escapeHtml, fmtDate } from '../format.js';
 import { emptyState, changeBadge } from '../components.js';
 import { t } from '../i18n.js';
 
@@ -19,6 +19,161 @@ const PALETTE = [
   '#4ea1ff', '#20c997', '#f5b451', '#ff5c73', 
   '#9b51e0', '#f2994a', '#2d9cdb', '#eb5757', '#6fcf97'
 ];
+
+let histDays = 30;
+let histChart = null;
+let histToken = 0;
+
+async function renderHistory() {
+  const card = qs('#historyCard');
+  if (!card) return;
+  const holdings = portfolio.holdings().filter(h => h.amount > 0);
+  if (holdings.length === 0) {
+    card.hidden = true;
+    if (histChart) { histChart.destroy(); histChart = null; }
+    return;
+  }
+  card.hidden = false;
+
+  const top = holdings.slice(0, 10);
+  const token = ++histToken;
+  const results = await Promise.allSettled(top.map(h => api.chart(h.coinId, histDays)));
+  if (token !== histToken) return;
+
+  const validSeries = [];
+  let failedCount = 0;
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].status === 'fulfilled' && results[i].value && results[i].value.prices) {
+      validSeries.push({ coinId: top[i].coinId, prices: results[i].value.prices });
+    } else {
+      failedCount++;
+    }
+  }
+
+  const note = qs('#historyNote');
+  note.textContent = failedCount > 0 ? t('portfolio.historyPartial', { n: failedCount }) : '';
+
+  if (validSeries.length === 0) return;
+
+  let longest = validSeries[0].prices;
+  for (const s of validSeries) {
+    if (s.prices.length > longest.length) longest = s.prices;
+  }
+
+  const txs = portfolio.list();
+  const cur = settings.get().currency || 'usd';
+
+  const timestamps = longest.map(p => p[0]);
+  const valueData = [];
+  const investedData = [];
+
+  for (const ts of timestamps) {
+    let valSum = 0;
+    let invSum = 0;
+
+    for (const h of top) {
+      let amt = 0;
+      let buyCost = 0;
+      let sellCost = 0;
+      for (const tx of txs) {
+        if (tx.coinId === h.coinId && tx.date <= ts) {
+          if (tx.type === 'buy') {
+            amt += tx.amount;
+            buyCost += tx.amount * tx.price;
+          } else if (tx.type === 'sell') {
+            amt -= tx.amount;
+            sellCost += tx.amount * tx.price;
+          }
+        }
+      }
+
+      const s = validSeries.find(x => x.coinId === h.coinId);
+      if (s && amt > 0) {
+        let price = s.prices[0][1];
+        for (let i = s.prices.length - 1; i >= 0; i--) {
+          if (s.prices[i][0] <= ts) {
+            price = s.prices[i][1];
+            break;
+          }
+        }
+        valSum += amt * price;
+      }
+      
+      invSum += (buyCost - sellCost);
+    }
+    investedData.push(Math.max(0, invSum * fx));
+    valueData.push(valSum);
+  }
+
+  const firstVal = valueData[0] || 0;
+  const lastVal = valueData[valueData.length - 1] || 0;
+  const valColor = lastVal >= firstVal ? '#20c997' : '#ff5c73';
+
+  const ctx = qs('#historyChart');
+  if (!ctx) return;
+
+  const data = {
+    labels: timestamps,
+    datasets: [
+      {
+        label: t('portfolio.value'),
+        data: valueData,
+        borderColor: valColor,
+        backgroundColor: valColor + '22',
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 2,
+        tension: 0.25
+      },
+      {
+        label: t('portfolio.invested'),
+        data: investedData,
+        borderColor: '#8795a4',
+        borderDash: [4, 4],
+        fill: false,
+        pointRadius: 0,
+        borderWidth: 1.5,
+        tension: 0
+      }
+    ]
+  };
+
+  if (histChart) {
+    histChart.data = data;
+    histChart.options.plugins.legend.labels.color = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    histChart.update();
+  } else {
+    histChart = new Chart(ctx, {
+      type: 'line',
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 8, callback: function(val) { return fmtDate(Number(this.getLabelForValue(val))); } },
+            grid: { color: 'rgba(128,128,128,.12)' }
+          },
+          y: {
+            ticks: { callback: function(val) { return fmtCurrency(val, settings.get().currency || 'usd'); } },
+            grid: { color: 'rgba(128,128,128,.12)' }
+          }
+        },
+        plugins: {
+          legend: { position: 'top', align: 'end', labels: { font: { size: 11 }, boxWidth: 10, color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() } },
+          tooltip: {
+            callbacks: {
+              title: function(ctxs) { return fmtDate(Number(ctxs[0].label)); },
+              label: function(context) { return context.dataset.label + ': ' + fmtCurrency(context.raw, settings.get().currency || 'usd'); }
+            }
+          }
+        }
+      }
+    });
+  }
+}
 
 async function load() {
   const container = qs('#holdingsTable');
@@ -128,7 +283,7 @@ async function load() {
           <td class="price-cell" data-live-price="${escapeHtml(r.coinId)}" data-price-usd="${r.priceUsd}">${fmtCurrency(r.priceCur, cur)}</td>
           <td>
             <div data-live-holdings-value="${escapeHtml(r.coinId)}" data-amount="${r.amount}">${fmtCurrency(r.value, cur)}</div>
-            <div style="color:var(--muted); font-size:0.8rem">${fmtCompact(r.amount)} ${escapeHtml(r.symbol.toUpperCase())}</div>
+            <div style="color:var(--muted); font-size:0.8rem">${fmtNumber(r.amount, { max: 8 })} ${escapeHtml(r.symbol.toUpperCase())}</div>
           </td>
           <td>${fmtCurrency(r.avgPriceUsd * fx, cur)}</td>
           <td>
@@ -216,6 +371,7 @@ async function load() {
   }
 
   renderTransactions();
+  renderHistory().catch(() => {});
 }
 
 function renderTransactions() {
@@ -245,26 +401,26 @@ function renderTransactions() {
   }
 
   let tbody = '';
-  txs.forEach(t => {
-    const isBuy = t.type === 'buy';
-    const priceCur = t.price * fx;
-    const total = t.amount * priceCur;
+  txs.forEach(tx => {
+    const isBuy = tx.type === 'buy';
+    const priceCur = tx.price * fx;
+    const total = tx.amount * priceCur;
     tbody += `
       <tr>
-        <td style="text-align:left">${fmtDate(t.date)}</td>
-        <td style="text-align:left"><span class="tx-type ${isBuy ? 'buy' : 'sell'}">${isBuy ? 'Buy' : 'Sell'}</span></td>
+        <td style="text-align:left">${fmtDate(tx.date)}</td>
+        <td style="text-align:left"><span class="tx-type ${isBuy ? 'buy' : 'sell'}">${isBuy ? t('js.buy') : t('js.sell')}</span></td>
         <td style="text-align:left">
           <div style="display:flex; align-items:center; gap:8px">
-            <img src="${escapeHtml(t.image)}" width="16" height="16" style="border-radius:50%">
-            ${escapeHtml(t.name)}
+            <img src="${escapeHtml(tx.image)}" width="16" height="16" style="border-radius:50%">
+            ${escapeHtml(tx.name)}
           </div>
         </td>
-        <td>${fmtCompact(t.amount)} ${escapeHtml(t.symbol.toUpperCase())}</td>
+        <td>${fmtNumber(tx.amount, { max: 8 })} ${escapeHtml(tx.symbol.toUpperCase())}</td>
         <td>${fmtCurrency(priceCur, cur)}</td>
         <td>${fmtCurrency(total, cur)}</td>
-        <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis" title="${escapeHtml(t.note || '')}">${escapeHtml(t.note || '-')}</td>
+        <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis" title="${escapeHtml(tx.note || '')}">${escapeHtml(tx.note || '-')}</td>
         <td>
-          <button class="btn btn-ghost btn-sm tx-del" data-id="${escapeHtml(t.id)}" style="color:var(--red)">${t('js.delete')}</button>
+          <button class="btn btn-ghost btn-sm tx-del" data-id="${escapeHtml(tx.id)}" style="color:var(--red)">${t('js.delete')}</button>
         </td>
       </tr>
     `;
@@ -540,6 +696,15 @@ async function init() {
     await load();
   });
   window.addEventListener('portfolio:change', load);
+  
+  qs('#histRange').addEventListener('click', e => {
+    const btn = e.target.closest('.range-btn');
+    if (!btn) return;
+    qsa('.range-btn', qs('#histRange')).forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    histDays = Number(btn.dataset.days);
+    renderHistory().catch(() => {});
+  });
 
   qs('#addTxBtn').addEventListener('click', () => openModal());
   

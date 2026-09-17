@@ -42,6 +42,21 @@
       <!-- KPI cards -->
     </div>
 
+    <div class="card" id="historyCard" style="margin-bottom:24px;" hidden>
+      <div class="card-head">
+        <h3 data-i18n="portfolio.history">Portfolio value</h3>
+        <div class="toggle-group" id="histRange">
+          <button type="button" class="range-btn" data-days="7">7d</button>
+          <button type="button" class="range-btn is-active" data-days="30">30d</button>
+          <button type="button" class="range-btn" data-days="90">90d</button>
+        </div>
+      </div>
+      <div class="card-body" style="position:relative; height:260px;">
+        <canvas id="historyChart"></canvas>
+      </div>
+      <div id="historyNote" class="muted small" style="padding:0 16px 12px;"></div>
+    </div>
+
     <div class="grid-2" style="grid-template-columns: 2fr 1fr; margin-bottom:24px;">
       <div class="card">
         <div class="card-head" data-i18n="portfolio.holdings">Holdings</div>
