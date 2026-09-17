@@ -8,6 +8,12 @@ const ALLOWED_DAYS_CHART = new Set(['1', '7', '30', '90', '365', 'max']);
 const ALLOWED_DAYS_OHLC = new Set(['1', '7', '14', '30', '90', '180', '365']);
 const COIN_ID_REGEX = /^[a-z0-9-]+$/;
 
+export const COIN_DETAIL_TTL_MS = 300 * 1000;
+
+export function coinDetailUrl(coinId) {
+  return `${COINGECKO_BASE}/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=true`;
+}
+
 // CoinGecko's trending payload formats money as strings like "$1,234,567.89"; turn them into numbers.
 function parseCompactUsd(value) {
   if (typeof value === 'number') return value;
@@ -166,8 +172,8 @@ export async function handleApi(req, res, url, ctx) {
     const subRoute = parts[4];
 
     if (!subRoute) {
-      targetUrl = `${COINGECKO_BASE}/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=true`;
-      ttlMs = 300 * 1000;
+      targetUrl = coinDetailUrl(coinId);
+      ttlMs = COIN_DETAIL_TTL_MS;
       fallback = async () => {
         const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
         const row = uni.byId.get(coinId);

@@ -5,7 +5,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 ## Features
 
 - **Overview**: Market Overview dashboard featuring a Fear & Greed gauge + 30-day history, market dominance doughnut, top sectors bar chart, market breadth, and a watchlist snapshot.
-- **Markets**: Global stats bar (total market cap, 24h volume, BTC/ETH dominance, Fear & Greed Index), trending and top gainers/losers highlight cards, sortable top-N coin table with 7-day sparklines, quick filter tabs (All, Watchlist, Gainers, Losers), per-page selector (50/100/250), and live price update flashes; tick up to 4 coins to jump into Compare.
+- **Markets**: Global stats bar (total market cap, 24h volume, BTC/ETH dominance, Fear & Greed Index), trending and top gainers/losers highlight cards, sortable top-N coin table with 7-day sparklines, quick filter tabs (All, Watchlist, Gainers, Losers), per-page selector (50/100/250), and live price update flashes; tick up to 4 coins to jump into Compare; CSV export of the current view (also on Watchlist and Portfolio transactions).
 - **Coin Detail**: Interactive line (with a volume histogram) and candlestick charts with timeframe ranges (24h to Max) and logarithmic scale toggle, price vs. market cap toggle, key stats (circulating/total/max supply, volume/market cap), ATH/ATL metrics with percentage change and dates, 24h low/high range bar, mini-converter, multi-timeframe price performance, historical data table + CSV export, exchange tickers with trust scores and trade links, coin description, official links, a "Similar coins" card (rank neighbours with live prices) and a "Set alert" button. Coin pages are served with per-coin `<title>`, description, canonical and Open Graph tags filled server-side from the universe snapshot, and the sitemap lists every coin in the universe.
 - **Compare**: Up to 4 coins side-by-side comparison with a normalized performance chart.
 - **Alerts**: Price alerts (above/below rules checked against the live stream + 60 s polling fallback) triggering toasts and browser Notifications; triggered alerts can be re-armed; stored in `localStorage`; besides above/below price targets, alerts can fire on 24h percent change (≥ +X% / ≤ −X%).
@@ -19,7 +19,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, language, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.
-- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
+- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; an offline banner when the network drops; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
 
 ## Architecture
 
@@ -30,6 +30,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
   - **Upstream Protection**: Upstream cooldown after a 429 (fails fast with 503 + Retry-After instead of hammering; cache serves stale). Global concurrency limiter (maximum 3 parallel requests).
   - **Degraded Mode**: Degraded coin payload from the universe (`X-Cache: fallback`, `partial: true`) so coin pages still render during throttling; `/api/search` likewise falls back to a name/symbol search over the universe. Throttled API responses carry `Retry-After`, and the browser client waits once (≤20 s) and retries before showing an error.
   - **API Rate Limiting**: Per-IP API rate limit (`API_RATE_LIMIT`, 429 + Retry-After, `X-RateLimit-Remaining`).
+  - **Warm cache**: the detail payloads of the top `WARM_COINS` coins are refreshed every 10 minutes (sequentially, skipped while the upstream is in cooldown), so popular coin pages are served from cache and survive throttling with full data.
   - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (version, uptime, memory, cache counters + hit ratio, upstream counters and cooldown, live feed state).
 - **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top 500 coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` (default order) and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
 - **Real-Time Price Stream (`/api/stream`)**: A single Binance combined WebSocket connection (`miniTicker` streams for ~60 top assets) feeds an SSE broadcaster (`live.js`). The connection connects lazily on the first client subscription and disconnects 60 seconds after the last subscriber leaves; price updates are throttled to at most once per second.
@@ -66,6 +67,7 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `UPSTREAM_FNG` | `https://api.alternative.me/fng/` | Upstream Fear & Greed index API base URL |
 | `LOG_LEVEL` | `info` | Server logging level (`info`, `debug`, `silent`) |
 | `API_RATE_LIMIT` | `120` | Per-IP limit for `/api` requests per minute |
+| `WARM_COINS` | `10` | How many top coins' detail payloads to keep pre-fetched (0 disables) |
 | `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |
 | `CACHE_FILE` | `.cache/cache.json` | On-disk cache snapshot file path (empty disables) |
 | `PUBLIC_URL` | `http://localhost:8080` | Base URL used in `/sitemap.xml` |

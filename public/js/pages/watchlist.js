@@ -3,7 +3,7 @@ import { api, normalizeCoin } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { renderCoinTable, emptyState, skeletonRows, sortCoins, changeBadge } from '../components.js';
 import { watchlist, settings } from '../store.js';
-import { fmtCurrency, fmtPercent, fmtCompact, escapeHtml } from '../format.js';
+import { fmtCurrency, fmtPercent, fmtCompact, escapeHtml, toCsv, downloadCsv } from '../format.js';
 import { t } from '../i18n.js';
 
 initLayout({ active: 'watchlist' });
@@ -151,6 +151,24 @@ qs('#exportBtn').addEventListener('click', () => {
   a.download = 'watchlist.json';
   a.click();
   URL.revokeObjectURL(url);
+});
+
+qs('#exportCsvBtn')?.addEventListener('click', () => {
+  const cur = (settings.get().currency || 'usd').toUpperCase();
+  const headers = ['Rank', 'Name', 'Symbol', `Price (${cur})`, '1h %', '24h %', '7d %', `24h Volume (${cur})`, `Market Cap (${cur})`];
+  const rows = coinsData.map(c => [
+    c.rank,
+    c.name,
+    (c.symbol || '').toUpperCase(),
+    c.price,
+    c.change1h,
+    c.change24h,
+    c.change7d,
+    c.volume,
+    c.marketCap
+  ]);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  downloadCsv(`cryptolive-watchlist-${dateStr}.csv`, toCsv(headers, rows));
 });
 
 qs('#importInput').addEventListener('change', (e) => {

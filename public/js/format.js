@@ -113,3 +113,26 @@ export function timeAgo(ts) {
   if (diff < 86400) return t('time.hoursAgo', { n: Math.floor(diff / 3600) });
   return t('time.daysAgo', { n: Math.floor(diff / 86400) });
 }
+
+/** Build a CSV string (RFC 4180 quoting, CRLF, UTF-8 BOM added by downloadCsv) from a header row and rows. */
+export function toCsv(headers, rows) {
+  const escapeCell = (cell) => {
+    const str = String(cell ?? '');
+    if (/[",\n\r]/.test(str)) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+  return [headers, ...rows].map(row => row.map(escapeCell).join(',')).join('\r\n');
+}
+
+/** Trigger a browser download of `csv` as `filename`. */
+export function downloadCsv(filename, csv) {
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

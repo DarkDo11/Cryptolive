@@ -1426,3 +1426,6 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 .search-rank { color: var(--muted); font-size: 0.8rem; }
 .search-meta .change-badge { font-size: 0.78rem; }
 @media (max-width: 560px) { .search-meta .change-badge { display: none; } }
+
+/* Offline banner */
+.offline-banner { position: sticky; top: 0; z-index: 60; padding: 8px 16px; text-align: center; font-size: 0.85rem; font-weight: 600; background: var(--amber); color: #1a1200; }

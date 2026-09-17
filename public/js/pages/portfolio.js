@@ -2,7 +2,7 @@ import { initLayout, setTitle, toast, qs, qsa, debounce } from '../layout.js';
 import { settings, portfolio } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { fmtCurrency, fmtPercent, fmtCompact, fmtNumber, escapeHtml, fmtDate } from '../format.js';
+import { fmtCurrency, fmtPercent, fmtCompact, fmtNumber, escapeHtml, fmtDate, toCsv, downloadCsv } from '../format.js';
 import { emptyState, changeBadge } from '../components.js';
 import { t } from '../i18n.js';
 
@@ -766,6 +766,22 @@ async function init() {
     a.download = 'cryptolive-portfolio.json';
     a.click();
     URL.revokeObjectURL(url);
+  });
+
+  qs('#exportCsvBtn')?.addEventListener('click', () => {
+    const headers = ['Date', 'Type', 'Coin', 'Symbol', 'Amount', 'Price (USD)', 'Total (USD)', 'Note'];
+    const rows = portfolio.list().map(tx => [
+      new Date(tx.date).toISOString(),
+      tx.type,
+      tx.name,
+      (tx.symbol || '').toUpperCase(),
+      tx.amount,
+      tx.price,
+      tx.amount * tx.price,
+      tx.note || ''
+    ]);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCsv(`cryptolive-transactions-${dateStr}.csv`, toCsv(headers, rows));
   });
 
   qs('#importInput').addEventListener('change', e => {

@@ -413,6 +413,29 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-action="retry"]')) location.reload();
 });
 
+// Offline banner: browsers know when the network is gone; show it once the layout is mounted.
+function setupOfflineBanner() {
+  let banner = null;
+  const show = () => {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'offline-banner';
+      banner.setAttribute('role', 'status');
+      banner.textContent = t('common.offline');
+      document.body.prepend(banner);
+    }
+    banner.hidden = false;
+  };
+  const hide = (announce) => {
+    if (banner) banner.hidden = true;
+    if (announce) toast(t('common.backOnline'), { type: 'success' });
+  };
+  window.addEventListener('offline', show);
+  window.addEventListener('online', () => hide(true));
+  if (navigator.onLine === false) show();
+}
+setupOfflineBanner();
+
 // Keyboard shortcuts: "?" opens the cheat sheet, "g <key>" jumps between pages, "t" toggles the theme.
 const SHORTCUT_TARGETS = { m: '/', o: '/overview', r: '/trending', h: '/heatmap', w: '/watchlist', p: '/portfolio', a: '/alerts', c: '/compare', e: '/exchanges', s: '/settings' };
 let pendingG = 0;

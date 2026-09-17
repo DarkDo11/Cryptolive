@@ -3,17 +3,19 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TtlCache } from './cache.js';
-import { handleApi } from './routes.js';
+import { handleApi, coinDetailUrl, COIN_DETAIL_TTL_MS } from './routes.js';
 import { createLive } from './live.js';
 import { getUniverse, getFx } from './universe.js';
 import { send, weakEtag, etagMatches } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
-import { upstreamStatus } from './upstream.js';
+import { cacheKey, fetchUpstream, upstreamStatus } from './upstream.js';
 import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const WARM_COINS = Math.max(0, parseInt(process.env.WARM_COINS || '10', 10) || 0);
+const WARM_INTERVAL_MS = 10 * 60 * 1000;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -334,3 +336,24 @@ setTimeout(() => {
 setInterval(() => {
   getUniverse({cache}).catch(()=>{});
 }, 60000).unref();
+
+async function warmTopCoins() {
+  if (WARM_COINS === 0 || upstreamStatus().throttled) return;
+  const uni = await getUniverse({ cache }).catch(() => null);
+  const rows = (uni?.rows || []).slice(0, WARM_COINS);
+  let warmed = 0;
+  for (const row of rows) {
+    if (upstreamStatus().throttled) break;
+    const url = coinDetailUrl(row.id);
+    await cache.get(cacheKey(url), COIN_DETAIL_TTL_MS, () => fetchUpstream(url)).catch(() => {});
+    warmed++;
+  }
+  if (LOG_LEVEL === 'debug') console.log(`warm: ${warmed} coins`);
+}
+
+const runWarmup = () => warmTopCoins().catch((err) => {
+  if (LOG_LEVEL !== 'silent') console.error('Warm cache failed:', err.message);
+});
+
+setTimeout(runWarmup, 5000).unref();
+setInterval(runWarmup, WARM_INTERVAL_MS).unref();

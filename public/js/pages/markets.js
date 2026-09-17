@@ -3,7 +3,7 @@ import { api, normalizeCoin } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { renderCoinTable, renderPagination, skeletonRows, sortCoins, changeBadge } from '../components.js';
 import { settings, watchlist, recentCoins } from '../store.js';
-import { fmtCurrency, fmtCompact, escapeHtml, fmtTime } from '../format.js';
+import { fmtCurrency, fmtCompact, escapeHtml, fmtTime, toCsv, downloadCsv } from '../format.js';
 import { t } from '../i18n.js';
 
 initLayout({ active: 'markets' });
@@ -17,6 +17,7 @@ let sortKey = 'rank';
 let sortDir = 'asc';
 let filterText = '';
 let coins = []; // normalized
+let currentDisplayedCoins = [];
 let fx = 1;
 let globalData = null;
 let unsubLive = null;
@@ -379,6 +380,7 @@ function renderTable() {
   }
 
   filtered = sortCoins(filtered, sortKey, sortDir);
+  currentDisplayedCoins = filtered;
 
   if (filtered.length < coins.length) {
     filterSummary.textContent = t('markets.showingOf', { shown: filtered.length, total: coins.length });
@@ -457,6 +459,24 @@ window.addEventListener('watchlist:change', () => {
     // Re-render table just to update star icons
     renderTable();
   }
+});
+
+qs('#exportCsvBtn')?.addEventListener('click', () => {
+  const cur = (settings.get().currency || 'usd').toUpperCase();
+  const headers = ['Rank', 'Name', 'Symbol', `Price (${cur})`, '1h %', '24h %', '7d %', `24h Volume (${cur})`, `Market Cap (${cur})`];
+  const rows = currentDisplayedCoins.map(c => [
+    c.rank,
+    c.name,
+    (c.symbol || '').toUpperCase(),
+    c.price,
+    c.change1h,
+    c.change24h,
+    c.change7d,
+    c.volume,
+    c.marketCap
+  ]);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  downloadCsv(`cryptolive-markets-${dateStr}.csv`, toCsv(headers, rows));
 });
 
 function scheduleRefresh() {

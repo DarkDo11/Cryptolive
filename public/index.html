@@ -80,14 +80,17 @@
         <option value="down5" data-i18n="markets.changeDown5">&lt; −5%</option>
       </select>
       <div id="categoryChips" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"></div>
-      <div style="position: relative; margin-left: auto;">
-        <button class="btn btn-ghost" id="columnsBtn" style="padding: 4px 8px; font-size: 0.9rem;"><span data-i18n="markets.columns">Columns</span> ▾</button>
-        <div class="popover" id="columnsPopover" style="display: none;">
+      <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
+        <button class="btn btn-ghost" id="exportCsvBtn" data-i18n="common.exportCsv" style="padding: 4px 8px; font-size: 0.9rem;">Export CSV</button>
+        <div style="position: relative;">
+          <button class="btn btn-ghost" id="columnsBtn" style="padding: 4px 8px; font-size: 0.9rem;"><span data-i18n="markets.columns">Columns</span> ▾</button>
+          <div class="popover" id="columnsPopover" style="display: none;">
           <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="change1h"> <span data-i18n="table.change1h">1h %</span></label>
           <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="change7d"> <span data-i18n="table.change7d">7d %</span></label>
           <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="volume"> <span data-i18n="table.volume">24h Volume</span></label>
           <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="marketCap"> <span data-i18n="table.marketCap">Market Cap</span></label>
           <label style="display: flex; gap: 8px; margin-bottom: 0; cursor: pointer;"><input type="checkbox" value="sparkline"> <span data-i18n="table.sparkline">Last 7 Days</span></label>
+          </div>
         </div>
       </div>
       <button class="btn btn-ghost" id="resetFiltersBtn" style="display: none; padding: 4px 8px; font-size: 0.9rem;" data-i18n="markets.resetFilters">Reset filters</button>
