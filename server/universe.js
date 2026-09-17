@@ -93,6 +93,16 @@ export function similarFromUniverse({ universe, ratio, id, limit = 8 }) {
   return rows.slice(start, end).filter(r => r.id !== id).slice(0, limit).map(r => convertRow(r, ratio));
 }
 
+export function enrichFromUniverse(universe, coinRow) {
+  const row = universe?.byId.get(coinRow.id);
+  return {
+    ...coinRow,
+    price_usd: row?.current_price ?? null,
+    change24h: row?.price_change_percentage_24h ?? null,
+    market_cap_usd: row?.market_cap ?? null
+  };
+}
+
 /**
  * Case-insensitive search over the universe: exact symbol → prefix matches → substring matches,
  * each group ordered by market cap rank. Returns `/search`-shaped coin rows (max `limit`).
@@ -113,7 +123,11 @@ export function searchUniverse(universe, query, limit = 20) {
     .filter(x => x.s >= 0)
     .sort((a, b) => a.s - b.s || (a.r.market_cap_rank ?? 1e9) - (b.r.market_cap_rank ?? 1e9))
     .slice(0, limit)
-    .map(({ r }) => ({ id: r.id, name: r.name, symbol: r.symbol, thumb: r.image, rank: r.market_cap_rank ?? null }));
+    .map(({ r }) => {
+      const coin = { id: r.id, name: r.name, symbol: r.symbol, thumb: r.image, rank: r.market_cap_rank ?? null };
+      if (r.current_price === undefined && r.price_change_percentage_24h === undefined && r.market_cap === undefined) return coin;
+      return enrichFromUniverse(universe, coin);
+    });
 }
 
 /**

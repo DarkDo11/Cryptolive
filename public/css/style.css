@@ -1419,3 +1419,10 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 
 .chip-link { text-decoration: none; cursor: pointer; }
 .chip-link:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Search palette: price/change meta */
+.search-meta { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.search-price { font-weight: 600; }
+.search-rank { color: var(--muted); font-size: 0.8rem; }
+.search-meta .change-badge { font-size: 0.78rem; }
+@media (max-width: 560px) { .search-meta .change-badge { display: none; } }

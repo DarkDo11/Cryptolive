@@ -26,8 +26,21 @@ globalThis.fetch = async (url) => {
       tickers: [{ base: 'BTC', target: 'USDT', coin_id: 'bitcoin', converted_last: { usd: 1 }, converted_volume: { usd: 2 }, trust_score: 'green', bid_ask_spread_percentage: 0.1, trade_url: 'u' }]
     }), { status: 200 });
   }
-  if (url.includes('/search?query=')) {
+  if (url.includes('/search?query=coin%2012')) {
     return new Response(JSON.stringify({ error: 'rate limited' }), { status: 429, headers: { 'Retry-After': '30' } });
+  }
+  if (url.includes('/search?query=seven')) {
+    return new Response(JSON.stringify({
+      coins: [
+        { id: 'coin7', name: 'Coin 7', symbol: 's7', thumb: 't7', market_cap_rank: 7 },
+        { id: 'unknown-coin', name: 'Unknown', symbol: 'unk', thumb: 't', market_cap_rank: null }
+      ],
+      categories: [],
+      exchanges: []
+    }), { status: 200 });
+  }
+  if (url.includes('/search?query=')) {
+    return new Response(JSON.stringify({ coins: [], categories: [], exchanges: [] }), { status: 200 });
   }
   if (url.includes('/fng/')) {
     return new Response(JSON.stringify({
@@ -107,6 +120,18 @@ test('routes: /api/exchange/:id shapes the payload and validates ids', async () 
   await assert.rejects(handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/exchange/binance/volume?days=3'), { cache }), (e) => e.status === 400);
 });
 
+test('routes: /api/search enriches upstream coins from the universe', async () => {
+  const cache = new TtlCache();
+  await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/coin/coin1/similar'), { cache });
+  const res = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/search?q=seven'), { cache });
+  assert.strictEqual(res.status, 200);
+  const body = JSON.parse(res.body);
+  assert.strictEqual(body.coins[0].price_usd, 7);
+  assert.ok(Object.hasOwn(body.coins[0], 'change24h'));
+  assert.strictEqual(body.coins[0].market_cap_usd, 993);
+  assert.strictEqual(body.coins[1].price_usd, null);
+});
+
 test('routes: /api/search falls back to the universe when upstream is rate limited', async () => {
   const cache = new TtlCache();
   // Warm the universe first (as the server does at boot); the 429 then only affects /search.
@@ -117,4 +142,5 @@ test('routes: /api/search falls back to the universe when upstream is rate limit
   const body = JSON.parse(res.body);
   assert.strictEqual(body.partial, true);
   assert.strictEqual(body.coins[0].id, 'coin12');
+  assert.strictEqual(body.coins[0].price_usd, 12);
 });

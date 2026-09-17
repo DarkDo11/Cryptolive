@@ -2,6 +2,7 @@ import { settings, watchlist } from './store.js';
 import { api } from './api.js';
 import { live } from './live.js';
 import { fmtCurrency, fmtCompact, fmtNumber, escapeHtml, fmtPercent } from './format.js';
+import { changeBadge } from './components.js';
 import { startAlertEngine, alerts } from './alerts.js';
 import { t, getLang, setLang, LANGS, applyTranslations, fngLabel } from './i18n.js';
 
@@ -288,6 +289,8 @@ async function populateCurrencies(selectEl) {
       }
   
       try {
+        const searchCur = settings.get().currency || 'usd';
+        const searchFx = await api.fxRatio().catch(() => 1);
         const res = await api.search(q);
         const sCoins = (res.coins || []).slice(0, 8).map(c => ({...c, url: `/coin/${c.id}`, isCoin: true}));
         const sCats = (res.categories || []).slice(0, 4).map(c => ({...c, url: `/categories?c=${c.id}`}));
@@ -299,7 +302,11 @@ async function populateCurrencies(selectEl) {
               <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
               <span>${escapeHtml(m.name)}</span>
               <span class="chip">${escapeHtml(m.symbol)}</span>
-              <span style="margin-left:auto; color:var(--muted)">#${m.rank || '-'}</span>
+              <span class="search-meta">
+                ${typeof m.price_usd === 'number' ? `<span class="search-price">${fmtCurrency(m.price_usd * searchFx, searchCur)}</span>` : ''}
+                ${typeof m.change24h === 'number' ? changeBadge(m.change24h) : ''}
+                <span class="search-rank">#${m.rank || '-'}</span>
+              </span>
             </a>
           `],
           [t('search.categories'), sCats, (m, i) => `

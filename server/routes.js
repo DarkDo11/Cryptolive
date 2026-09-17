@@ -1,5 +1,5 @@
 import { COINGECKO_BASE, fetchUpstream, badRequest, cacheKey } from './upstream.js';
-import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, searchUniverse, coinFromUniverse, VS_CURRENCIES } from './universe.js';
+import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, searchUniverse, coinFromUniverse, enrichFromUniverse, VS_CURRENCIES } from './universe.js';
 
 const FNG_BASE = process.env.UPSTREAM_FNG || 'https://api.alternative.me/fng/';
 
@@ -233,8 +233,9 @@ export async function handleApi(req, res, url, ctx) {
       const uni = await getUniverse(ctx);
       return { coins: searchUniverse(uni, q), categories: [], exchanges: [], partial: true };
     };
+    const uni = await getUniverse(ctx).catch(() => null);
     transform = (data) => ({
-      coins: (data.coins || []).slice(0, 20).map(c => ({
+      coins: (data.coins || []).slice(0, 20).map(c => enrichFromUniverse(uni, {
         id: c.id,
         name: c.name,
         symbol: c.symbol,

@@ -88,7 +88,7 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/coin/:id/chart` | `vs`, `days` (1, 7, 30, 90, 365, max) | 120s (1d) / 900s | Historical price, market cap, and volume series |
 | `GET /api/coin/:id/ohlc` | `vs`, `days` (1, 7, 14, 30, 90, 180, 365) | 300s | OHLC candlestick data |
 | `GET /api/coin/:id/tickers` | `page` | 300s | Exchange trading pairs, volumes, trust scores, and trade URLs |
-| `GET /api/search` | `q` | 600s | Multi-category search (coins, categories, exchanges) |
+| `GET /api/search` | `q` | 600s | Multi-category search (coins, categories, exchanges); coins are enriched with `price_usd`, `change24h`, `market_cap_usd` from the universe |
 | `GET /api/categories` | — | 600s | Cryptocurrency category market caps and 24h performance |
 | `GET /api/exchanges` | `page`, `per_page` | 600s | Exchange list with trust scores and 24h trading volume |
 | `GET /api/exchange/:id` | — | 600s | Exchange profile (trust, volume, links, description) and top 100 tickers |
