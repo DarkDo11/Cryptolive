@@ -120,7 +120,8 @@ function renderHeader(data, md, cur) {
 
   const isStar = watchlist.has(data.id);
   
-  let catsHtml = (data.categories || []).slice(0, 3).map(c => `<span class="chip">${escapeHtml(c)}</span>`).join('');
+  let catsHtml = (data.categories || []).slice(0, 3).map(c => `<span class="chip" data-category-name="${escapeHtml(c)}">${escapeHtml(c)}</span>`).join('');
+  linkCategoryChips();
   
   const headerHtml = `
     <div class="card-body" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px;">
@@ -204,6 +205,26 @@ function renderHeader(data, md, cur) {
 }
 
 // Shows/hides the "degraded data" banner and the cards that need the full upstream payload.
+// Coin payloads carry category names only; resolve them to ids via the categories list so chips link.
+let categoryIdsByName = null;
+async function linkCategoryChips() {
+  try {
+    if (!categoryIdsByName) {
+      const list = await api.categories();
+      categoryIdsByName = new Map((list || []).map(c => [String(c.name).toLowerCase(), c.id]));
+    }
+  } catch { return; }
+  qsa('#coinHeader .chip[data-category-name]').forEach(chip => {
+    const id = categoryIdsByName.get(chip.dataset.categoryName.toLowerCase());
+    if (!id) return;
+    const a = document.createElement('a');
+    a.className = 'chip chip-link';
+    a.href = `/categories?c=${encodeURIComponent(id)}`;
+    a.textContent = chip.textContent;
+    chip.replaceWith(a);
+  });
+}
+
 function renderPartialNotice(isPartial) {
   let banner = qs('#partialNotice');
   if (!banner) {

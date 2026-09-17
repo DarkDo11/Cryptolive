@@ -1416,3 +1416,6 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 /* Coin page: position card P&L colouring */
 #positionPnl.is-up { color: var(--green); }
 #positionPnl.is-down { color: var(--red); }
+
+.chip-link { text-decoration: none; cursor: pointer; }
+.chip-link:hover { border-color: var(--blue); color: var(--blue); }
