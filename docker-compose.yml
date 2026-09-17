@@ -8,6 +8,7 @@ services:
       - COINGECKO_API_KEY=${COINGECKO_API_KEY:-}
       - PUBLIC_URL=${PUBLIC_URL:-http://localhost:8080}
       - API_RATE_LIMIT=${API_RATE_LIMIT:-120}
+      - ENABLE_HSTS=${ENABLE_HSTS:-}
     volumes:
       - cryptolive-cache:/app/.cache
 

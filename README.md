@@ -66,6 +66,7 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `UPSTREAM_FNG` | `https://api.alternative.me/fng/` | Upstream Fear & Greed index API base URL |
 | `LOG_LEVEL` | `info` | Server logging level (`info`, `debug`, `silent`) |
 | `API_RATE_LIMIT` | `120` | Per-IP limit for `/api` requests per minute |
+| `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |
 | `CACHE_FILE` | `.cache/cache.json` | On-disk cache snapshot file path (empty disables) |
 | `PUBLIC_URL` | `http://localhost:8080` | Base URL used in `/sitemap.xml` |
 

@@ -93,12 +93,18 @@ const STATIC_ROUTES = {
   '/status': '/status.html'
 };
 
-const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'";
+const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+// HSTS is only meaningful behind TLS; enable it explicitly when the service is served over https.
+const HSTS = process.env.ENABLE_HSTS === '1' || process.env.ENABLE_HSTS === 'true';
 
 function setSecurityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Content-Security-Policy', CSP);
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (HSTS) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 }
 
 const startTime = Date.now();
