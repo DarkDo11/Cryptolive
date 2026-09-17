@@ -2,7 +2,7 @@ import { initLayout, setTitle, qs, qsa, toast } from '../layout.js';
 import { settings } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { alerts, openAlertModal, requestNotificationPermission } from '../alerts.js';
+import { alerts, openAlertModal, requestNotificationPermission, describeCondition, describeTarget } from '../alerts.js';
 import { fmtCurrency, fmtDateTime, timeAgo, escapeHtml, fmtPercent } from '../format.js';
 import { emptyState } from '../components.js';
 import { t } from '../i18n.js';
@@ -55,9 +55,17 @@ async function load() {
     activeAlerts.forEach(a => {
       const priceUsd = prices[a.coinId] && prices[a.coinId][cur] ? prices[a.coinId][cur] / fx : 0;
       const currentPrice = priceUsd * fx;
-      const targetPrice = a.price * fx;
-      const dist = currentPrice > 0 ? (targetPrice - currentPrice) / currentPrice : 0;
+      const targetPrice = a.price ? a.price * fx : 0;
+      const dist = (currentPrice > 0 && targetPrice > 0) ? (targetPrice - currentPrice) / currentPrice : 0;
+      const isUp = a.condition === 'above' || a.condition === 'change_up';
+      const isChange = a.condition === 'change_up' || a.condition === 'change_down';
+      const targetStr = describeTarget(a, cur, fx);
+      const change24h = prices[a.coinId] && prices[a.coinId][cur + '_24h_change'];
       
+      const distCell = isChange
+        ? `<td>${typeof change24h === 'number' ? fmtPercent(change24h) : '—'}</td>`
+        : `<td data-alert-dist="${escapeHtml(a.id)}" data-target-price="${a.price}">${currentPrice > 0 ? fmtPercent(dist * 100) : '—'}</td>`;
+
       tbody += `
         <tr>
           <td>
@@ -71,11 +79,11 @@ async function load() {
             ${a.note ? `<div style="font-size:0.8rem; color:var(--muted); margin-top:4px">${escapeHtml(a.note)}</div>` : ''}
           </td>
           <td>
-            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(String(a.condition || "").toUpperCase())}</span>
+            <span class="chip ${isUp ? 'is-up' : 'is-down'}">${escapeHtml(describeCondition(a).toUpperCase())}</span>
           </td>
-          <td>${fmtCurrency(targetPrice, cur)}</td>
+          <td>${escapeHtml(targetStr)}</td>
           <td class="price-cell" data-live-price="${escapeHtml(a.coinId)}" data-price-usd="${priceUsd}">${currentPrice > 0 ? fmtCurrency(currentPrice, cur) : '—'}</td>
-          <td data-alert-dist="${escapeHtml(a.id)}" data-target-price="${a.price}">${currentPrice > 0 ? fmtPercent(dist * 100) : '—'}</td>
+          ${distCell}
           <td style="color:var(--muted)">${timeAgo(a.createdAt)}</td>
           <td style="text-align:right">
             <button class="btn btn-ghost btn-sm action-delete" data-id="${escapeHtml(a.id)}" style="color:var(--red)">${t('js.delete')}</button>
@@ -111,8 +119,10 @@ async function load() {
     triggeredCard.style.display = 'block';
     let tbody = '';
     triggeredAlerts.forEach(a => {
-      const targetPrice = a.price * fx;
+      const targetStr = describeTarget(a, cur, fx);
       const triggeredPrice = a.triggeredPrice * fx;
+      const isUp = a.condition === 'above' || a.condition === 'change_up';
+      const isChange = a.condition === 'change_up' || a.condition === 'change_down';
       
       tbody += `
         <tr>
@@ -127,11 +137,11 @@ async function load() {
             ${a.note ? `<div style="font-size:0.8rem; color:var(--muted); margin-top:4px">${escapeHtml(a.note)}</div>` : ''}
           </td>
           <td>
-            <span class="chip ${a.condition === 'above' ? 'is-up' : 'is-down'}">${escapeHtml(String(a.condition || "").toUpperCase())}</span>
+            <span class="chip ${isUp ? 'is-up' : 'is-down'}">${escapeHtml(describeCondition(a).toUpperCase())}</span>
           </td>
-          <td>${fmtCurrency(targetPrice, cur)}</td>
+          <td>${escapeHtml(targetStr)}</td>
           <td>${fmtDateTime(a.triggeredAt)}</td>
-          <td>${fmtCurrency(triggeredPrice, cur)}</td>
+          <td>${isChange && typeof a.triggeredChange === 'number' ? fmtPercent(a.triggeredChange) : fmtCurrency(triggeredPrice, cur)}</td>
           <td style="text-align:right">
             <div style="display:flex; justify-content:flex-end; gap:8px">
               <button class="btn btn-ghost btn-sm action-rearm" data-id="${escapeHtml(a.id)}">${t('js.re_arm')}</button>
@@ -166,6 +176,7 @@ function updateDistances(tick) {
   const container = qs('#activeAlertsContainer');
   if (!container || !tick || !tick.prices) return;
   qsa('[data-alert-dist]', container).forEach(el => {
+    if (!el.dataset.targetPrice || el.dataset.targetPrice === 'undefined' || el.dataset.targetPrice === 'null') return;
     const id = el.dataset.alertDist;
     const targetPriceUsd = Number(el.dataset.targetPrice);
     const row = el.closest('tr');

@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { live } from './live.js';
 import { settings } from './store.js';
-import { fmtCurrency, escapeHtml } from './format.js';
+import { fmtCurrency, escapeHtml, fmtPercent } from './format.js';
 import { t } from './i18n.js';
 
 // Local helpers
@@ -76,16 +76,31 @@ export function startAlertEngine({ notify }) {
       const priceInfo = pricesObj[alert.coinId];
       if (!priceInfo) return;
       
-      const p = priceInfo.p || priceInfo.usd; // fallback for simplePrice vs live
-      if (!p) return;
+      const p = priceInfo.p ?? priceInfo.usd;
+      const c = priceInfo.c ?? priceInfo.usd_24h_change;
+      let isMatch = false;
+      let msg = '';
 
-      const isMatch = alert.condition === 'above' ? p >= alert.price : p <= alert.price;
+      if (alert.condition === 'above' || alert.condition === 'below') {
+        if (!Number.isFinite(p)) return;
+        isMatch = alert.condition === 'above' ? p >= alert.price : p <= alert.price;
+        if (isMatch) {
+          msg = `${alert.symbol.toUpperCase()} is ${alert.condition} ${fmtCurrency(alert.price, 'usd')} — now ${fmtCurrency(p, 'usd')}`;
+        }
+      } else if (alert.condition === 'change_up' || alert.condition === 'change_down') {
+        if (!Number.isFinite(c)) return;
+        isMatch = alert.condition === 'change_up' ? c >= alert.percent : c <= -alert.percent;
+        if (isMatch) {
+          msg = `${alert.symbol.toUpperCase()} ${t('js.change_alert_msg', {pct: fmtPercent(c)})}`;
+        }
+      }
+
       if (isMatch) {
         alert.triggeredAt = Date.now();
         alert.triggeredPrice = p;
+        alert.triggeredChange = c;
         changed = true;
         
-        const msg = `${alert.symbol.toUpperCase()} is ${alert.condition} ${fmtCurrency(alert.price, 'usd')} — now ${fmtCurrency(p, 'usd')}`;
         if (engineNotify) engineNotify(msg, 'success');
         
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -122,36 +137,63 @@ export function requestNotificationPermission() {
 let modalActive = false;
 let selectedCoin = null;
 
+let lastPriceValue = '';
+function applyConditionUi(condition) {
+  const lbl = qs('#alertValueLabel');
+  const cur = qs('#alertCurCode');
+  const inp = qs('#alertPrice');
+  const hint = qs('#alertConditionHint');
+  const wasChange = cur.textContent === '%';
+  const isChange = condition === 'change_up' || condition === 'change_down';
+
+  if (isChange) {
+    if (!wasChange) { lastPriceValue = inp.value; inp.value = ''; }
+    lbl.textContent = t('js.change_threshold');
+    cur.textContent = '%';
+    inp.placeholder = '5';
+    hint.textContent = t('js.change_hint');
+  } else {
+    if (wasChange) inp.value = lastPriceValue;
+    lbl.textContent = t('js.target_price');
+    cur.textContent = (settings.get().currency || 'usd').toUpperCase();
+    inp.placeholder = '';
+    hint.textContent = '';
+  }
+}
+
 function buildAlertModal() {
   if (qs('#alertModalBackdrop')) return;
   const html = `
     <div class="modal-backdrop" id="alertModalBackdrop" style="display:none">
       <div class="modal">
         <div class="modal-head">
-          Set Price Alert
+          ${t('js.set_price_alert')}
           <button class="btn btn-ghost btn-sm" id="alertModalClose">×</button>
         </div>
         <div class="modal-body">
           <form id="alertForm" class="modal-form-grid">
             <div class="field full-width autocomplete" id="alertCoinSearchField">
-              <label>Coin</label>
-              <input type="text" class="input" id="alertCoinSearch" placeholder="Search coin..." autocomplete="off">
+              <label>${t('js.coin')}</label>
+              <input type="text" class="input" id="alertCoinSearch" placeholder="${t('js.search_coin')}" autocomplete="off">
               <div class="autocomplete-dropdown" id="alertCoinDropdown" style="display:none"></div>
               <div id="alertSelectedCoin" style="display:none; margin-top:8px;"></div>
             </div>
             
             <div class="field full-width">
-              <label>Condition</label>
+              <label>${t('js.condition')}</label>
               <div class="toggle-group" style="width:100%; display:flex;">
                 <button type="button" class="range-btn is-active" style="flex:1" data-val="above">${t('js.above')}</button>
                 <button type="button" class="range-btn" style="flex:1" data-val="below">${t('js.below')}</button>
+                <button type="button" class="range-btn" style="flex:1" data-val="change_up">${t('js.change_up')}</button>
+                <button type="button" class="range-btn" style="flex:1" data-val="change_down">${t('js.change_down')}</button>
               </div>
               <input type="hidden" id="alertCondition" value="above">
             </div>
 
             <div class="field">
-              <label>Target Price (<span id="alertCurCode">USD</span>)</label>
+              <label><span id="alertValueLabel">${t('js.target_price')}</span> (<span id="alertCurCode">USD</span>)</label>
               <input type="number" class="input" id="alertPrice" step="any" min="0" required>
+              <p class="muted" id="alertConditionHint" style="margin:6px 0 0; font-size:0.8rem; line-height:1.4"></p>
             </div>
             
             <div class="field full-width">
@@ -179,7 +221,9 @@ function buildAlertModal() {
     btn.addEventListener('click', () => {
       qsa('.toggle-group .range-btn', backdrop).forEach(b => b.classList.remove('is-active'));
       btn.classList.add('is-active');
-      qs('#alertCondition').value = btn.dataset.val;
+      const condition = btn.dataset.val;
+      qs('#alertCondition').value = condition;
+      applyConditionUi(condition);
     });
   });
 
@@ -281,6 +325,7 @@ export function openAlertModal(opts = {}) {
   qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
   qs('.toggle-group .range-btn[data-val="above"]').classList.add('is-active');
   qs('#alertCondition').value = 'above';
+  applyConditionUi('above');
   
   selectedCoin = null;
   qs('#alertSelectedCoin').style.display = 'none';
@@ -325,17 +370,28 @@ async function saveAlert(e) {
   }
   
   const condition = qs('#alertCondition').value;
-  const priceCur = Number(qs('#alertPrice').value);
+  const val = Number(qs('#alertPrice').value);
   const note = qs('#alertNote').value.trim();
 
-  if (!priceCur || priceCur <= 0) {
-    errEl.textContent = 'Invalid price';
-    errEl.style.display = 'block';
-    return;
-  }
+  let priceUsd = null;
+  let percent = null;
 
-  const fx = await api.fxRatio();
-  const priceUsd = priceCur / fx;
+  if (condition === 'change_up' || condition === 'change_down') {
+    if (!val || val <= 0 || val > 1000) {
+      errEl.textContent = 'Invalid percentage (must be > 0 and ≤ 1000)';
+      errEl.style.display = 'block';
+      return;
+    }
+    percent = val;
+  } else {
+    if (!val || val <= 0) {
+      errEl.textContent = 'Invalid price';
+      errEl.style.display = 'block';
+      return;
+    }
+    const fx = await api.fxRatio();
+    priceUsd = val / fx;
+  }
 
   alerts.add({
     coinId: selectedCoin.id,
@@ -344,6 +400,7 @@ async function saveAlert(e) {
     image: selectedCoin.image,
     condition,
     price: priceUsd,
+    percent: percent,
     note
   });
 
@@ -353,4 +410,19 @@ async function saveAlert(e) {
   if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
     requestNotificationPermission();
   }
+}
+
+export function describeCondition(alert) {
+  if (alert.condition === 'above') return t('js.above');
+  if (alert.condition === 'below') return t('js.below');
+  if (alert.condition === 'change_up') return t('js.change_up');
+  if (alert.condition === 'change_down') return t('js.change_down');
+  return alert.condition;
+}
+
+export function describeTarget(alert, cur, fx) {
+  if (alert.condition === 'change_up' || alert.condition === 'change_down') {
+    return (alert.condition === 'change_up' ? '+' : '−') + alert.percent + '%';
+  }
+  return fmtCurrency(alert.price * fx, cur);
 }
