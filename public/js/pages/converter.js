@@ -1,13 +1,14 @@
-import { initLayout, setTitle, qs, qsa } from '../layout.js';
+import { initLayout, setTitle, qs, qsa, toast } from '../layout.js';
 import { settings } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { fmtCurrency, escapeHtml, timeAgo } from '../format.js';
+import { fmtCurrency, fmtNumber, escapeHtml, timeAgo } from '../format.js';
 import { changeBadge } from '../components.js';
 import { t } from '../i18n.js';
 
 let fxRates = {}; // fiat code -> usd rate
 let coinsMap = {}; // coinId -> price_usd
+let allFiats = []; // stores fiats array
 let lastUpdate = Date.now();
 let rateInterval;
 
@@ -35,6 +36,11 @@ async function loadData() {
     console.error(e);
     return null;
   }
+}
+
+// toPrecision(8) without trailing zeros: 76000.000 → 76000, 1.5000000 → 1.5
+function trimZeros(n) {
+  return n.toPrecision(8).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
 }
 
 function getUsdValue(assetStr) {
@@ -73,6 +79,8 @@ async function init() {
   const data = await loadData();
   if (!data) return;
 
+  allFiats = data.fiats;
+
   const fromSel = qs('#fromAsset');
   const toSel = qs('#toAsset');
   
@@ -96,17 +104,30 @@ async function init() {
   const params = new URLSearchParams(location.search);
   let urlFrom = params.get('from');
   let urlTo = params.get('to');
-  let urlAmount = params.get('amount') || '1';
-
-  function findOpt(val) {
+  let urlAmount = Number(params.get('amount'));
+  if (isNaN(urlAmount) || urlAmount <= 0 || !isFinite(urlAmount)) {
+    urlAmount = 1;
+  }
+  
+  const isValidAsset = (val) => {
+    if (!val) return false;
+    const [type, id] = val.split(':');
+    if (type === 'fiat') return data.fiats.some(f => f.code === id);
+    if (type === 'coin') return data.markets.some(m => m.id === id);
+    return false;
+  };
+  
+  // Accept both `coin:bitcoin` and the older bare-id form (`bitcoin`, `usd`).
+  const normalizeAsset = (val) => {
     if (!val) return null;
+    if (val.includes(':')) return isValidAsset(val) ? val : null;
     if (data.fiats.some(f => f.code === val)) return `fiat:${val}`;
     if (data.markets.some(m => m.id === val)) return `coin:${val}`;
     return null;
-  }
-  
-  fromSel.value = findOpt(urlFrom) || 'coin:bitcoin';
-  toSel.value = findOpt(urlTo) || 'fiat:usd';
+  };
+  fromSel.value = normalizeAsset(urlFrom) || 'coin:bitcoin';
+  toSel.value = normalizeAsset(urlTo) || 'fiat:usd';
+
   qs('#fromAmount').value = urlAmount;
 
   function recompute(focus = 'from') {
@@ -117,21 +138,17 @@ async function init() {
     
     if (focus === 'from') {
       const res = convert(amtFrom, fStr, tStr);
-      qs('#toAmount').value = res ? res.toPrecision(8).replace(/\\.?0+$/, '') : '';
+      qs('#toAmount').value = res ? trimZeros(res) : '';
     } else {
       const res = convert(amtTo, tStr, fStr);
-      qs('#fromAmount').value = res ? res.toPrecision(8).replace(/\\.?0+$/, '') : '';
+      qs('#fromAmount').value = res ? trimZeros(res) : '';
     }
     
-    const fId = fStr.split(':')[1];
-    const tId = tStr.split(':')[1];
-    const newUrl = new URL(location);
-    newUrl.searchParams.set('from', fId);
-    newUrl.searchParams.set('to', tId);
-    newUrl.searchParams.set('amount', qs('#fromAmount').value);
+    const newUrl = `?from=${encodeURIComponent(fStr)}&to=${encodeURIComponent(tStr)}&amount=${encodeURIComponent(qs('#fromAmount').value)}`;
     history.replaceState(null, '', newUrl);
 
     updateRateLine();
+    renderRates();
   }
 
   function updateRateLine() {
@@ -139,6 +156,25 @@ async function init() {
     const tStr = toSel.value;
     const rate = convert(1, fStr, tStr);
     qs('#rateLine').innerHTML = `1 ${escapeHtml(getLabel(fStr))} = ${rate > 100 ? rate.toLocaleString(undefined,{maximumFractionDigits:2}) : rate.toPrecision(6)} ${escapeHtml(getLabel(tStr))} &middot; updated ${timeAgo(lastUpdate)}`;
+  }
+
+  function renderRates() {
+    const amtStr = qs('#fromAmount').value;
+    let amount = Number(amtStr);
+    if (isNaN(amount) || amount <= 0 || !isFinite(amount)) amount = 1;
+    const fStr = fromSel.value;
+    const title = t('converter.ratesTitle', { asset: `${amount} ${getLabel(fStr)}` });
+    qs('#ratesTitle').textContent = title;
+    
+    let html = `<div class="table-frame"><table class="data-table is-plain"><tbody>`;
+    allFiats.forEach(f => {
+      const toStr = 'fiat:' + f.code;
+      if (fStr === toStr) return;
+      const formatted = fmtCurrency(convert(amount, fStr, toStr), f.code);
+      html += `<tr data-to="${toStr}" style="cursor:pointer"><td style="text-align:left"><strong>${f.code.toUpperCase()}</strong> <span class="muted small">${escapeHtml(f.name)}</span></td><td>${formatted}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    qs('#ratesTable').innerHTML = html;
   }
 
   recompute('from');
@@ -167,6 +203,27 @@ async function init() {
       }
       recompute('from');
     });
+  });
+
+  qs('#copyLinkBtn').addEventListener('click', () => {
+    const url = location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        toast(t('converter.linkCopied'), { type: 'success' });
+      }).catch(() => {
+        prompt('', url);
+      });
+    } else {
+      prompt('', url);
+    }
+  });
+
+  qs('#ratesTable').addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-to]');
+    if (tr) {
+      toSel.value = tr.dataset.to;
+      recompute('from');
+    }
   });
 
   rateInterval = setInterval(updateRateLine, 10000);

@@ -1,4 +1,21 @@
+import crypto from 'node:crypto';
 import zlib from 'node:zlib';
+
+export function weakEtag(body) {
+  const length = Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body);
+  const hash = crypto.createHash('sha1').update(body).digest('hex').slice(0, 16);
+  return `W/"${length}-${hash}"`;
+}
+
+export function etagMatches(ifNoneMatchHeader, etag) {
+  if (!ifNoneMatchHeader) return false;
+  const stripWeak = (value) => value.trim().replace(/^W\//i, '');
+  const target = stripWeak(etag);
+  return String(ifNoneMatchHeader).split(',').some((value) => {
+    const candidate = value.trim();
+    return candidate === '*' || stripWeak(candidate) === target;
+  });
+}
 
 function isCompressible(contentType) {
   if (!contentType) return false;

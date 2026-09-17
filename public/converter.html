@@ -40,15 +40,21 @@
       </div>
       <div style="margin-top: 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
         <div style="color:var(--muted); font-size:0.9rem;" id="rateLine" data-i18n="converter.loading">Loading rates...</div>
-        <div style="display:flex; gap:8px;" id="quickPicks">
+        <div style="display:flex; gap:8px; align-items:center;" id="quickPicks">
           <button class="chip" data-pick="coin:bitcoin" style="cursor:pointer">BTC</button>
           <button class="chip" data-pick="coin:ethereum" style="cursor:pointer">ETH</button>
           <button class="chip" data-pick="coin:solana" style="cursor:pointer">SOL</button>
           <button class="chip" data-pick="fiat:usd" style="cursor:pointer">USD</button>
           <button class="chip" data-pick="fiat:eur" style="cursor:pointer">EUR</button>
           <button class="chip" data-pick="fiat:rub" style="cursor:pointer">RUB</button>
+          <button class="btn btn-ghost btn-sm" id="copyLinkBtn" data-i18n="converter.copyLink">Copy link</button>
         </div>
       </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-head" id="ratesTitle"></div>
+      <div id="ratesTable"></div>
     </div>
 
     <div class="card">

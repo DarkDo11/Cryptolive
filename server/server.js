@@ -6,7 +6,7 @@ import { TtlCache } from './cache.js';
 import { handleApi } from './routes.js';
 import { createLive } from './live.js';
 import { getUniverse, getFx } from './universe.js';
-import { send } from './compress.js';
+import { send, weakEtag, etagMatches } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
 import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
@@ -191,6 +191,21 @@ const server = http.createServer(async (req, res) => {
         const result = await handleApi(req, res, url, { cache });
         statusCode = result.status;
         cacheStatus = result.cache;
+        if (result.status === 200 &&
+            ((typeof result.body === 'string' && result.body.length > 0) ||
+             (Buffer.isBuffer(result.body) && result.body.length > 0))) {
+          const etag = weakEtag(result.body);
+          result.headers = { ...result.headers, 'ETag': etag };
+          if (etagMatches(req.headers['if-none-match'], etag)) {
+            statusCode = 304;
+            send(req, res, 304, {
+              'ETag': etag,
+              'Cache-Control': result.headers['Cache-Control'] || 'no-cache',
+              'X-Cache': result.headers['X-Cache'] || result.cache || ''
+            }, '');
+            return;
+          }
+        }
         send(req, res, result.status, result.headers, result.body);
       } catch (err) {
         statusCode = err.status || 500;

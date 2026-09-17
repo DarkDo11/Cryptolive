@@ -1,7 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import zlib from 'node:zlib';
-import { send } from '../server/compress.js';
+import { send, weakEtag, etagMatches } from '../server/compress.js';
+
+test('weakEtag: deterministic weak tag based on body', () => {
+  const etag = weakEtag('hello');
+
+  assert.strictEqual(weakEtag('hello'), etag);
+  assert.notStrictEqual(weakEtag('world'), etag);
+  assert.match(etag, /^W\/"\d+-[0-9a-f]{16}"$/);
+  assert.strictEqual(weakEtag(Buffer.from('hello')), etag);
+});
+
+test('etagMatches: matches weak and strong tags and lists', () => {
+  assert.strictEqual(etagMatches('W/"abc"', 'W/"abc"'), true);
+  assert.strictEqual(etagMatches('"abc"', 'W/"abc"'), true);
+  assert.strictEqual(etagMatches('W/"abc"', '"abc"'), true);
+  assert.strictEqual(etagMatches('"x", W/"abc"', '"abc"'), true);
+  assert.strictEqual(etagMatches('*', 'W/"abc"'), true);
+  assert.strictEqual(etagMatches('"x"', 'W/"abc"'), false);
+  assert.strictEqual(etagMatches('', 'W/"abc"'), false);
+  assert.strictEqual(etagMatches(undefined, 'W/"abc"'), false);
+});
 
 test('compress: gzip when accepted and body large', () => {
   let writtenCode, writtenHeaders, writtenBody;
