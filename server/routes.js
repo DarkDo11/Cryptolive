@@ -402,7 +402,8 @@ export async function handleApi(req, res, url, ctx) {
     value = degraded;
     cacheStatus = 'fallback';
   }
-  const finalValue = transform(value);
+  // Fallback payloads are already in the public shape; transforms only apply to raw upstream data.
+  const finalValue = cacheStatus === 'fallback' ? value : transform(value);
   
   return {
     status: 200,
