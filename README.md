@@ -125,6 +125,7 @@ literals, and i18n keys: RU/EN parity plus every `t('…')` / `data-i18n` key mu
 - Response compression (gzip when accepted, passthrough for small bodies)
 - Server-side coin page SEO decoration (`decorateCoinPage`)
 - API routes with a stubbed `fetch`: `/api/currencies`, parameter validation (400), Fear & Greed mapping, `/api/coin/:id/similar`, `/api/exchange/:id` (+ volume), `/api/search` universe fallback under 429
+- HTTP integration tests (`test/app.test.js`): static routing, clean URLs, 404, coin page SEO tags, `/healthz`, API ETag/304, universe-served markets, validation errors, sitemap, per-IP rate limit, 405, static caching, path traversal
 
 ## Project Layout
 
@@ -155,7 +156,8 @@ Cryptolive/
 │   ├── sw.js               # Service worker (app-shell cache, same-origin only)
 │   └── js/                 # Vanilla ES modules (api, store, format, live, layout, alerts, i18n + i18n/{en,ru}.js, pages/)
 ├── server/                 # Node.js backend (Node >= 22)
-│   ├── server.js           # HTTP server, clean URLs, static serving, healthz
+│   ├── server.js           # Process entrypoint, cache persistence, warmups, shutdown
+│   ├── app.js              # request handler factory (createApp) — used by server.js and the integration tests
 │   ├── cache.js            # In-memory TTL cache with coalescing & stale fallback
 │   ├── routes.js           # API route table and query parameter validation
 │   ├── universe.js         # Top 500 universe cache & currency conversions
