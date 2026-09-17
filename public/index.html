@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Cryptocurrency Prices, Charts and Market Cap · Cryptolive</title>
+  <meta name="description" content="Cryptocurrency prices, charts and market capitalization">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/markets.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <section class="hero">
+      <h1 data-i18n="markets.title">Cryptocurrency Prices by Market Cap</h1>
+      <p class="hero-sub" id="heroSub">Loading global market data…</p>
+    </section>
+
+    <section class="grid-3 highlights" id="highlights">
+      <div class="card">
+        <div class="card-head" data-i18n="markets.trending">Trending</div>
+        <div class="card-body highlight-list" id="trendingList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span data-i18n="markets.topGainers">Top Gainers 24h</span> <a href="/gainers-losers" class="btn btn-ghost btn-sm" style="margin-left: auto;" data-i18n="common.viewMore">View more</a></div>
+        <div class="card-body highlight-list" id="gainersList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span data-i18n="markets.topLosers">Top Losers 24h</span> <a href="/gainers-losers" class="btn btn-ghost btn-sm" style="margin-left: auto;" data-i18n="common.viewMore">View more</a></div>
+        <div class="card-body highlight-list" id="losersList"></div>
+      </div>
+    </section>
+
+    <div class="toolbar" style="display: flex; gap: 8px; margin-bottom: 16px; margin-top: 24px; align-items: center; flex-wrap: wrap;">
+      <div class="tabs" style="margin-bottom: 0; border-bottom: none; gap: 16px;">
+        <button class="tab is-active" data-tab="all" style="background:none;border-width:0 0 2px 0;font:inherit;" data-i18n="markets.all">All</button>
+        <button class="tab" data-tab="watchlist" style="background:none;border-width:0 0 2px 0;font:inherit;" data-i18n="markets.watchlist">Watchlist</button>
+        <button class="tab" data-tab="gainers" style="background:none;border-width:0 0 2px 0;font:inherit;" data-i18n="markets.gainers">Gainers</button>
+        <button class="tab" data-tab="losers" style="background:none;border-width:0 0 2px 0;font:inherit;" data-i18n="markets.losers">Losers</button>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <input type="text" class="input" id="tableSearch" placeholder="Filter by name or symbol" data-i18n-placeholder="markets.searchPlaceholder" style="width: 250px;">
+      <select class="select" id="perPage" style="width: auto;">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="250">250</option>
+      </select>
+      <button class="btn btn-ghost" id="toggleHighlights" data-i18n="markets.hideHighlights">Hide highlights</button>
+      <span id="updatedAt" style="font-size: 0.8rem; color: var(--muted); margin-left: 8px;"></span>
+      <span class="filter-summary" id="filterSummary" style="font-size: 0.8rem; color: var(--muted); margin-left: 8px; display: none;"></span>
+    </div>
+
+    <div class="filters" id="marketFilters">
+      <select class="select" id="mcapFilter" style="width: auto; padding: 4px 8px; font-size: 0.9rem;">
+        <option value="all" data-i18n="markets.mcapAll">Market Cap: All</option>
+        <option value="large" data-i18n="markets.mcapLarge">Large (&gt; $10B)</option>
+        <option value="mid" data-i18n="markets.mcapMid">Mid ($1B–$10B)</option>
+        <option value="small" data-i18n="markets.mcapSmall">Small ($100M–$1B)</option>
+        <option value="micro" data-i18n="markets.mcapMicro">Micro (&lt; $100M)</option>
+      </select>
+      <select class="select" id="changeFilter" style="width: auto; padding: 4px 8px; font-size: 0.9rem;">
+        <option value="all" data-i18n="markets.changeAny">24h Change: Any</option>
+        <option value="up" data-i18n="markets.changeUp">Up</option>
+        <option value="down" data-i18n="markets.changeDown">Down</option>
+        <option value="up5" data-i18n="markets.changeUp5">&gt; +5%</option>
+        <option value="down5" data-i18n="markets.changeDown5">&lt; −5%</option>
+      </select>
+      <div id="categoryChips" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"></div>
+      <div style="position: relative; margin-left: auto;">
+        <button class="btn btn-ghost" id="columnsBtn" style="padding: 4px 8px; font-size: 0.9rem;"><span data-i18n="markets.columns">Columns</span> ▾</button>
+        <div class="popover" id="columnsPopover" style="display: none;">
+          <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="change1h"> <span data-i18n="table.change1h">1h %</span></label>
+          <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="change7d"> <span data-i18n="table.change7d">7d %</span></label>
+          <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="volume"> <span data-i18n="table.volume">24h Volume</span></label>
+          <label style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;"><input type="checkbox" value="marketCap"> <span data-i18n="table.marketCap">Market Cap</span></label>
+          <label style="display: flex; gap: 8px; margin-bottom: 0; cursor: pointer;"><input type="checkbox" value="sparkline"> <span data-i18n="table.sparkline">Last 7 Days</span></label>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="resetFiltersBtn" style="display: none; padding: 4px 8px; font-size: 0.9rem;" data-i18n="markets.resetFilters">Reset filters</button>
+    </div>
+
+    <div id="marketsTable"></div>
+    <div id="marketsPagination"></div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

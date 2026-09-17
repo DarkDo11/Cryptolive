@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Cryptocurrency Categories · Cryptolive</title>
+  <meta name="description" content="Browse cryptocurrency categories and sectors">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/categories.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div id="catListView">
+      <div class="hero" style="margin-bottom: 24px;">
+        <h1 data-i18n="categories.title">Cryptocurrency Categories</h1>
+      </div>
+      
+      <div class="toolbar" style="margin-bottom: 16px;">
+        <input type="text" class="input" id="catSearch" placeholder="Search categories..." autocomplete="off">
+      </div>
+      
+      <div id="catTable"></div>
+    </div>
+    
+    <section id="catDetail" class="card" hidden>
+      <div class="card-head" style="display: flex; align-items: center; gap: 16px;">
+        <button class="btn btn-ghost btn-sm" id="catBackBtn" data-i18n="categories.back">&larr; Back to all categories</button>
+        <h3 id="catDetailTitle" style="margin: 0;"></h3>
+      </div>
+      <div class="card-body" id="catCoins" style="padding: 0;"></div>
+    </section>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Settings · Cryptolive</title>
+  <meta name="description" content="Manage your Cryptolive settings and data">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/settings.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div style="max-width: 600px; margin: 0 auto;">
+      <h1 style="margin-bottom: 24px;" data-i18n="nav.settings">Settings</h1>
+      
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-head" data-i18n="settings.appearance">Appearance</div>
+        <div class="card-body">
+          <div class="field">
+            <label data-i18n="settings.theme">Theme</label>
+            <div class="toggle-group" style="display:flex; gap:8px;" id="themeRadios">
+              <label style="display:flex; align-items:center; gap:6px;"><input type="radio" name="theme" value="dark" data-i18n="settings.dark"> Dark</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="radio" name="theme" value="light" data-i18n="settings.light"> Light</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="radio" name="theme" value="system" data-i18n="settings.system"> System</label>
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="settings.currency">Currency</label>
+            <select class="select" id="settingsCurrency"></select>
+          </div>
+          <div class="field">
+            <label data-i18n="settings.perPage">Rows per page</label>
+            <select class="select" id="settingsPerPage">
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+            </select>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" id="settingsHideHighlights" data-i18n="settings.showHighlights"> Show highlights on Markets
+            </label>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" id="settingsReduceFlash" data-i18n="settings.reduceFlash"> Reduce live price flashes
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-head" data-i18n="settings.notifications">Notifications</div>
+        <div class="card-body" id="notificationsSection">
+          <p style="margin-top:0;" data-i18n="settings.status">Status: <strong id="notifStatus">checking...</strong></p>
+          <button class="btn btn-primary" id="enableNotifBtn" style="display:none;" data-i18n="settings.enableNotifications">Enable Notifications</button>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0;" id="notifHint"></p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-head" data-i18n="settings.yourData">Your data</div>
+        <div class="card-body">
+          <ul style="list-style:none; padding:0; margin:0 0 16px 0; font-size:0.9rem;">
+            <li style="margin-bottom:8px;" data-i18n="settings.watchlistCoins">Watchlist coins: <strong id="dataCountWatchlist">0</strong></li>
+            <li style="margin-bottom:8px;" data-i18n="settings.portfolioTx">Portfolio transactions: <strong id="dataCountPortfolio">0</strong></li>
+            <li style="margin-bottom:8px;" data-i18n="settings.alertsCount">Alerts: <strong id="dataCountAlerts">0</strong></li>
+          </ul>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+            <button class="btn btn-ghost" id="exportDataBtn" data-i18n="settings.exportAll">Export all (JSON)</button>
+            <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:8px 16px; border-radius:var(--radius); border:1px solid transparent;" data-i18n="settings.importBackup">
+              Import backup
+              <input type="file" id="importDataBtn" accept=".json" style="display:none;">
+            </label>
+          </div>
+          <button class="btn btn-danger" id="clearDataBtn" data-i18n="settings.clearAll">Clear all local data</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-head" data-i18n="settings.about">About</div>
+        <div class="card-body">
+          <p style="margin-top:0;">Cryptolive <strong id="appVersion">v2.x</strong></p>
+          <p style="font-size:0.9rem; color:var(--muted);" data-i18n="settings.sources">Data sources: CoinGecko, alternative.me, Binance.</p>
+          <p style="font-size:0.9rem; margin-bottom:24px;">
+            <a href="/healthz" data-i18n="settings.health">System Health</a>
+          </p>
+          <h3 style="font-size:1rem; margin-bottom:8px;" data-i18n="settings.shortcuts">Keyboard Shortcuts</h3>
+          <ul style="list-style:none; padding:0; margin:0; font-size:0.9rem;">
+            <li style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:8px;">
+              <span data-i18n="common.search">Search</span> <kbd style="background:var(--panel-soft); padding:2px 6px; border-radius:4px;">⌘K / Ctrl+K / /</kbd>
+            </li>
+            <li style="display:flex; justify-content:space-between;">
+              <span data-i18n="settings.closeModals">Close modals</span> <kbd style="background:var(--panel-soft); padding:2px 6px; border-radius:4px;">Esc</kbd>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

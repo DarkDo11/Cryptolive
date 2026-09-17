@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Price Alerts · Cryptolive</title>
+  <meta name="description" content="Get notified when a coin crosses your target price.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/alerts.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;">
+      <div>
+        <h1 data-i18n="alerts.title">Price Alerts</h1>
+        <p class="hero-sub" data-i18n="alerts.sub">Get notified when a coin crosses your target price. Alerts are checked live while any Cryptolive tab is open.</p>
+      </div>
+      <div class="toolbar" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="enableNotificationsBtn" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span data-i18n="alerts.enableNotifications">Enable browser notifications</span>
+        </button>
+        <button class="btn btn-danger" id="clearAlertsBtn" style="display:none" data-i18n="common.clearAll">Clear all</button>
+        <button class="btn btn-primary" id="newAlertBtn" data-i18n="alerts.new">New alert</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px">
+      <div class="card-head">
+        <h2 data-i18n="alerts.active">Active Alerts</h2>
+      </div>
+      <div class="card-body" style="padding: 0" id="activeAlertsContainer"></div>
+    </div>
+
+    <div class="card" id="triggeredAlertsCard" style="display:none">
+      <div class="card-head">
+        <h2 data-i18n="alerts.triggered">Triggered Alerts</h2>
+      </div>
+      <div class="card-body" style="padding: 0" id="triggeredAlertsContainer"></div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

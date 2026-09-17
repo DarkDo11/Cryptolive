@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Top Gainers & Losers · Cryptolive</title>
+  <meta name="description" content="Biggest movers among the top 500 coins by market cap">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/gainers-losers.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="margin-bottom: 24px;">
+      <h1 data-i18n="gl.title">Top Gainers & Losers</h1>
+      <p class="hero-sub" data-i18n="gl.sub">Biggest movers among the top 500 coins by market cap (24h volume &ge; $50K)</p>
+    </div>
+    
+    <div class="tabs" id="tfTabs" style="margin-bottom: 24px;">
+      <button class="tab" data-tf="change1h">1h</button>
+      <button class="tab is-active" data-tf="change24h">24h</button>
+      <button class="tab" data-tf="change7d">7d</button>
+    </div>
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <h3 data-i18n="gl.gainers">Top 20 Gainers</h3>
+        </div>
+        <div class="card-body" id="gainersTable" style="padding: 0;"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3 data-i18n="gl.losers">Top 20 Losers</h3>
+        </div>
+        <div class="card-body" id="losersTable" style="padding: 0;"></div>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

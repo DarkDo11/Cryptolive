@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Heatmap · Cryptolive</title>
+  <meta name="description" content="Crypto Market Heatmap">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/heatmap.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+        <div>
+          <h1 data-i18n="heatmap.title">Crypto Market Heatmap</h1>
+          <p class="hero-sub" data-i18n="heatmap.sub">Visualize market caps and volume</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+          <div class="tabs" style="margin:0; border:none; gap:12px;" id="topTabs">
+            <div class="tab" data-top="50" data-i18n="heatmap.top50">Top 50</div>
+            <div class="tab is-active" data-top="100" data-i18n="heatmap.top100">Top 100</div>
+            <div class="tab" data-top="250" data-i18n="heatmap.top250">Top 250</div>
+          </div>
+          <div class="toggle-group" id="cbGroup">
+            <button class="range-btn" data-cb="1h">1h</button>
+            <button class="range-btn is-active" data-cb="24h">24h</button>
+            <button class="range-btn" data-cb="7d">7d</button>
+          </div>
+          <div class="toggle-group" id="sbGroup">
+            <button class="range-btn is-active" data-sb="marketCap" data-i18n="common.marketCap">Market Cap</button>
+            <button class="range-btn" data-sb="volume" data-i18n="common.volume24h">24h Volume</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="heatmap" id="heatmap" style="height:70vh;min-height:480px"></div>
+    <div class="heatmap-legend">
+      <span>-5%</span>
+      <div class="bar"></div>
+      <span>+5%</span>
+    </div>
+    <div class="heatmap-tooltip" id="heatmapTooltip" style="display:none"></div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

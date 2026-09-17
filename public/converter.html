@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Converter · Cryptolive</title>
+  <meta name="description" content="Cryptocurrency Converter">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/converter.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero">
+      <h1 data-i18n="converter.title">Cryptocurrency Converter</h1>
+      <p class="hero-sub" data-i18n="converter.sub">Live exchange rates for top cryptocurrencies and fiat</p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px; padding: 24px;">
+      <div class="converter">
+        <div class="converter-box">
+          <input type="number" class="input" id="fromAmount" min="0" step="any" placeholder="0.00">
+          <select class="select" id="fromAsset"></select>
+        </div>
+        <button class="swap-btn" id="swapBtn" title="Swap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"></path><path d="M15 14v-12"></path><polyline points="3 14 7 10 11 14"></polyline><polyline points="19 10 15 14 23 10"></polyline></svg>
+        </button>
+        <div class="converter-box">
+          <input type="number" class="input" id="toAmount" min="0" step="any" placeholder="0.00">
+          <select class="select" id="toAsset"></select>
+        </div>
+      </div>
+      <div style="margin-top: 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <div style="color:var(--muted); font-size:0.9rem;" id="rateLine" data-i18n="converter.loading">Loading rates...</div>
+        <div style="display:flex; gap:8px;" id="quickPicks">
+          <button class="chip" data-pick="coin:bitcoin" style="cursor:pointer">BTC</button>
+          <button class="chip" data-pick="coin:ethereum" style="cursor:pointer">ETH</button>
+          <button class="chip" data-pick="coin:solana" style="cursor:pointer">SOL</button>
+          <button class="chip" data-pick="fiat:usd" style="cursor:pointer">USD</button>
+          <button class="chip" data-pick="fiat:eur" style="cursor:pointer">EUR</button>
+          <button class="chip" data-pick="fiat:rub" style="cursor:pointer">RUB</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head" data-i18n="converter.popular">Popular conversions</div>
+      <div id="popularTable"></div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

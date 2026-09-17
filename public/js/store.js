@@ -1,0 +1,162 @@
+/**
+ * Local storage modules for state management
+ */
+
+function safeGet(key, def) {
+  try {
+    const val = localStorage.getItem(key);
+    return val ? JSON.parse(val) : def;
+  } catch (e) {
+    return def;
+  }
+}
+
+function safeSet(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) {
+    console.warn('localStorage error', e);
+  }
+}
+
+// Migrate legacy theme
+try {
+  const legacyTheme = localStorage.getItem('cryptolive-theme');
+  if (legacyTheme) {
+    const current = safeGet('cryptolive:settings', {});
+    current.theme = legacyTheme;
+    safeSet('cryptolive:settings', current);
+    localStorage.removeItem('cryptolive-theme');
+  }
+} catch (e) {}
+
+function uuid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+export const settings = {
+  get() {
+    return Object.assign({
+      theme: 'dark',
+      currency: 'usd',
+      perPage: 100
+    }, safeGet('cryptolive:settings', {}));
+  },
+  set(patch) {
+    const current = this.get();
+    const updated = { ...current, ...patch };
+    safeSet('cryptolive:settings', updated);
+    window.dispatchEvent(new CustomEvent('settings:change', { detail: updated }));
+  }
+};
+
+export const watchlist = {
+  list() {
+    return safeGet('cryptolive:watchlist', []);
+  },
+  has(id) {
+    return this.list().includes(id);
+  },
+  add(id) {
+    const current = this.list();
+    if (!current.includes(id)) {
+      current.push(id);
+      safeSet('cryptolive:watchlist', current);
+      window.dispatchEvent(new Event('watchlist:change'));
+    }
+  },
+  remove(id) {
+    const current = this.list().filter(x => x !== id);
+    safeSet('cryptolive:watchlist', current);
+    window.dispatchEvent(new Event('watchlist:change'));
+  },
+  toggle(id) {
+    if (this.has(id)) {
+      this.remove(id);
+    } else {
+      this.add(id);
+    }
+  }
+};
+
+export const portfolio = {
+  list() {
+    return safeGet('cryptolive:portfolio', []);
+  },
+  add(tx) {
+    const current = this.list();
+    const newTx = { ...tx, id: uuid(), date: tx.date || Date.now() };
+    current.push(newTx);
+    safeSet('cryptolive:portfolio', current);
+    window.dispatchEvent(new Event('portfolio:change'));
+  },
+  update(id, patch) {
+    const current = this.list();
+    const idx = current.findIndex(x => x.id === id);
+    if (idx !== -1) {
+      current[idx] = { ...current[idx], ...patch };
+      safeSet('cryptolive:portfolio', current);
+      window.dispatchEvent(new Event('portfolio:change'));
+    }
+  },
+  remove(id) {
+    const current = this.list().filter(x => x.id !== id);
+    safeSet('cryptolive:portfolio', current);
+    window.dispatchEvent(new Event('portfolio:change'));
+  },
+  clear() {
+    safeSet('cryptolive:portfolio', []);
+    window.dispatchEvent(new Event('portfolio:change'));
+  },
+  holdings() {
+    const txs = this.list();
+    const map = new Map();
+    for (const tx of txs) {
+      if (!map.has(tx.coinId)) {
+        map.set(tx.coinId, {
+          coinId: tx.coinId,
+          symbol: tx.symbol,
+          name: tx.name,
+          image: tx.image,
+          amount: 0,
+          totalBuyCost: 0,
+          totalBuyAmount: 0
+        });
+      }
+      const h = map.get(tx.coinId);
+      const amt = Number(tx.amount) || 0;
+      const price = Number(tx.price) || 0;
+      if (tx.type === 'buy') {
+        h.amount += amt;
+        h.totalBuyCost += (amt * price);
+        h.totalBuyAmount += amt;
+      } else if (tx.type === 'sell') {
+        h.amount -= amt;
+      }
+    }
+    
+    const result = [];
+    for (const h of map.values()) {
+      if (h.amount > 0 || h.totalBuyAmount > 0) {
+        const avgPriceUsd = h.totalBuyAmount > 0 ? (h.totalBuyCost / h.totalBuyAmount) : 0;
+        const costBasisUsd = avgPriceUsd * h.amount;
+        result.push({
+          coinId: h.coinId,
+          symbol: h.symbol,
+          name: h.name,
+          image: h.image,
+          amount: h.amount,
+          costBasisUsd,
+          avgPriceUsd
+        });
+      }
+    }
+    return result;
+  }
+};

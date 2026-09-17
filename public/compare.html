@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Compare Cryptocurrencies · Cryptolive</title>
+  <meta name="description" content="Side-by-side stats and normalized performance for up to 4 coins.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/pages/compare.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <section class="hero">
+      <h1 data-i18n="compare.title">Compare Cryptocurrencies</h1>
+      <p class="hero-sub" data-i18n="compare.sub">Side-by-side stats and normalized performance for up to 4 coins.</p>
+    </section>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-head" data-i18n="compare.selected">Selected coins</div>
+      <div class="card-body">
+        <div class="compare-picker" id="picker">
+          <div id="chipsContainer" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          <div class="autocomplete" style="flex:1; min-width:200px; position:relative;">
+            <input type="text" class="input" id="compareSearch" placeholder="Add a coin…" autocomplete="off">
+            <div id="compareDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <span style="color:var(--muted); font-size:0.9rem;" data-i18n="compare.presets">Quick presets:</span>
+          <button class="btn btn-ghost btn-sm preset-btn" data-preset="bitcoin,ethereum">BTC vs ETH</button>
+          <button class="btn btn-ghost btn-sm preset-btn" data-preset="bitcoin,ethereum,solana,binancecoin">Top 4 L1s</button>
+          <button class="btn btn-ghost btn-sm preset-btn" data-preset="dogecoin,shiba-inu,pepe,dogwifcoin" data-i18n="compare.memecoins">Memecoins</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-head" style="display:flex; justify-content:space-between; align-items:center;">
+        <span data-i18n="compare.performance">Performance</span>
+        <div class="chart-toolbar" id="perfRangeGroup">
+          <button class="btn btn-ghost btn-sm range-btn is-active" data-days="7">7d</button>
+          <button class="btn btn-ghost btn-sm range-btn" data-days="30">30d</button>
+          <button class="btn btn-ghost btn-sm range-btn" data-days="90">90d</button>
+          <button class="btn btn-ghost btn-sm range-btn" data-days="365">1y</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap" style="height: 300px; position: relative;">
+          <canvas id="perfChart"></canvas>
+        </div>
+        <div id="perfError" style="display:none; color:var(--red); margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-head" data-i18n="coin.stats">Statistics</div>
+      <div id="statsTable" style="overflow-x:auto;"></div>
+    </div>
+
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

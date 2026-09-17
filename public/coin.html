@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Coin · Cryptolive</title>
+  <meta name="description" content="Cryptocurrency details and live price.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/pages/coin.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div id="coinHeader" class="coin-header card">
+      <div class="card-body">
+        <div class="skeleton" style="height: 40px; width: 300px; margin-bottom: 16px;"></div>
+        <div class="skeleton" style="height: 60px; width: 200px;"></div>
+      </div>
+    </div>
+    
+    <div class="coin-layout">
+      <div class="coin-col-left">
+        <section class="card" id="chartCard">
+          <div class="card-head" style="flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div class="chart-toolbar" style="margin: 0;">
+              <div class="toggle-group" id="rangeGroup">
+                <button type="button" class="range-btn" data-days="1">24h</button>
+                <button type="button" class="range-btn is-active" data-days="7">7d</button>
+                <button type="button" class="range-btn" data-days="30">30d</button>
+                <button type="button" class="range-btn" data-days="90">90d</button>
+                <button type="button" class="range-btn" data-days="365">1y</button>
+                <button type="button" class="range-btn" data-days="max" data-i18n="coin.max">Max</button>
+              </div>
+              <div class="toggle-group" id="typeGroup">
+                <button type="button" class="range-btn is-active" data-type="line" data-i18n="coin.line">Line</button>
+                <button type="button" class="range-btn" data-type="candles" data-i18n="coin.candles">Candles</button>
+              </div>
+              <div class="toggle-group" id="metricGroup">
+                <button type="button" class="range-btn is-active" data-metric="price" data-i18n="common.price">Price</button>
+                <button type="button" class="range-btn" data-metric="market_caps" data-i18n="common.marketCap">Market Cap</button>
+              </div>
+              <label class="field" style="margin: 0; display: flex; align-items: center; gap: 8px; font-weight: normal; color: var(--muted);">
+                <input type="checkbox" id="logScale" data-i18n="coin.log"> Log
+              </label>
+            </div>
+            <span id="chartMeta"></span>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="priceChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="marketsCard" style="margin-top: 16px;">
+          <div class="card-head" data-i18n="coin.markets">Markets</div>
+          <div id="tickersBody" style="padding: 0;"></div>
+          <div class="card-body" style="text-align: center; border-top: 1px solid var(--line);">
+            <button class="btn btn-ghost" id="loadMoreTickers" data-i18n="common.loadMore">Load more</button>
+          </div>
+        </section>
+
+        <section class="card" id="historyCard" style="margin-top:16px"><div class="card-head" data-i18n="coin.history">Historical data <div class="toggle-group" id="historyRange"><button type="button" class="range-btn is-active" data-days="30">30d</button><button type="button" class="range-btn" data-days="90">90d</button><button type="button" class="range-btn" data-days="365">1y</button></div></div><div id="historyBody"></div></section>
+
+        <section class="card" id="aboutCard" style="margin-top: 16px;">
+          <div class="card-head" data-i18n="coin.about">About</div>
+          <div id="aboutBody" class="card-body"></div>
+        </section>
+      </div>
+
+      <div class="coin-col-right">
+        <section class="card" id="statsCard">
+          <div class="card-head" data-i18n="coin.stats">Statistics</div>
+          <div id="statsBody" class="card-body"></div>
+        </section>
+
+        <section class="card" id="converterCard" style="margin-top: 16px;">
+          <div class="card-head" data-i18n="nav.converter">Converter</div>
+          <div class="card-body">
+            <div class="field">
+              <label id="convFromLabel">Asset</label>
+              <input class="input" id="convFrom" type="number" step="any" value="1">
+            </div>
+            <div class="field">
+              <label id="convToLabel">Currency</label>
+              <input class="input" id="convTo" type="number" step="any">
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="perfCard" style="margin-top: 16px;">
+          <div class="card-head" data-i18n="coin.performance">Price performance</div>
+          <div id="perfBody" style="padding: 0;"></div>
+        </section>
+      </div>
+    </div>
+    
+    <div id="notFound" class="card" hidden>
+      <div class="empty-state">
+        <h3 data-i18n="coin.notFound">Coin not found</h3>
+        <p><a href="/" data-i18n="notFound.back">Go to Home</a></p>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

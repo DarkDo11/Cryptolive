@@ -1,7 +1,15 @@
 services:
   cryptolive:
     build: .
-    container_name: cryptolive
     restart: unless-stopped
     ports:
       - "8080:8080"
+    environment:
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY:-}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:8080}
+      - API_RATE_LIMIT=${API_RATE_LIMIT:-120}
+    volumes:
+      - cryptolive-cache:/app/.cache
+
+volumes:
+  cryptolive-cache:

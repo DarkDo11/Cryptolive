@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Trending · Cryptolive</title>
+  <meta name="description" content="What the market is searching for right now — refreshed every 5 minutes.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/trending.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div style="margin-bottom: 24px;">
+      <h1 data-i18n="trending.title">Trending on Cryptolive</h1>
+      <p class="muted" data-i18n="trending.sub">What the market is searching for right now — refreshed every 5 minutes.</p>
+    </div>
+
+    <div class="tabs" id="trendingTabs">
+      <div class="tab is-active" data-tab="coins" data-i18n="search.coins">Coins</div>
+      <div class="tab" data-tab="categories" data-i18n="search.categories">Categories</div>
+      <div class="tab" data-tab="nfts" data-i18n="trending.nfts">NFTs</div>
+    </div>
+
+    <div id="tabCoins">
+      <div class="card">
+        <div class="table-frame">
+          <table class="data-table" id="coinsTable">
+            <thead>
+              <tr>
+                <th class="col-star"></th>
+                <th class="col-num">#</th>
+                <th class="col-coin is-sticky" data-i18n="table.coin">Coin</th>
+                <th class="col-price" data-i18n="table.price">Price</th>
+                <th class="col-change24h" data-i18n="table.change24h">24h %</th>
+                <th class="col-volume" data-i18n="table.volume">24h Volume</th>
+                <th class="col-marketCap" data-i18n="table.marketCap">Market Cap</th>
+                <th class="col-sparkline" data-i18n="table.sparkline">Last 7 days</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabCategories" style="display: none;">
+      <div class="card">
+        <div class="table-frame">
+          <table class="data-table is-plain" id="categoriesTable">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-coin is-sticky" data-i18n="trending.category">Category</th>
+                <th data-i18n="search.coins">Coins</th>
+                <th class="col-marketCap" data-i18n="table.marketCap">Market Cap</th>
+                <th class="col-change24h" data-i18n="table.change24h">24h %</th>
+                <th class="col-sparkline" data-i18n="table.sparkline">Last 7 days</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabNfts" style="display: none;">
+      <div class="card">
+        <div class="table-frame">
+          <table class="data-table is-plain" id="nftsTable">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-coin is-sticky" data-i18n="trending.collection">Collection</th>
+                <th class="col-price" data-i18n="trending.floor">Floor Price</th>
+                <th class="col-change24h" data-i18n="table.change24h">24h %</th>
+                <th class="col-volume" data-i18n="table.volume">24h Volume</th>
+                <th class="col-sparkline" data-i18n="table.sparkline">Last 7 days</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

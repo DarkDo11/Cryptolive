@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Market Overview · Cryptolive</title>
+  <meta name="description" content="Sentiment, dominance and sector flows at a glance.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/pages/overview.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero">
+      <h1 data-i18n="overview.title">Market Overview</h1>
+      <p class="hero-sub" data-i18n="overview.sub">Sentiment, dominance and sector flows at a glance.</p>
+    </div>
+    
+    <div class="summary-strip" id="kpis">
+      <!-- KPIs injected here -->
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-head" data-i18n="overview.fng">Fear & Greed Index</div>
+        <div class="card-body" id="fngCard" style="display:flex; flex-direction:column; gap:16px;">
+          <!-- FNG injected here -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="overview.dominance">Market Dominance</div>
+        <div class="card-body" id="domCard" style="display:flex; justify-content:center; align-items:center; min-height: 250px;">
+          <!-- Dominance chart injected here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-head" data-i18n="overview.sectors">Top Sectors by Market Cap</div>
+        <div class="card-body" id="sectorsCard" style="min-height: 300px; position:relative;">
+          <!-- Sectors chart injected here -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="overview.breadth">Market Breadth (top 100)</div>
+        <div class="card-body" id="breadthCard" style="display:flex; flex-direction:column; gap:16px;">
+          <!-- Breadth chart injected here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="watchlistCard" style="margin-bottom:24px; display:none;">
+      <div class="card-head" data-i18n="overview.watchlist">Watchlist snapshot</div>
+      <div id="watchlistTable"></div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

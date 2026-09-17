@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Watchlist · Cryptolive</title>
+  <meta name="description" content="Track your favorite cryptocurrencies">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/watchlist.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="margin-bottom: 24px;">
+      <h1 data-i18n="watchlist.title">My Watchlist</h1>
+      <p class="hero-sub" id="watchSub"></p>
+    </div>
+    
+    <div class="summary-strip" id="watchSummary" style="display: none; margin-bottom: 24px;"></div>
+    
+    <div class="toolbar" id="watchToolbar" style="display: none; gap: 8px; margin-bottom: 16px;">
+      <button class="btn btn-ghost btn-sm" id="exportBtn" data-i18n="common.export">Export</button>
+      <label class="btn btn-ghost btn-sm" style="cursor: pointer;" data-i18n="common.import">
+        Import
+        <input type="file" id="importInput" accept=".json" style="display: none;">
+      </label>
+      <button class="btn btn-ghost btn-sm" id="clearBtn" data-i18n="common.clear2">Clear</button>
+    </div>
+    
+    <div id="watchTable"></div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>
