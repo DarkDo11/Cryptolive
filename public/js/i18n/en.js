@@ -199,6 +199,8 @@ export default {
   'overview.sub': "Sentiment, dominance and sector flows at a glance.",
   'overview.title': "Market Overview",
   'overview.watchlist': "Watchlist snapshot",
+  'overview.trending': "Trending now",
+  'overview.exchanges': "Top exchanges",
   'portfolio.addTx': "Add transaction",
   'portfolio.allocation': "Allocation",
   'portfolio.holdings': "Holdings",

@@ -199,6 +199,8 @@ export default {
   'overview.sub': "Настроение, доминация и потоки по секторам — одним взглядом.",
   'overview.title': "Обзор рынка",
   'overview.watchlist': "Срез избранного",
+  'overview.trending': "Сейчас в тренде",
+  'overview.exchanges': "Топ бирж",
   'portfolio.addTx': "Добавить сделку",
   'portfolio.allocation': "Распределение",
   'portfolio.holdings': "Активы",

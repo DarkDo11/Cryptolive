@@ -2,7 +2,7 @@ import { initLayout, setTitle, qs } from '../layout.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { settings, watchlist } from '../store.js';
-import { fmtCurrency, fmtCompact, fmtDate, escapeHtml } from '../format.js';
+import { fmtCurrency, fmtCompact, fmtNumber, fmtDate, escapeHtml } from '../format.js';
 import { gaugeSvg, renderCoinTable, changeBadge, coinChip, normalizeCoin } from '../components.js';
 import { t, fngLabel } from '../i18n.js';
 
@@ -13,6 +13,8 @@ let globalData = null;
 let catData = null;
 let breadthData = null;
 let wlData = null;
+let trendingData = null;
+let exchangesData = null;
 let refreshTimer = null;
 
 async function init() {
@@ -33,6 +35,7 @@ async function init() {
     if (wlData && wlData.length > 0) {
       applyLiveTick(qs('#watchlistTable'), tick, fx);
     }
+    applyLiveTick(qs('#trendingCard'), tick, fx);
   });
 
   await loadData();
@@ -70,7 +73,9 @@ async function loadData() {
     api.global(),
     api.fng(),
     api.categories(),
-    api.markets({ perPage: 100 })
+    api.markets({ perPage: 100 }),
+    api.trending(),
+    api.exchanges(1, 250)
   ];
   
   if (wlIds.length > 0) {
@@ -79,7 +84,9 @@ async function loadData() {
     promises.push(Promise.resolve(null));
   }
 
-  const [resGlobal, resFng, resCat, resBreadth, resWl] = await Promise.allSettled(promises);
+  const [resGlobal, resFng, resCat, resBreadth, resTrending, resExchanges, resWl] = await Promise.allSettled(promises);
+  trendingData = resTrending.status === 'fulfilled' ? resTrending.value : { error: true };
+  exchangesData = resExchanges.status === 'fulfilled' ? resExchanges.value : { error: true };
   
   globalData = resGlobal.status === 'fulfilled' ? resGlobal.value : { error: true };
   fngData = resFng.status === 'fulfilled' ? resFng.value : { error: true };
@@ -99,6 +106,52 @@ function renderAll() {
   });
 
   renderWatchlist();
+  renderTrending();
+  renderExchanges();
+}
+
+function renderTrending() {
+  const box = qs('#trendingCard');
+  const coins = trendingData && !trendingData.error ? (trendingData.coins || []).slice(0, 7) : [];
+  if (coins.length === 0) { box.innerHTML = renderErrorHtml(); return; }
+  const cur = settings.get().currency || 'usd';
+  box.innerHTML = coins.map(c => `
+    <a class="row" href="/coin/${encodeURIComponent(c.id)}">
+      <div class="left">
+        <img src="${escapeHtml(c.thumb || '')}" alt="" loading="lazy" width="24" height="24">
+        <span class="name">${escapeHtml(c.name)}</span>
+        <span class="symbol chip">${escapeHtml(String(c.symbol || '').toUpperCase())}</span>
+      </div>
+      <div class="right">
+        ${typeof c.price_usd === 'number' ? `<span class="price" data-live-price="${escapeHtml(c.id)}" data-price-usd="${c.price_usd}">${fmtCurrency(c.price_usd * fx, cur)}</span>` : ''}
+        ${typeof c.change24h === 'number' ? changeBadge(c.change24h, `data-live-change="${escapeHtml(c.id)}"`) : ''}
+      </div>
+    </a>`).join('');
+}
+
+function renderExchanges() {
+  const box = qs('#exchangesCard');
+  const list = exchangesData && !exchangesData.error ? exchangesData : [];
+  if (list.length === 0) { box.innerHTML = renderErrorHtml(); return; }
+  const btcRow = (breadthData && !breadthData.error ? breadthData : []).find(c => c.id === 'bitcoin');
+  const btcPrice = btcRow ? btcRow.current_price : 0;
+  const cur = settings.get().currency || 'usd';
+  const top = [...list].sort((a, b) => (a.trust_score_rank ?? 1e9) - (b.trust_score_rank ?? 1e9)).slice(0, 7);
+  box.innerHTML = top.map(ex => `
+    <a class="row" href="/exchange/${encodeURIComponent(ex.id)}">
+      <div class="left">
+        <img src="${escapeHtml(ex.image || '')}" alt="" loading="lazy" width="24" height="24" referrerpolicy="no-referrer">
+        <span class="name">${escapeHtml(ex.name)}</span>
+        ${ex.trust_score != null ? `<span class="chip">${ex.trust_score}/10</span>` : ''}
+      </div>
+      <div class="right">
+        <span class="price">${btcPrice ? fmtCurrency((ex.trade_volume_24h_btc || 0) * btcPrice, cur, { compact: true }) : fmtNumber(ex.trade_volume_24h_btc || 0, { max: 0 }) + ' BTC'}</span>
+      </div>
+    </a>`).join('');
+}
+
+function renderErrorHtml() {
+  return `<div style="padding:24px; text-align:center; color:var(--muted)">${t('common.unavailable')}</div>`;
 }
 
 async function waitForChart() {
