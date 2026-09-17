@@ -427,24 +427,24 @@ async function loadTickers() {
     const tickers = res.tickers || [];
     
     let html = '';
-    tickers.forEach((t, i) => {
+    tickers.forEach((tk, i) => {
       const num = (tickersPage - 1) * 100 + i + 1;
-      const logo = t.exchange_logo ? `<img src="${escapeHtml(t.exchange_logo)}" width="16" height="16" style="border-radius:50%">` : `<span class="asset-icon" style="width:16px;height:16px;font-size:8px;">${escapeHtml(t.exchange.charAt(0))}</span>`;
+      const logo = tk.exchange_logo ? `<img src="${escapeHtml(tk.exchange_logo)}" width="16" height="16" style="border-radius:50%">` : `<span class="asset-icon" style="width:16px;height:16px;font-size:8px;">${escapeHtml(tk.exchange.charAt(0))}</span>`;
       
-      const price = fmtCurrency(t.last_usd * fx, cur);
-      const vol = fmtCurrency(t.volume_usd * fx, cur);
-      const trustClass = t.trust_score === 'green' ? 'is-green' : (t.trust_score === 'yellow' ? 'is-yellow' : (t.trust_score === 'red' ? 'is-red' : 'is-grey'));
-      const spread = t.spread != null ? fmtPercent(t.spread).replace('+', '') : '—';
-      const tradeLink = t.trade_url ? `<a href="${escapeHtml(t.trade_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">${t('js.trade')}</a>` : '—';
+      const price = fmtCurrency(tk.last_usd * fx, cur);
+      const vol = fmtCurrency(tk.volume_usd * fx, cur);
+      const trustClass = tk.trust_score === 'green' ? 'is-green' : (tk.trust_score === 'yellow' ? 'is-yellow' : (tk.trust_score === 'red' ? 'is-red' : 'is-grey'));
+      const spread = tk.spread != null ? fmtPercent(tk.spread).replace('+', '') : '—';
+      const tradeLink = tk.trade_url ? `<a href="${escapeHtml(tk.trade_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">${t('js.trade')}</a>` : '—';
       
       html += `
         <tr>
           <td>${num}</td>
-          <td><div style="display:flex; align-items:center; gap:8px">${logo}<span>${escapeHtml(t.exchange)}</span></div></td>
-          <td style="color:var(--blue)">${escapeHtml(t.base)}/${escapeHtml(t.target)}</td>
+          <td><div style="display:flex; align-items:center; gap:8px">${logo}<span>${escapeHtml(tk.exchange)}</span></div></td>
+          <td style="color:var(--blue)">${escapeHtml(tk.base)}/${escapeHtml(tk.target)}</td>
           <td>${price}</td>
           <td>${vol}</td>
-          <td style="text-align:center"><span class="trust-dot ${trustClass}" title="${escapeHtml(t.trust_score || 'unknown')}"></span></td>
+          <td style="text-align:center"><span class="trust-dot ${trustClass}" title="${escapeHtml(tk.trust_score || 'unknown')}"></span></td>
           <td>${spread}</td>
           <td>${tradeLink}</td>
         </tr>

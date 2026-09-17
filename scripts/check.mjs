@@ -40,6 +40,29 @@ for (const file of [...js, ...html]) {
   });
 }
 
+// Arrow/function parameters named `t` that shadow the i18n `t()` inside a block that calls t(...).
+function findShadowedT(text) {
+  const hits = [];
+  const re = /(?:\(\s*t\s*(?:,\s*\w+\s*)*\)|\bt)\s*=>\s*\{|function\s*\w*\s*\(\s*t\s*(?:,[^)]*)?\)\s*\{/g;
+  let m;
+  while ((m = re.exec(text))) {
+    let depth = 0, i = text.indexOf('{', m.index);
+    const start = i;
+    for (; i < text.length; i++) {
+      if (text[i] === '{') depth++;
+      else if (text[i] === '}') { depth--; if (depth === 0) break; }
+    }
+    const body = text.slice(start, i);
+    if (/[^\w.]t\(\s*['"`]/.test(body)) hits.push(text.slice(0, m.index).split('\n').length);
+  }
+  return hits;
+}
+for (const file of js.filter(f => f.includes('/public/'))) {
+  const text = await readFile(file, 'utf8');
+  if (!/import\s*\{[^}]*\bt\b[^}]*\}\s*from\s*['"][^'"]*i18n\.js['"]/.test(text)) continue;
+  for (const line of findShadowedT(text)) problems.push(`${path.relative(root, file)}:${line}: parameter 't' shadows i18n t() inside a block that calls t(...)`);
+}
+
 // i18n coverage
 const en = (await import(pathToFileURL(path.join(root, 'public/js/i18n/en.js')))).default;
 const ru = (await import(pathToFileURL(path.join(root, 'public/js/i18n/ru.js')))).default;
