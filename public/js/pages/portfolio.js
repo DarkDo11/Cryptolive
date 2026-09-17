@@ -545,44 +545,11 @@ function buildModal() {
 
   searchInp.addEventListener('input', e => doSearch(e.target.value));
   
-  dd.addEventListener('click', async e => {
+  dd.addEventListener('click', e => {
     const item = e.target.closest('.tx-coin-item');
     if (!item) return;
     dd.style.display = 'none';
-    searchInp.style.display = 'none';
-    
-    selectedCoin = {
-      id: item.dataset.id,
-      symbol: item.dataset.symbol,
-      name: item.dataset.name,
-      thumb: item.dataset.thumb
-    };
-    
-    const sel = qs('#txSelectedCoin');
-    sel.innerHTML = `
-      <div class="chip" style="font-size:0.9rem; padding:6px 12px">
-        <img src="${escapeHtml(selectedCoin.thumb)}" width="16" height="16" style="border-radius:50%">
-        ${escapeHtml(selectedCoin.name)} (${escapeHtml(selectedCoin.symbol.toUpperCase())})
-        <button type="button" class="btn btn-ghost btn-sm" style="margin-left:8px; padding:0 4px" id="txClearCoin">×</button>
-      </div>
-    `;
-    sel.style.display = 'block';
-    
-    qs('#txClearCoin').addEventListener('click', () => {
-      selectedCoin = null;
-      sel.style.display = 'none';
-      searchInp.style.display = 'block';
-      searchInp.value = '';
-      searchInp.focus();
-    });
-
-    try {
-      const cur = settings.get().currency || 'usd';
-      const prices = await api.simplePrice(selectedCoin.id, cur);
-      if (prices && prices[selectedCoin.id] && prices[selectedCoin.id][cur]) {
-        qs('#txPrice').value = prices[selectedCoin.id][cur];
-      }
-    } catch (err) {}
+    selectTxCoin({ id: item.dataset.id, symbol: item.dataset.symbol, name: item.dataset.name, thumb: item.dataset.thumb });
   });
 
   qs('#txModalSave').addEventListener('click', saveTx);
@@ -591,6 +558,35 @@ function buildModal() {
 function pad(n) { return n < 10 ? '0'+n : n; }
 function localIsoStr(d) {
   return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+async function selectTxCoin(coin) {
+  const searchInp = qs('#txCoinSearch');
+  const sel = qs('#txSelectedCoin');
+  searchInp.style.display = 'none';
+  selectedCoin = coin;
+  sel.innerHTML = `
+    <div class="chip" style="font-size:0.9rem; padding:6px 12px">
+      <img src="${escapeHtml(selectedCoin.thumb || '')}" width="16" height="16" style="border-radius:50%">
+      ${escapeHtml(selectedCoin.name)} (${escapeHtml(String(selectedCoin.symbol || '').toUpperCase())})
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-left:8px; padding:0 4px" id="txClearCoin">×</button>
+    </div>
+  `;
+  sel.style.display = 'block';
+  qs('#txClearCoin').addEventListener('click', () => {
+    selectedCoin = null;
+    sel.style.display = 'none';
+    searchInp.style.display = 'block';
+    searchInp.value = '';
+    searchInp.focus();
+  });
+  try {
+    const cur = settings.get().currency || 'usd';
+    const prices = await api.simplePrice(selectedCoin.id, cur);
+    if (prices && prices[selectedCoin.id] && prices[selectedCoin.id][cur]) {
+      qs('#txPrice').value = prices[selectedCoin.id][cur];
+    }
+  } catch (err) {}
 }
 
 function openModal(prefillCoinId = null) {
@@ -613,12 +609,10 @@ function openModal(prefillCoinId = null) {
 
   if (prefillCoinId) {
     api.search(prefillCoinId).then(res => {
-      const c = (res.coins||[]).find(x => x.id === prefillCoinId) || (res.coins||[])[0];
-      if (c) {
-        searchInp.value = c.id;
-        searchInp.dispatchEvent(new Event('input'));
-      }
-    });
+      const c = (res.coins || []).find(x => x.id === prefillCoinId) || (res.coins || [])[0];
+      if (c) selectTxCoin({ id: c.id, symbol: c.symbol, name: c.name, thumb: c.thumb });
+      else searchInp.focus();
+    }).catch(() => searchInp.focus());
   } else {
     setTimeout(() => searchInp.focus(), 50);
   }
@@ -707,6 +701,13 @@ async function init() {
   });
 
   qs('#addTxBtn').addEventListener('click', () => openModal());
+
+  // Deep link from coin pages: /portfolio?add=<coinId> opens the transaction modal pre-filled.
+  const addId = new URLSearchParams(location.search).get('add');
+  if (addId && /^[a-z0-9-]{1,100}$/.test(addId)) {
+    history.replaceState(null, '', '/portfolio');
+    openModal(addId);
+  }
   
   qs('#clearBtn').addEventListener('click', () => {
     if (confirm('Are you sure you want to clear your entire portfolio?')) {

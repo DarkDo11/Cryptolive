@@ -406,6 +406,8 @@ export default {
   'js.search_coin': "Search coin...",
   'js.sell': "Sell",
   'js.set_alert': "Set alert",
+  'js.add_to_portfolio': "Add to portfolio",
+  'js.compare': "Compare",
   'js.set_price_alert': "Set Price Alert",
   'js.show_less': "Show less",
   'js.total_balance': "Total Balance",

@@ -406,6 +406,8 @@ export default {
   'js.search_coin': "Поиск монеты…",
   'js.sell': "Продажа",
   'js.set_alert': "Алерт",
+  'js.add_to_portfolio': "В портфель",
+  'js.compare': "Сравнить",
   'js.set_price_alert': "Ценовой алерт",
   'js.show_less': "Свернуть",
   'js.total_balance': "Общий баланс",
