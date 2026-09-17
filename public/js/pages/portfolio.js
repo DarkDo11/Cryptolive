@@ -10,6 +10,7 @@ let fx = 1;
 let currentCoinIds = [];
 let chartInstance = null;
 let txFilterCoin = null;
+let editingTxId = null;
 
 async function loadFx() {
   fx = await api.fxRatio();
@@ -420,6 +421,7 @@ function renderTransactions() {
         <td>${fmtCurrency(total, cur)}</td>
         <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis" title="${escapeHtml(tx.note || '')}">${escapeHtml(tx.note || '-')}</td>
         <td>
+          <button class="btn btn-ghost btn-sm tx-edit" data-id="${escapeHtml(tx.id)}">${t('js.edit')}</button>
           <button class="btn btn-ghost btn-sm tx-del" data-id="${escapeHtml(tx.id)}" style="color:var(--red)">${t('js.delete')}</button>
         </td>
       </tr>
@@ -457,7 +459,7 @@ function buildModal() {
     <div class="modal-backdrop" id="txModalBackdrop" style="display:none">
       <div class="modal">
         <div class="modal-head">
-          Add Transaction
+          <span id="txModalTitle">${t('js.add_transaction')}</span>
           <button class="btn btn-ghost btn-sm" id="txModalClose">×</button>
         </div>
         <div class="modal-body">
@@ -591,6 +593,8 @@ async function selectTxCoin(coin) {
 
 function openModal(prefillCoinId = null) {
   buildModal();
+  editingTxId = null;
+  qs('#txModalTitle').textContent = t('js.add_transaction');
   qs('#txForm').reset();
   qs('#txDate').value = localIsoStr(new Date());
   qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
@@ -618,6 +622,23 @@ function openModal(prefillCoinId = null) {
   }
 }
 
+async function openEditModal(id) {
+  const tx = portfolio.list().find(item => item.id === id);
+  if (!tx) return;
+
+  openModal();
+  editingTxId = id;
+  qs('#txModalTitle').textContent = t('js.edit_transaction');
+  qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
+  qs(`.toggle-group .range-btn[data-val="${tx.type}"]`).classList.add('is-active');
+  qs('#txType').value = tx.type;
+  await selectTxCoin({ id: tx.coinId, symbol: tx.symbol, name: tx.name, thumb: tx.image });
+  qs('#txPrice').value = tx.price * fx;
+  qs('#txAmount').value = tx.amount;
+  qs('#txDate').value = localIsoStr(new Date(tx.date));
+  qs('#txNote').value = tx.note || '';
+}
+
 function closeModal(e) {
   if (e && e.preventDefault) e.preventDefault();
   if (qs('#txModalBackdrop')) {
@@ -642,10 +663,11 @@ function saveTx(e) {
   if (priceCur < 0) { toast(t('js.invalid_price'), {type:'error'}); return; }
 
   if (type === 'sell') {
-    const h = portfolio.holdings().find(x => x.coinId === selectedCoin.id);
-    const held = h ? h.amount : 0;
+    const held = portfolio.list()
+      .filter(tx => tx.coinId === selectedCoin.id && tx.id !== editingTxId)
+      .reduce((sum, tx) => sum + (tx.type === 'buy' ? tx.amount : -tx.amount), 0);
     if (amount > held) {
-      toast(`Cannot sell ${amount} ${selectedCoin.symbol}. You only hold ${held}`, {type:'error'});
+      toast(t('js.cannot_sell_more', { amount, symbol: selectedCoin.symbol.toUpperCase(), held }), {type:'error'});
       return;
     }
   }
@@ -653,19 +675,26 @@ function saveTx(e) {
   const priceUsd = priceCur / fx;
   const d = new Date(dateStr).getTime();
 
-  portfolio.add({
+  const tx = {
     coinId: selectedCoin.id,
     symbol: selectedCoin.symbol,
     name: selectedCoin.name,
-    image: selectedCoin.thumb,
+    image: selectedCoin.thumb || selectedCoin.image,
     type,
     amount,
     price: priceUsd,
     date: isNaN(d) ? Date.now() : d,
     note
-  });
+  };
 
-  toast(t('js.transaction_saved'), {type:'success'});
+  if (editingTxId) {
+    portfolio.update(editingTxId, tx);
+    toast(t('js.transaction_updated'), {type:'success'});
+    editingTxId = null;
+  } else {
+    portfolio.add(tx);
+    toast(t('js.transaction_saved'), {type:'success'});
+  }
   closeModal();
   load();
 }
@@ -777,6 +806,9 @@ async function init() {
         txs.forEach(t => portfolio.remove(t.id));
         toast(t('js.asset_removed'));
       }
+    } else if (e.target.closest('.tx-edit')) {
+      const id = e.target.closest('button').dataset.id;
+      openEditModal(id);
     } else if (e.target.closest('.tx-del')) {
       const id = e.target.closest('button').dataset.id;
       portfolio.remove(id);

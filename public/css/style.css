@@ -1410,3 +1410,7 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 
 .highlight-list a.row { color: inherit; text-decoration: none; }
 .highlight-list a.row .price { color: var(--text); font-weight: 600; }
+
+/* Coin page: position card P&L colouring */
+#positionPnl.is-up { color: var(--green); }
+#positionPnl.is-down { color: var(--red); }

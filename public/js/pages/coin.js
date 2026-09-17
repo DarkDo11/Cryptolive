@@ -1,8 +1,8 @@
 import { initLayout, setTitle, toast, qs, qsa, debounce } from '../layout.js';
-import { settings, watchlist, recentCoins } from '../store.js';
+import { settings, watchlist, recentCoins, portfolio } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { fmtCurrency, fmtCompact, fmtPercent, fmtSupply, fmtDate, fmtDateTime, fmtTime, escapeHtml } from '../format.js';
+import { fmtCurrency, fmtCompact, fmtPercent, fmtSupply, fmtDate, fmtDateTime, fmtTime, escapeHtml, fmtNumber } from '../format.js';
 import { changeBadge, emptyState, skeletonRows, sparklineSvg } from '../components.js';
 import { openAlertModal } from '../alerts.js';
 import { t } from '../i18n.js';
@@ -15,6 +15,7 @@ let chartInstance = null;
 let chartState = { days: '7', type: 'line', metric: 'price', log: false };
 let tickersPage = 1;
 let loadingTickers = false;
+let positionState = null;
 
 if (!coinId) {
   qs('#coinHeader').style.display = 'none';
@@ -30,11 +31,17 @@ if (!coinId) {
     await load();
   });
   window.addEventListener('settings:change', updateChartTheme);
+  window.addEventListener('portfolio:change', () => {
+    if (coinData && coinData.market_data) {
+      renderPosition(coinData.market_data, settings.get().currency || 'usd');
+    }
+  });
   
   const unsub = live.subscribe(tick => {
     applyLiveTick(qs('#main'), tick, fx);
     updateLiveChartPoint(tick);
     updateLiveConverter(tick);
+    updateLivePosition(tick);
   });
 }
 
@@ -68,6 +75,7 @@ async function load() {
   
   renderHeader(coinData, md, cur);
   renderStats(md, cur);
+  renderPosition(md, cur);
   renderConverter(coinData, md, cur);
   renderPerf(md, cur);
   renderAbout(coinData);
@@ -255,6 +263,63 @@ function renderStats(md, cur) {
     </div>
   `;
   qs('#statsBody').innerHTML = html;
+}
+
+function renderPosition(md, cur) {
+  const holdings = portfolio.holdings();
+  const h = holdings.find(x => x.coinId === coinId && x.amount > 0);
+  if (!h) {
+    qs('#positionCard').hidden = true;
+    positionState = null;
+    return;
+  }
+  qs('#positionCard').hidden = false;
+
+  let priceUsd = md.current_price?.usd;
+  if (priceUsd === undefined) {
+    priceUsd = md.current_price?.[cur] / fx;
+  }
+  if (!Number.isFinite(priceUsd)) priceUsd = 0;
+
+  const value = h.amount * priceUsd * fx;
+  const cost = h.costBasisUsd * fx;
+  const pnl = value - cost;
+  const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+  const avg = h.avgPriceUsd * fx;
+
+  positionState = { amount: h.amount, costUsd: h.costBasisUsd };
+
+  const html = `
+    <div class="stat-list">
+      <div class="stat-row"><dt>${t('js.holdings')}</dt><dd>${fmtNumber(h.amount, { max: 8 })} ${escapeHtml(String(h.symbol || '').toUpperCase())}</dd></div>
+      <div class="stat-row"><dt>${t('coin.positionValue')}</dt><dd><span id="positionValue" data-position-amount="${h.amount}">${fmtCurrency(value, cur)}</span></dd></div>
+      <div class="stat-row"><dt>${t('js.avg_buy_price')}</dt><dd>${fmtCurrency(avg, cur)}</dd></div>
+      <div class="stat-row"><dt>${t('js.p_l')}</dt><dd><span id="positionPnl" class="${pnl >= 0 ? 'is-up' : 'is-down'}">${fmtCurrency(pnl, cur)} ${changeBadge(pnlPct)}</span></dd></div>
+    </div>
+  `;
+  qs('#positionBody').innerHTML = html;
+}
+
+function updateLivePosition(tick) {
+  if (!positionState || !tick.prices[coinId]) return;
+  const cur = settings.get().currency || 'usd';
+  const amount = positionState.amount;
+  const costUsd = positionState.costUsd;
+
+  const priceUsd = tick.prices[coinId].p;
+  const value = amount * priceUsd * fx;
+  const cost = costUsd * fx;
+  const pnl = value - cost;
+  const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+
+  const valEl = qs('#positionValue');
+  if (valEl) valEl.textContent = fmtCurrency(value, cur);
+
+  const pnlEl = qs('#positionPnl');
+  if (pnlEl) {
+    pnlEl.className = pnl >= 0 ? 'is-up' : 'is-down';
+    pnlEl.innerHTML = `${fmtCurrency(pnl, cur)} ${changeBadge(pnlPct)}`;
+  }
 }
 
 function renderConverter(data, md, cur) {
