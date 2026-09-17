@@ -18,6 +18,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Exchanges**: Directory of top cryptocurrency exchanges with trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
+- **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.
 - **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 8 display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
 
 ## Architecture
@@ -29,7 +30,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
   - **Upstream Protection**: Upstream cooldown after a 429 (fails fast with 503 + Retry-After instead of hammering; cache serves stale). Global concurrency limiter (maximum 3 parallel requests).
   - **Degraded Mode**: Degraded coin payload from the universe (`X-Cache: fallback`, `partial: true`) so coin pages still render during throttling; `/api/search` likewise falls back to a name/symbol search over the universe. Throttled API responses carry `Retry-After`, and the browser client waits once (≤20 s) and retries before showing an error.
   - **API Rate Limiting**: Per-IP API rate limit (`API_RATE_LIMIT`, 429 + Retry-After, `X-RateLimit-Remaining`).
-  - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (includes `upstream: {throttled, throttledForMs}`).
+  - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (version, uptime, memory, cache counters + hit ratio, upstream counters and cooldown, live feed state).
 - **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top 500 coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` (default order) and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
 - **Real-Time Price Stream (`/api/stream`)**: A single Binance combined WebSocket connection (`miniTicker` streams for ~60 top assets) feeds an SSE broadcaster (`live.js`). The connection connects lazily on the first client subscription and disconnects 60 seconds after the last subscriber leaves; price updates are throttled to at most once per second.
 - **Upstream Limits**: The public CoinGecko API allows ~10–30 req/min without an API key. Supplying a free Demo key via `COINGECKO_API_KEY` increases limits to ~30 req/min (10k requests/month).
@@ -92,7 +93,7 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/coin/:id/similar` | `vs` | universe | Coins ranked next to the coin by market cap (served from the universe, no upstream call) |
 | `GET /api/simple-price` | `ids`, `vs` | 60s | Simple prices and 24h change (served from universe if cached) |
 | `GET /api/currencies` | — | 3600s (static) | Supported display currencies (USD, EUR, GBP, RUB, JPY, CNY, BTC, ETH) |
-| `GET /healthz` | — | — | Health check with server uptime, cache stats, and live stream status |
+| `GET /healthz` | — | — | Health JSON: version, uptime, memory, cache counters, upstream counters/cooldown, live feed state (rendered by `/status`) |
 
 ### Live Price Stream (`/api/stream`)
 
@@ -127,6 +128,7 @@ Cryptolive/
 │   ├── index.html          # Markets overview (home)
 │   ├── overview.html       # Market overview dashboard (/overview)
 │   ├── trending.html       # Trending coins / categories / NFTs (/trending)
+│   ├── status.html         # Service status (/status)
 │   ├── settings.html       # Settings & data backup (/settings)
 │   ├── coin.html           # Coin detail & interactive charts (/coin/:id)
 │   ├── compare.html        # Side-by-side coin comparison (/compare)

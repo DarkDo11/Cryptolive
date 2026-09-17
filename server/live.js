@@ -75,6 +75,8 @@ export function createLive() {
   let latestPrices = {};   // pending delta since the last broadcast
   let snapshot = {};       // last known price for every symbol
   let changedSinceLastTick = false;
+  let lastMessageAt = null;
+  let reconnects = 0;
 
   const getStreamUrl = () => {
     const streams = Object.values(BINANCE_MAP).map(s => `${s}@miniTicker`).join('/');
@@ -125,6 +127,7 @@ export function createLive() {
             latestPrices[id] = { p, c };
             snapshot[id] = { p, c };
             changedSinceLastTick = true;
+            lastMessageAt = Date.now();
           }
         }
       } catch (e) {}
@@ -136,6 +139,7 @@ export function createLive() {
       if (subscribers.size > 0) {
         setTimeout(connect, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+        reconnects++;
       }
     };
 
@@ -202,7 +206,14 @@ export function createLive() {
       checkConnection();
     },
     status() {
-      return { connected, subscribers: subscribers.size };
+      return {
+        connected,
+        subscribers: subscribers.size,
+        symbols: Object.keys(BINANCE_MAP).length,
+        pricesKnown: Object.keys(snapshot).length,
+        lastMessageAt,
+        reconnects
+      };
     }
   };
 }

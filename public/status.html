@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>Status · Cryptolive</title>
+  <meta name="description" content="Live health of this Cryptolive instance: data provider, cache and the real-time price feed.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/status.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="margin-bottom:24px">
+      <h1 data-i18n="status.title">Service status</h1>
+      <p class="muted" data-i18n="status.sub">Live health of this Cryptolive instance: data provider, cache and the real-time price feed.</p>
+    </div>
+    <div id="statusBanner" class="notice" hidden></div>
+    <div class="summary-strip" id="statusKpis"></div>
+    <div class="grid-2">
+      <div class="card" id="upstreamCard">
+        <div class="card-head" data-i18n="status.upstream">Data provider (CoinGecko)</div>
+        <div class="card-body" id="upstreamBody"></div>
+      </div>
+      <div class="card" id="liveCard">
+        <div class="card-head" data-i18n="status.live">Real-time price feed (Binance)</div>
+        <div class="card-body" id="liveBody"></div>
+      </div>
+      <div class="card" id="cacheCard">
+        <div class="card-head" data-i18n="status.cache">Cache</div>
+        <div class="card-body" id="cacheBody"></div>
+      </div>
+      <div class="card" id="serverCard">
+        <div class="card-head" data-i18n="status.server">Server</div>
+        <div class="card-body" id="serverBody"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <p class="muted small" id="statusUpdated" style="margin-top:16px"></p>
+      <button class="btn btn-ghost btn-sm" id="statusRefresh" data-i18n="common.refresh" style="margin-top:16px">Refresh</button>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

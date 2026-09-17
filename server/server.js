@@ -18,6 +18,9 @@ const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
 
+const APP_VERSION = await fs.readFile(path.resolve(__dirname, '../package.json'), 'utf8')
+  .then((raw) => JSON.parse(raw).version).catch(() => 'unknown');
+
 const cache = new TtlCache(500);
 const live = createLive();
 
@@ -86,7 +89,8 @@ const STATIC_ROUTES = {
   '/compare': '/compare.html',
   '/overview': '/overview.html',
   '/trending': '/trending.html',
-  '/settings': '/settings.html'
+  '/settings': '/settings.html',
+  '/status': '/status.html'
 };
 
 const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'";
@@ -119,9 +123,15 @@ const server = http.createServer(async (req, res) => {
     setSecurityHeaders(res);
 
     if (pathname === '/healthz') {
+      const mem = process.memoryUsage();
       const body = JSON.stringify({
         ok: true,
+        version: APP_VERSION,
+        node: process.version,
         uptime: Math.floor((Date.now() - startTime) / 1000),
+        startedAt: startTime,
+        now: Date.now(),
+        memory: { rss: mem.rss, heapUsed: mem.heapUsed },
         cache: cache.stats(),
         upstream: upstreamStatus(),
         live: live.status()

@@ -32,6 +32,7 @@ export class TtlCache {
     this.maxEntries = maxEntries;
     this.cache = new Map(); // key -> { value, expiresAt }
     this.inFlight = new Map(); // key -> Promise<{value, status}>
+    this.counters = { hit: 0, stale: 0, miss: 0, error: 0 };
   }
 
   /**
@@ -49,20 +50,24 @@ export class TtlCache {
       // Map keeps insertion order; re-insert to mark as most recently used.
       this.cache.delete(key);
       this.cache.set(key, cached);
+      this.counters.hit++;
       return { value: cached.value, status: 'hit' };
     }
 
     if (cached && cached.expiresAt + ttlMs * MAX_STALE_FACTOR > now) {
       // Serve stale right away, refresh in the background (errors are swallowed: stale stays).
       this.revalidate(key, ttlMs, fetcher).catch(() => {});
+      this.counters.stale++;
       return { value: cached.value, status: 'stale' };
     }
 
     try {
       const value = await this.revalidate(key, ttlMs, fetcher);
+      this.counters.miss++;
       return { value, status: 'miss' };
     } catch (err) {
-      if (cached) return { value: cached.value, status: 'stale' };
+      if (cached) { this.counters.stale++; return { value: cached.value, status: 'stale' }; }
+      this.counters.error++;
       throw err;
     }
   }
@@ -91,7 +96,14 @@ export class TtlCache {
   }
 
   stats() {
-    return { entries: this.cache.size };
+    const total = this.counters.hit + this.counters.stale + this.counters.miss + this.counters.error;
+    return {
+      entries: this.cache.size,
+      maxEntries: this.maxEntries,
+      inFlight: this.inFlight.size,
+      ...this.counters,
+      hitRatio: total ? Number(((this.counters.hit + this.counters.stale) / total).toFixed(3)) : null
+    };
   }
 
   /** Serialisable snapshot of all entries (fresh and stale) for persistence across restarts. */

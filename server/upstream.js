@@ -6,8 +6,14 @@ const CG_KEY = process.env.COINGECKO_API_KEY;
 // After a 429 the whole upstream is considered throttled until this timestamp: further calls fail fast
 // (the cache then serves stale data) instead of burning more quota and hanging requests.
 let throttledUntil = 0;
+const counters = { requests: 0, ok: 0, rateLimited: 0, errors: 0, lastOkAt: null, lastErrorAt: null, lastRateLimitAt: null };
 export function upstreamStatus() {
-  return { throttled: Date.now() < throttledUntil, throttledForMs: Math.max(0, throttledUntil - Date.now()) };
+  return {
+    throttled: Date.now() < throttledUntil,
+    throttledForMs: Math.max(0, throttledUntil - Date.now()),
+    keyConfigured: Boolean(CG_KEY),
+    ...counters
+  };
 }
 function throttledError() {
   const e = new Error('Upstream rate limited, retry later');
@@ -32,10 +38,13 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
     }
 
     try {
+      counters.requests++;
       const resp = await fetch(targetUrl, fetchOptions);
       clearTimeout(timeout);
       
       if (resp.status === 429) {
+        counters.rateLimited++;
+        counters.lastRateLimitAt = Date.now();
         const retryAfter = parseInt(resp.headers.get('Retry-After') || '', 10);
         const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 2000;
         if (retries > 0 && waitMs <= 5000) {
@@ -49,11 +58,14 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
       }
       
       if (!resp.ok) {
+        if (resp.status !== 404) { counters.errors++; counters.lastErrorAt = Date.now(); }
         const err = new Error(`Upstream Error: ${resp.status} ${resp.statusText}`);
         err.status = resp.status === 404 ? 404 : 502;
         throw err;
       }
       
+      counters.ok++;
+      counters.lastOkAt = Date.now();
       return resp.json();
     } catch (err) {
       clearTimeout(timeout);

@@ -114,7 +114,7 @@ function renderFooter() {
         <a href="/watchlist">${t('nav.watchlist')}</a> <a href="/portfolio">${t('nav.portfolio')}</a> <a href="/converter">${t('nav.converter')}</a>
         <a href="/compare">${t('nav.compare')}</a> <a href="/alerts">${t('nav.alerts')}</a>
       </p>
-      <p>&copy; ${new Date().getFullYear()} Cryptolive &middot; <a href="/healthz">${t('footer.status')}</a></p>
+      <p>&copy; ${new Date().getFullYear()} Cryptolive &middot; <a href="/status">${t('footer.status')}</a></p>
     </footer>
   `;
 }

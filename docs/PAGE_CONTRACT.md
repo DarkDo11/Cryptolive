@@ -39,7 +39,7 @@ and inline event handlers (`onclick=` etc.) — **never** use them; attach liste
 ## Available modules (exact exports)
 
 `/js/layout.js`
-- `initLayout({active})` — `active` ∈ `'markets' | 'gainers-losers' | 'heatmap' | 'categories' | 'exchanges' | 'watchlist' | 'portfolio' | 'converter' | 'compare' | 'alerts' | 'overview' | 'trending' | 'settings' | ''`. Call first thing. Injects header + ticker bar + footer + search palette, starts live connection.
+- `initLayout({active})` — `active` ∈ `'markets' | 'gainers-losers' | 'heatmap' | 'categories' | 'exchanges' | 'watchlist' | 'portfolio' | 'converter' | 'compare' | 'alerts' | 'overview' | 'trending' | 'settings' | 'exchanges' | ''`. Call first thing. Injects header + ticker bar + footer + search palette, starts live connection.
 - `toast(message, {type:'info'|'success'|'error'})`, `setTitle(text)`, `qs(sel, ctx?)`, `qsa(sel, ctx?)`, `debounce(fn, ms)`.
 - Window events you can listen to: `currency:change` (user switched fiat currency → refetch & re-render), `watchlist:change`, `portfolio:change`, `settings:change`, `live:status` (detail: `'connecting'|'live'|'offline'`).
 
