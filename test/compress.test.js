@@ -70,6 +70,44 @@ test('compress: passthrough when small', () => {
   assert.strictEqual(writtenBody.toString(), smallBody);
 });
 
+test('compress: skips brotli with q=0 and uses gzip', () => {
+  let writtenHeaders, writtenBody;
+  const res = {
+    writeHead(code, headers) {
+      writtenHeaders = headers;
+    },
+    end(body) {
+      writtenBody = body;
+    }
+  };
+  const body = 'a'.repeat(1050);
+
+  send({ headers: { 'accept-encoding': 'br;q=0, gzip' }, method: 'GET' }, res, 200,
+    { 'Content-Type': 'application/json' }, body);
+
+  assert.strictEqual(writtenHeaders['Content-Encoding'], 'gzip');
+  assert.strictEqual(zlib.gunzipSync(writtenBody).toString(), body);
+});
+
+test('compress: uses identity when gzip has q=0', () => {
+  let writtenHeaders, writtenBody;
+  const res = {
+    writeHead(code, headers) {
+      writtenHeaders = headers;
+    },
+    end(body) {
+      writtenBody = body;
+    }
+  };
+  const body = 'a'.repeat(1050);
+
+  send({ headers: { 'accept-encoding': 'gzip;q=0' }, method: 'GET' }, res, 200,
+    { 'Content-Type': 'application/json' }, body);
+
+  assert.strictEqual(writtenHeaders['Content-Encoding'], undefined);
+  assert.strictEqual(writtenBody.toString(), body);
+});
+
 test('compress: caches compressed bodies by key and encoding', () => {
   const cache = createCompressionCache();
   const originalGet = cache.get;

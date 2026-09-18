@@ -111,6 +111,23 @@ export const portfolio = {
     safeSet('cryptolive:portfolio', current);
     window.dispatchEvent(new Event('portfolio:change'));
   },
+  addMany(txs) {
+    const current = this.list();
+    for (const tx of txs) {
+      current.push({ ...tx, id: uuid(), date: tx.date || Date.now() });
+    }
+    safeSet('cryptolive:portfolio', current);
+    window.dispatchEvent(new Event('portfolio:change'));
+  },
+  replaceAll(txs) {
+    const updated = txs.map(tx => ({
+      ...tx,
+      id: typeof tx.id === 'string' && tx.id ? tx.id : uuid(),
+      date: tx.date || Date.now()
+    }));
+    safeSet('cryptolive:portfolio', updated);
+    window.dispatchEvent(new Event('portfolio:change'));
+  },
   update(id, patch) {
     const current = this.list();
     const idx = current.findIndex(x => x.id === id);

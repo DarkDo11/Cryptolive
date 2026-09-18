@@ -27,6 +27,7 @@ let unsubLive = null;
 let refreshTimer = null;
 let activeTab = 'coins';
 let viewedDataLoaded = false;
+let viewedRows = [];
 
 function updateHash() {
   window.location.hash = activeTab;
@@ -81,8 +82,13 @@ async function loadViewed() {
     viewedTbody.innerHTML = skeletonRows(15, 5);
   }
   try {
-    const rows = await api.popular(20);
-    renderViewed(rows);
+    const cur = settings.get().currency || 'usd';
+    if (fx === 1 && cur !== 'usd') {
+      const r = await api.fxRatio();
+      fx = Number.isFinite(r) && r > 0 ? r : fx;
+    }
+    viewedRows = await api.popular(20);
+    renderViewed(viewedRows);
   } catch (err) {
     console.error('Viewed load error', err);
     viewedTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red); padding: 24px;">${escapeHtml(err.message || 'Error loading')}</td></tr>`;
@@ -256,6 +262,7 @@ async function loadData() {
     fx = fxRatio || 1;
     trendingData = data;
     renderData();
+    if (viewedRows.length > 0) renderViewed(viewedRows);
 
     if (!unsubLive) {
       unsubLive = live.subscribe((tick) => {

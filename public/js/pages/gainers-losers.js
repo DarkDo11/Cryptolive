@@ -72,7 +72,7 @@ async function loadData() {
 function renderData() {
   if (allCoins.length === 0) return;
 
-  const validCoins = allCoins.filter(c => c.volume >= 50000 && typeof c[currentTf] === 'number' && isFinite(c[currentTf]));
+  const validCoins = allCoins.filter(c => (c.volume / (Number.isFinite(fx) && fx > 0 ? fx : 1)) >= 50000 && typeof c[currentTf] === 'number' && isFinite(c[currentTf]));
   
   validCoins.sort((a, b) => b[currentTf] - a[currentTf]);
   
@@ -87,7 +87,7 @@ function renderData() {
   const volumeCoins = [...allCoins].sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 20);
   renderCoinTable(volumeTable, volumeCoins, { columns: ['rank', 'coin', 'price', 'change24h', 'volume', 'marketCap'], sortable: false, fx });
 
-  const volatileCoins = allCoins.filter(c => isFinite(c.high24h) && isFinite(c.low24h) && c.low24h > 0 && c.volume >= 50000);
+  const volatileCoins = allCoins.filter(c => isFinite(c.high24h) && isFinite(c.low24h) && c.low24h > 0 && (c.volume / (Number.isFinite(fx) && fx > 0 ? fx : 1)) >= 50000);
   volatileCoins.sort((a, b) => ((b.high24h - b.low24h) / b.low24h) - ((a.high24h - a.low24h) / a.low24h));
   
   const cur = settings.get().currency || 'usd';
@@ -95,7 +95,7 @@ function renderData() {
   
   volatileCoins.slice(0, 20).forEach(c => {
     const rangePct = (c.high24h - c.low24h) / c.low24h;
-    volatileHtml += `<tr data-coin-id="${escapeHtml(c.id)}" style="cursor:pointer"><td>${c.rank ?? '-'}</td><td><a class="asset-cell" href="/coin/${encodeURIComponent(c.id)}"><img class="asset-logo" src="${escapeHtml(c.image||'')}" alt="" loading="lazy" referrerpolicy="no-referrer"><span class="asset-copy"><span class="asset-name">${escapeHtml(c.name)}</span><span class="asset-symbol">${escapeHtml(String(c.symbol||'').toUpperCase())}</span></span></a></td><td class="price-cell" data-live-price="${escapeHtml(c.id)}" data-price-usd="${c.price / fx}">${fmtCurrency(c.price, cur)}</td><td><span class="range-pct">${fmtPercent(rangePct).replace('+','')}</span><span class="muted small" style="margin-left:6px">${fmtCurrency(c.low24h, cur)} – ${fmtCurrency(c.high24h, cur)}</span></td><td>${changeBadge(c.change24h, `data-live-change="${escapeHtml(c.id)}"`)}</td></tr>`;
+    volatileHtml += `<tr data-coin-id="${escapeHtml(c.id)}" style="cursor:pointer"><td>${c.rank ?? '-'}</td><td><a class="asset-cell" href="/coin/${encodeURIComponent(c.id)}"><img class="asset-logo" src="${escapeHtml(c.image||'')}" alt="" loading="lazy" referrerpolicy="no-referrer"><span class="asset-copy"><span class="asset-name">${escapeHtml(c.name)}</span><span class="asset-symbol">${escapeHtml(String(c.symbol||'').toUpperCase())}</span></span></a></td><td class="price-cell" data-live-price="${escapeHtml(c.id)}" data-price-usd="${c.price / fx}">${fmtCurrency(c.price, cur)}</td><td><span class="range-pct">${fmtPercent(rangePct * 100).replace('+','')}</span><span class="muted small" style="margin-left:6px">${fmtCurrency(c.low24h, cur)} – ${fmtCurrency(c.high24h, cur)}</span></td><td>${changeBadge(c.change24h, `data-live-change="${escapeHtml(c.id)}"`)}</td></tr>`;
   });
   volatileHtml += `</tbody></table></div>`;
   volatileTable.innerHTML = volatileHtml;

@@ -30,6 +30,24 @@ test('popular: evicts the lowest decayed score at maxEntries', () => {
   assert.deepStrictEqual(popular.top(10, 2000).map(entry => entry.id), ['strong', 'new']);
 });
 
+test('popular: views use a rolling seven-day window while score keeps decaying', () => {
+  const day = 24 * 3600 * 1000;
+  const popular = createPopular({ halfLifeMs: 14 * day });
+  popular.hit('bitcoin', 0);
+  popular.hit('bitcoin', 6 * day);
+
+  assert.deepStrictEqual(popular.top(10, 6 * day), [{
+    id: 'bitcoin',
+    score: 0.5 ** (6 / 14) + 1,
+    views: 2
+  }]);
+  assert.deepStrictEqual(popular.top(10, 7 * day + 1), [{
+    id: 'bitcoin',
+    score: (0.5 ** (6 / 14) + 1) * 0.5 ** ((day + 1) / (14 * day)),
+    views: 1
+  }]);
+});
+
 test('popular: snapshot and restore round-trip valid entries and ignore junk', () => {
   const source = createPopular();
   source.hit('bitcoin', 100);
@@ -40,6 +58,7 @@ test('popular: snapshot and restore round-trip valid entries and ignore junk', (
   snapshot.entries.push(
     ['bad-score', { score: 'one', updatedAt: 1, views: 1 }],
     ['bad-views', { score: 1, updatedAt: 1, views: -1 }],
+    ['bad-buckets', { score: 1, updatedAt: 1, buckets: [[1, -1]] }],
     ['missing'],
     'junk'
   );
@@ -48,4 +67,14 @@ test('popular: snapshot and restore round-trip valid entries and ignore junk', (
   assert.deepStrictEqual(restored.snapshot(), source.snapshot());
   assert.strictEqual(restored.restore(null), 0);
   assert.strictEqual(restored.restore({ entries: 'junk' }), 0);
+});
+
+test('popular: restores legacy views as a bucket at updatedAt', () => {
+  const popular = createPopular();
+  assert.strictEqual(popular.restore({ entries: [
+    ['bitcoin', { score: 2, updatedAt: 1234, views: 3 }]
+  ] }), 1);
+  assert.deepStrictEqual(popular.snapshot(), { entries: [
+    ['bitcoin', { score: 2, updatedAt: 1234, buckets: [[1234, 3]] }]
+  ] });
 });

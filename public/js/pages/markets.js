@@ -192,6 +192,22 @@ tableSearch.addEventListener('input', (e) => {
   renderTable();
 });
 
+async function loadWatchlistRows() {
+  const ids = watchlist.list();
+  if (ids.length > 0) {
+    try {
+      const rows = await api.markets({ ids: ids.join(','), perPage: 250 });
+      watchlistRows = rows.map(normalizeCoin);
+    } catch (e) {
+      // ignore
+    }
+    if (tab === 'watchlist') renderTable();
+  } else {
+    watchlistRows = [];
+    if (tab === 'watchlist') renderTable();
+  }
+}
+
 qsa('.tab').forEach(t => {
   t.addEventListener('click', (e) => {
     qsa('.tab').forEach(el => el.classList.remove('is-active'));
@@ -204,18 +220,8 @@ qsa('.tab').forEach(t => {
     else if (tab === 'watchlist' || tab === 'all') { sortKey = 'rank'; sortDir = 'asc'; }
     
     if (tab === 'watchlist') {
-      const ids = watchlist.list();
-      if (ids.length > 0) {
-        api.markets({ ids: ids.join(','), perPage: 250 })
-          .then(rows => {
-            watchlistRows = rows.map(normalizeCoin);
-            if (tab === 'watchlist') renderTable();
-          })
-          .catch(() => renderTable());
-        return; // wait for fetch
-      } else {
-        watchlistRows = [];
-      }
+      loadWatchlistRows();
+      return; // wait for fetch
     }
     
     renderTable();
@@ -282,19 +288,23 @@ function renderHighlightRow(id, name, symbol, image, priceUsd, change24h) {
   `;
 }
 
+let loadSeq = 0;
 async function load() {
+  const seq = ++loadSeq;
   marketsTable.innerHTML = `<div class="table-frame"><table class="data-table"><thead><tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead><tbody>${skeletonRows(10, 10)}</tbody></table></div>`;
   marketsPagination.innerHTML = '';
   updatedAt.textContent = t('markets.updating');
 
   try {
     fx = await api.fxRatio();
+    if (seq !== loadSeq) return;
     
     const [globalRes, trendingRes, marketsRes] = await Promise.allSettled([
       api.global(),
       api.trending(),
       category ? api.markets({ category, perPage }) : api.markets({ page, perPage })
     ]);
+    if (seq !== loadSeq) return;
 
     if (marketsRes.status === 'rejected') {
       throw marketsRes.reason;
@@ -476,23 +486,13 @@ function renderTable() {
 }
 
 window.addEventListener('currency:change', () => {
+  loadWatchlistRows();
   load();
 });
 
 window.addEventListener('watchlist:change', () => {
   if (tab === 'watchlist') {
-    const ids = watchlist.list();
-    if (ids.length > 0) {
-      api.markets({ ids: ids.join(','), perPage: 250 })
-        .then(rows => {
-          watchlistRows = rows.map(normalizeCoin);
-          if (tab === 'watchlist') renderTable();
-        })
-        .catch(() => renderTable());
-    } else {
-      watchlistRows = [];
-      renderTable();
-    }
+    loadWatchlistRows();
   } else {
     // Re-render table just to update star icons
     renderTable();

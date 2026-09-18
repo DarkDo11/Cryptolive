@@ -1,8 +1,25 @@
-const CACHE_NAME = 'cryptolive-v6';
+const CACHE_NAME = 'cryptolive-v7';
 const API_CACHE = 'cryptolive-api-v1';
 
 const PRECACHE_URLS = [
   '/',
+  '/watchlist',
+  '/portfolio',
+  '/converter',
+  '/heatmap',
+  '/gainers-losers',
+  '/categories',
+  '/exchanges',
+  '/alerts',
+  '/compare',
+  '/overview',
+  '/trending',
+  '/settings',
+  '/status',
+  '/api-docs',
+  '/coin/bitcoin',
+  '/exchange/binance',
+  '/404.html',
   '/css/style.css',
   '/favicon.svg',
   '/manifest.webmanifest',
@@ -112,10 +129,18 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request).then((res) => {
-          return res || caches.match('/');
-        });
+      fetch(event.request).then(async (res) => {
+        if (res.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, res.clone());
+        }
+        return res;
+      }).catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (url.pathname.startsWith('/coin/')) return caches.match('/coin/bitcoin');
+        if (url.pathname.startsWith('/exchange/')) return caches.match('/exchange/binance');
+        return caches.match('/');
       })
     );
     return;

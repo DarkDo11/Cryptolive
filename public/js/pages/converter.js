@@ -247,7 +247,8 @@ async function init() {
     
     let popHtml = '';
     popMarkets.forEach(m => {
-      const val = m.current_price * fxCur;
+      const pUsd = coinsMap[m.id] ?? m.current_price;
+      const val = pUsd * fxCur;
       popHtml += `
         <tr>
           <td style="text-align:left">
@@ -258,7 +259,7 @@ async function init() {
               </span>
             </a>
           </td>
-          <td class="price-cell" data-live-price="${escapeHtml(m.id)}" data-price-usd="${m.current_price}">${fmtCurrency(val, cur)}</td>
+          <td class="price-cell" data-live-price="${escapeHtml(m.id)}" data-price-usd="${pUsd}">${fmtCurrency(val, cur)}</td>
           <td>${changeBadge(m.price_change_percentage_24h, `data-live-change="${escapeHtml(m.id)}"`)}</td>
         </tr>
       `;

@@ -134,7 +134,17 @@ export const api = {
   exchange(id) { return this.get(`/exchange/${id}`); },
   exchangeVolume(id, days = 30) { return this.get(`/exchange/${id}/volume`, { days }); },
   
-  simplePrice(ids, vs) { return this.get('/simple-price', { ids, vs }); },
+  async simplePrice(ids, vs) {
+    const idsArray = [...new Set(ids.split(',').filter(Boolean))];
+    const chunks = [];
+    for (let i = 0; i < idsArray.length; i += 100) {
+      chunks.push(idsArray.slice(i, i + 100));
+    }
+    const results = await Promise.all(chunks.map(chunk =>
+      this.get('/simple-price', { ids: chunk.join(','), vs })
+    ));
+    return Object.assign({}, ...results);
+  },
   
   currencies() { return this.get('/currencies'); },
 

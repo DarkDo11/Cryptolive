@@ -55,13 +55,16 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
         }
         // Enter cooldown (bounded) so concurrent/following requests fail fast.
         throttledUntil = Date.now() + Math.min(Math.max(waitMs, 10000), 60000);
-        throw throttledError();
+        const err = throttledError();
+        err.upstreamCounted = true;
+        throw err;
       }
       
       if (!resp.ok) {
         if (resp.status !== 404) { counters.errors++; counters.lastErrorAt = Date.now(); }
         const err = new Error(`Upstream Error: ${resp.status} ${resp.statusText}`);
         err.status = resp.status === 404 ? 404 : 502;
+        err.upstreamCounted = true;
         throw err;
       }
       
@@ -73,7 +76,13 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
       if (err.name === 'AbortError') {
         const e = new Error('Upstream Timeout');
         e.status = 504;
+        counters.errors++;
+        counters.lastErrorAt = Date.now();
         throw e;
+      }
+      if (!err.upstreamCounted) {
+        counters.errors++;
+        counters.lastErrorAt = Date.now();
       }
       if (!err.status) err.status = 502;
       throw err;

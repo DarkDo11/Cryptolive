@@ -69,7 +69,7 @@ async function load() {
   renderAbout(exData);
   
   pairsData = exData.tickers || [];
-  renderPairs();
+  renderPairs(qs('#pairFilter')?.value || '');
   
   if (!controlsReady) {
     controlsReady = true;

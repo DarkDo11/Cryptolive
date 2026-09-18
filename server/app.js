@@ -283,17 +283,16 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
       }
 
       let content = '';
+      let countCoinView = false;
       if (req.method !== 'HEAD') {
         content = await fs.readFile(filePath);
         if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
           const purpose = String(req.headers['x-purpose'] || '').toLowerCase();
           const secPurpose = String(req.headers['sec-purpose'] || '').toLowerCase();
           const userAgent = String(req.headers['user-agent'] || '');
-          const countView = purpose !== 'prefetch' && !secPurpose.includes('prefetch') &&
+          countCoinView = purpose !== 'prefetch' && !secPurpose.includes('prefetch') &&
             !/bot|crawl|spider|slurp|preview/i.test(userAgent);
-          const universe = countView ? getUniverse({ cache }).catch(() => null) : null;
           content = await decorateCoinPage(content.toString('utf8'), coinPageId, { cache, publicUrl });
-          if ((await universe)?.byId.has(coinPageId)) popular?.hit(coinPageId);
         } else if (exchangePageId && /^[a-z0-9_-]{1,60}$/.test(exchangePageId)) {
           content = await decorateExchangePage(content.toString('utf8'), exchangePageId, { cache, publicUrl });
         }
@@ -307,6 +306,11 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
         cacheKey: filePath + '|' + etag,
         compressionCache
       });
+      if (countCoinView) {
+        getUniverse({ cache }).then((universe) => {
+          if (universe?.byId.has(coinPageId)) popular?.hit(coinPageId);
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error(`Unhandled request error id=${id}`, err);
       statusCode = 500;

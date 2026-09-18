@@ -8,7 +8,9 @@ const urlInput = qs('#tryUrl');
 const output = qs('#tryOutput');
 const meta = qs('#tryMeta');
 
+let sendSeq = 0;
 async function send(url) {
+  const seq = ++sendSeq;
   output.textContent = '…';
   meta.textContent = '';
   const started = performance.now();
@@ -16,12 +18,14 @@ async function send(url) {
     const res = await fetch(url, { cache: 'no-store' });
     const ms = Math.round(performance.now() - started);
     const text = await res.text();
+    if (seq !== sendSeq) return;
     let body = text;
     try { body = JSON.stringify(JSON.parse(text), null, 2); } catch { /* not JSON */ }
     if (body.length > 20000) body = body.slice(0, 20000) + `\n… (${t('apiDocs.truncated')})`;
     output.textContent = body;
     meta.textContent = `HTTP ${res.status} · ${ms} ms · X-Cache: ${res.headers.get('X-Cache') || '—'} · ${text.length.toLocaleString('en-US')} bytes`;
   } catch (err) {
+    if (seq !== sendSeq) return;
     output.textContent = String(err && err.message ? err.message : err);
     meta.textContent = t('apiDocs.failed');
   }

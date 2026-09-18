@@ -55,7 +55,7 @@ export function bindSortableTable(container, onSort) {
 
 export function renderCoinTable(container, coins, opts = {}) {
   const cur = settings.get().currency || 'usd';
-  const fx = opts.fx || 1;
+  const fx = Number.isFinite(opts.fx) && opts.fx > 0 ? opts.fx : (cur === 'usd' ? 1 : NaN);
   
   const allCols = ['rank','coin','price','change1h','change24h','change7d','volume','marketCap','sparkline'];
   const columns = opts.columns || allCols;
@@ -137,7 +137,11 @@ export function renderCoinTable(container, coins, opts = {}) {
             ${btn}
           </td>`;
       } else if (colKey === 'price') {
-        tbody += `<td class="price-cell" data-live-price="${coinId}" data-price-usd="${priceUsd}">${fmtCurrency(c.price, cur)}</td>`;
+        if (Number.isNaN(fx)) {
+          tbody += `<td class="price-cell">${fmtCurrency(c.price, cur)}</td>`;
+        } else {
+          tbody += `<td class="price-cell" data-live-price="${coinId}" data-price-usd="${priceUsd}">${fmtCurrency(c.price, cur)}</td>`;
+        }
       } else if (colKey === 'change1h') {
         tbody += `<td class="col-change1h">${changeBadge(c.change1h)}</td>`;
       } else if (colKey === 'change24h') {

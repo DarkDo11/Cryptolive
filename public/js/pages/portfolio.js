@@ -28,6 +28,12 @@ let histToken = 0;
 async function renderHistory() {
   const card = qs('#historyCard');
   if (!card) return;
+  const historyCanvas = qs('#historyChart');
+  if (typeof window.Chart === 'undefined') {
+    if (historyCanvas) historyCanvas.style.display = 'none';
+    return;
+  }
+  if (historyCanvas) historyCanvas.style.display = 'block';
   const holdings = portfolio.holdings().filter(h => h.amount > 0);
   if (holdings.length === 0) {
     card.hidden = true;
@@ -110,7 +116,7 @@ async function renderHistory() {
   const lastVal = valueData[valueData.length - 1] || 0;
   const valColor = lastVal >= firstVal ? '#20c997' : '#ff5c73';
 
-  const ctx = qs('#historyChart');
+  const ctx = historyCanvas;
   if (!ctx) return;
 
   const data = {
@@ -144,7 +150,7 @@ async function renderHistory() {
     histChart.options.plugins.legend.labels.color = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
     histChart.update();
   } else {
-    histChart = new Chart(ctx, {
+    histChart = new window.Chart(ctx, {
       type: 'line',
       data,
       options: {
@@ -337,7 +343,12 @@ async function load() {
 
   const allocCanvas = qs('#allocChart');
   if (rows.length === 0) {
-    if (chartInstance) chartInstance.destroy();
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+    allocCanvas.style.display = 'none';
+  } else if (typeof window.Chart === 'undefined') {
     allocCanvas.style.display = 'none';
   } else {
     allocCanvas.style.display = 'block';
@@ -357,7 +368,7 @@ async function load() {
       chartInstance.data.datasets[0].backgroundColor = colors;
       chartInstance.update();
     } else {
-      chartInstance = new Chart(allocCanvas, {
+      chartInstance = new window.Chart(allocCanvas, {
         type: 'doughnut',
         data: {
           labels,
@@ -610,8 +621,8 @@ function openModal(prefillCoinId = null) {
   qs('#txModalTitle').textContent = t('js.add_transaction');
   qs('#txForm').reset();
   qs('#txDate').value = localIsoStr(new Date());
-  qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
-  qs('.toggle-group .range-btn[data-val="buy"]').classList.add('is-active');
+  qsa('.toggle-group .range-btn', qs('#txModalBackdrop')).forEach(b => b.classList.remove('is-active'));
+  qs('.toggle-group .range-btn[data-val="buy"]', qs('#txModalBackdrop')).classList.add('is-active');
   qs('#txType').value = 'buy';
   
   selectedCoin = null;
@@ -642,8 +653,8 @@ async function openEditModal(id) {
   openModal();
   editingTxId = id;
   qs('#txModalTitle').textContent = t('js.edit_transaction');
-  qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
-  qs(`.toggle-group .range-btn[data-val="${tx.type}"]`).classList.add('is-active');
+  qsa('.toggle-group .range-btn', qs('#txModalBackdrop')).forEach(b => b.classList.remove('is-active'));
+  qs(`.toggle-group .range-btn[data-val="${tx.type}"]`, qs('#txModalBackdrop')).classList.add('is-active');
   qs('#txType').value = tx.type;
   await selectTxCoin({ id: tx.coinId, symbol: tx.symbol, name: tx.name, thumb: tx.image });
   qs('#txPrice').value = tx.price * fx;
@@ -675,16 +686,6 @@ function saveTx(e) {
   if (!amount || amount <= 0) { toast(t('js.invalid_amount'), {type:'error'}); return; }
   if (priceCur < 0) { toast(t('js.invalid_price'), {type:'error'}); return; }
 
-  if (type === 'sell') {
-    const held = portfolio.list()
-      .filter(tx => tx.coinId === selectedCoin.id && tx.id !== editingTxId)
-      .reduce((sum, tx) => sum + (tx.type === 'buy' ? tx.amount : -tx.amount), 0);
-    if (amount > held) {
-      toast(t('js.cannot_sell_more', { amount, symbol: selectedCoin.symbol.toUpperCase(), held }), {type:'error'});
-      return;
-    }
-  }
-
   const priceUsd = priceCur / fx;
   const d = new Date(dateStr).getTime();
 
@@ -700,6 +701,29 @@ function saveTx(e) {
     note
   };
 
+  const replay = portfolio.list()
+    .filter(item => item.coinId === selectedCoin.id && item.id !== editingTxId)
+    .concat(tx)
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => (Number(a.item.date) - Number(b.item.date)) || (a.index - b.index));
+  let held = 0;
+  for (const { item } of replay) {
+    const txAmount = Number(item.amount) || 0;
+    if (item.type === 'buy') {
+      held += txAmount;
+    } else {
+      if (txAmount > held) {
+        toast(t('js.cannot_sell_more', {
+          amount: txAmount,
+          symbol: selectedCoin.symbol.toUpperCase(),
+          held
+        }), {type:'error'});
+        return;
+      }
+      held -= txAmount;
+    }
+  }
+
   if (editingTxId) {
     portfolio.update(editingTxId, tx);
     toast(t('js.transaction_updated'), {type:'success'});
@@ -709,7 +733,6 @@ function saveTx(e) {
     toast(t('js.transaction_saved'), {type:'success'});
   }
   closeModal();
-  load();
 }
 
 async function init() {
@@ -782,11 +805,12 @@ async function init() {
   });
 
   qs('#exportCsvBtn')?.addEventListener('click', () => {
-    const headers = ['Date', 'Type', 'Coin', 'Symbol', 'Amount', 'Price (USD)', 'Total (USD)', 'Note'];
+    const headers = ['Date', 'Type', 'Coin', 'Coin ID', 'Symbol', 'Amount', 'Price (USD)', 'Total (USD)', 'Note'];
     const rows = portfolio.list().map(tx => [
       new Date(tx.date).toISOString(),
       tx.type,
       tx.name,
+      tx.coinId,
       (tx.symbol || '').toUpperCase(),
       tx.amount,
       tx.price,
@@ -812,16 +836,28 @@ async function init() {
             if (!Number.isFinite(item.amount) || item.amount <= 0) continue;
             if (!Number.isFinite(item.price) || item.price < 0) continue;
             
-            const date = Number.isFinite(item.date) ? item.date : Date.now();
+            if (!Number.isFinite(item.date)) continue;
+            const date = item.date;
             const symbol = typeof item.symbol === 'string' ? item.symbol.slice(0, 64) : '';
             const name = typeof item.name === 'string' ? item.name.slice(0, 64) : '';
             const note = typeof item.note === 'string' ? item.note.slice(0, 200) : '';
+            const image = typeof item.image === 'string' ? item.image.slice(0, 1000) : '';
             
-            validTxs.push({ ...item, date, symbol, name, note });
+            validTxs.push({
+              ...(typeof item.id === 'string' && item.id ? { id: item.id } : {}),
+              coinId: item.coinId,
+              symbol,
+              name,
+              image,
+              type: item.type,
+              amount: item.amount,
+              price: item.price,
+              date,
+              note
+            });
           }
           if (validTxs.length > 0) {
-            portfolio.clear();
-            validTxs.forEach(tx => portfolio.add(tx));
+            portfolio.replaceAll(validTxs);
             toast(t('js.portfolio_imported'), {type:'success'});
           } else {
             toast(t('js.invalid_import'), {type:'error'});
@@ -840,7 +876,7 @@ async function init() {
     const file = input.files[0];
     if (!file) return;
 
-    let imported = 0;
+    const importedTxs = [];
     const searchCache = new Map();
     const normalizeHeader = header => header.toLowerCase().replace(/[\s()]/g, '');
     const parseNumber = value => {
@@ -899,7 +935,7 @@ async function init() {
 
         const typeValue = get('type', 'side').toLowerCase();
         const type = ['sell', 's', 'sale'].includes(typeValue) ? 'sell' : 'buy';
-        portfolio.add({
+        importedTxs.push({
           coinId,
           symbol: coin?.symbol || inputSymbol,
           name: coin?.name || rawCoinId || coinId,
@@ -910,10 +946,12 @@ async function init() {
           date: parseDate(get('date', 'time', 'timestamp')),
           note: get('note', 'notes', 'memo')
         });
-        imported++;
       }
 
-      if (imported > 0) toast(t('js.csv_imported', { n: imported }), { type: 'success' });
+      if (importedTxs.length > 0) {
+        portfolio.addMany(importedTxs);
+        toast(t('js.csv_imported', { n: importedTxs.length }), { type: 'success' });
+      }
       else toast(t('js.csv_invalid'), { type: 'error' });
     } catch (err) {
       toast(t('js.csv_invalid'), { type: 'error' });

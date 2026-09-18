@@ -26,6 +26,24 @@ function isCompressible(contentType) {
     contentType.startsWith('application/manifest+json');
 }
 
+function acceptedEncoding(header, encoding) {
+  const accepted = new Map();
+  for (const part of String(header).split(',')) {
+    const [namePart, ...params] = part.trim().toLowerCase().split(';');
+    if (!namePart) continue;
+    let quality = 1;
+    for (const param of params) {
+      const match = param.trim().match(/^q\s*=\s*(\d*(?:\.\d+)?)$/);
+      if (match) {
+        quality = Number(match[1]);
+        if (!Number.isFinite(quality) || quality < 0 || quality > 1) quality = 0;
+      }
+    }
+    accepted.set(namePart, quality);
+  }
+  return accepted.has(encoding) ? accepted.get(encoding) : (accepted.get('*') || 0);
+}
+
 export function createCompressionCache({ maxEntries = 200 } = {}) {
   const entries = new Map();
 
@@ -55,9 +73,9 @@ export function send(req, res, statusCode, headers, body, { cacheKey, compressio
   let encoding = null;
 
   if (outBody && outBody.length >= 1024 && isCompressible(contentType)) {
-    if (accept.includes('br')) {
+    if (acceptedEncoding(accept, 'br') > 0) {
       encoding = 'br';
-    } else if (accept.includes('gzip')) {
+    } else if (acceptedEncoding(accept, 'gzip') > 0) {
       encoding = 'gzip';
     }
 

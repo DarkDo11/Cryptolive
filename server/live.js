@@ -87,16 +87,32 @@ export function createLive() {
   const broadcast = (event, data) => {
     if (subscribers.size === 0) return;
     const msg = data ? `event: ${event}\ndata: ${JSON.stringify(data)}\n\n` : `event: ${event}\n\n`;
+    let removed = false;
     for (const res of subscribers) {
-      res.write(msg);
+      if (res.writableNeedDrain === true || res.writableLength > 256 * 1024) continue;
+      try {
+        res.write(msg);
+      } catch (err) {
+        subscribers.delete(res);
+        removed = true;
+      }
     }
+    if (removed) checkConnection();
   };
 
   const pingAll = () => {
     if (subscribers.size === 0) return;
+    let removed = false;
     for (const res of subscribers) {
-      res.write(`: ping\n\n`);
+      if (res.writableNeedDrain === true || res.writableLength > 256 * 1024) continue;
+      try {
+        res.write(`: ping\n\n`);
+      } catch (err) {
+        subscribers.delete(res);
+        removed = true;
+      }
     }
+    if (removed) checkConnection();
   };
 
   const flushTicks = () => {
@@ -199,6 +215,9 @@ export function createLive() {
         'X-Accel-Buffering': 'no'
       });
       subscribers.add(res);
+      const remove = () => this.unsubscribe(res);
+      res.on?.('close', remove);
+      res.on?.('error', remove);
       
       const ids = Object.keys(BINANCE_MAP);
       if (Object.keys(snapshot).length > 0) {

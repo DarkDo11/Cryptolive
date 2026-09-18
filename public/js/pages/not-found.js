@@ -65,13 +65,12 @@ let searchReqId = 0;
 let firstResultHref = '';
 
 async function doSearch(query) {
+  const reqId = ++searchReqId;
   if (query.length < 2) {
     if (searchResults) searchResults.innerHTML = '';
     firstResultHref = '';
     return;
   }
-  
-  const reqId = ++searchReqId;
   
   try {
     let fx = 1;

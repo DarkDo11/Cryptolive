@@ -339,8 +339,8 @@ export function openAlertModal(opts = {}) {
   const cur = settings.get().currency || 'usd';
   qs('#alertCurCode').textContent = cur.toUpperCase();
   
-  qsa('.toggle-group .range-btn').forEach(b => b.classList.remove('is-active'));
-  qs('.toggle-group .range-btn[data-val="above"]').classList.add('is-active');
+  qsa('.toggle-group .range-btn', qs('#alertModalBackdrop')).forEach(b => b.classList.remove('is-active'));
+  qs('.toggle-group .range-btn[data-val="above"]', qs('#alertModalBackdrop')).classList.add('is-active');
   qs('#alertCondition').value = 'above';
   applyConditionUi('above');
   
