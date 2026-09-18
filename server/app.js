@@ -148,6 +148,12 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
         return;
       }
 
+      if (pathname === '/robots.txt') {
+        send(req, res, 200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+          `User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${publicUrl.replace(/\/$/, '')}/sitemap.xml\n`);
+        return;
+      }
+
       if (pathname === '/sitemap.xml') {
         const urls = Object.keys(STATIC_ROUTES);
         const uni = await Promise.race([getUniverse({ cache }).catch(() => null), new Promise(r => setTimeout(() => r(null), 1500))]);

@@ -242,3 +242,10 @@ test('does not expose files through path traversal', async () => {
     assert.doesNotMatch(res.body, /"name"\s*:\s*"cryptolive"/);
   }
 });
+
+test('serves robots.txt with the sitemap location', async () => {
+  const res = await request(server, '/robots.txt');
+  assert.equal(res.status, 200);
+  assert.match(res.body, /Sitemap: https:\/\/example\.test\/sitemap\.xml/);
+  assert.match(res.body, /Disallow: \/api\//);
+});

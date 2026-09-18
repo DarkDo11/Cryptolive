@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
   '/404.html',
   '/css/style.css',
   '/favicon.svg',
+  '/icon-192.png',
   '/manifest.webmanifest',
   '/js/alerts.js',
   '/js/api.js',
