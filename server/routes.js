@@ -214,12 +214,12 @@ export async function handleApi(req, res, url, ctx) {
     const category = url.searchParams.get('category');
     if (category && !/^[a-z0-9-]+$/.test(category)) badRequest('Invalid category');
     const order = url.searchParams.get('order') || 'market_cap_desc';
-    if (!/^(market_cap|volume|id)_(asc|desc)$/.test(order)) badRequest('Invalid order');
+    if (!/^(market_cap|volume|price_change_percentage_24h|id)_(asc|desc)$/.test(order)) badRequest('Invalid order');
     
-    if (!category && order === 'market_cap_desc') {
+    if (!category) {
       try {
         const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
-        const rows = marketsFromUniverse({ universe: uni, ratio: fx[vs] ?? null, ids: ids ? ids.split(',') : null, page, perPage: per_page });
+        const rows = marketsFromUniverse({ universe: uni, ratio: fx[vs] ?? null, ids: ids ? ids.split(',') : null, page, perPage: per_page, order });
         if (rows && typeof fx[vs] === 'number' && Number.isFinite(fx[vs])) {
           return respond(rows, {
               'X-Cache': 'universe',

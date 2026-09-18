@@ -54,6 +54,26 @@ test('universe: marketsFromUniverse pagination and ids', () => {
   assert.strictEqual(p3, null); // start >= length
 });
 
+test('universe: marketsFromUniverse sorts supported orders with nulls last', () => {
+  const rows = [
+    { id: 'charlie', market_cap: 30, total_volume: null, price_change_percentage_24h: 1 },
+    { id: 'alpha', market_cap: null, total_volume: 20, price_change_percentage_24h: -2 },
+    { id: 'bravo', market_cap: 10, total_volume: 40, price_change_percentage_24h: null }
+  ];
+  const universe = { rows, byId: new Map(rows.map(r => [r.id, r])) };
+  const sorted = (order) => marketsFromUniverse({ universe, ratio: 1, page: 1, perPage: 3, order }).map(r => r.id);
+
+  assert.deepStrictEqual(sorted('market_cap_desc'), ['charlie', 'bravo', 'alpha']);
+  assert.deepStrictEqual(sorted('market_cap_asc'), ['bravo', 'charlie', 'alpha']);
+  assert.deepStrictEqual(sorted('volume_desc'), ['bravo', 'alpha', 'charlie']);
+  assert.deepStrictEqual(sorted('volume_asc'), ['alpha', 'bravo', 'charlie']);
+  assert.deepStrictEqual(sorted('price_change_percentage_24h_desc'), ['charlie', 'alpha', 'bravo']);
+  assert.deepStrictEqual(sorted('price_change_percentage_24h_asc'), ['alpha', 'charlie', 'bravo']);
+  assert.deepStrictEqual(sorted('id_asc'), ['alpha', 'bravo', 'charlie']);
+  assert.deepStrictEqual(sorted('id_desc'), ['charlie', 'bravo', 'alpha']);
+  assert.deepStrictEqual(universe.rows.map(r => r.id), ['charlie', 'alpha', 'bravo'], 'original rows are unmodified');
+});
+
 test('universe: similarFromUniverse picks rank neighbours and excludes the coin', () => {
   const rows = Array.from({ length: 20 }, (_, i) => ({ id: 'c' + i, market_cap_rank: i + 1, current_price: i + 1 }));
   const universe = { rows, byId: new Map(rows.map(r => [r.id, r])) };

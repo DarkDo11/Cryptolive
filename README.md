@@ -34,7 +34,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
   - **Request Tracing**: Every response carries an `X-Request-Id`, echoed when supplied by the client or generated otherwise.
   - **Warm cache**: the detail payloads of the top `WARM_COINS` coins are refreshed every 10 minutes (sequentially, skipped while the upstream is in cooldown), so popular coin pages are served from cache and survive throttling with full data.
   - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (version, uptime, memory, cache counters + hit ratio, upstream counters and cooldown, live feed state).
-- **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top 500 coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` (default order) and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
+- **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` requests, including `order` variants, and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
 - **Real-Time Price Stream (`/api/stream`)**: A single Binance combined WebSocket connection (`miniTicker` streams for ~60 top assets) feeds an SSE broadcaster (`live.js`). The connection connects lazily on the first client subscription and disconnects 60 seconds after the last subscriber leaves; price updates are throttled to at most once per second.
 - **Upstream Limits**: The public CoinGecko API allows ~10–30 req/min without an API key. Supplying a free Demo key via `COINGECKO_API_KEY` increases limits to ~30 req/min (10k requests/month).
 
@@ -71,6 +71,7 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `LOG_FORMAT` | `text` | Access-log format: `text` or `json` (one JSON object per line: ts, id, method, path, status, ms, cache, ip, ua) |
 | `API_RATE_LIMIT` | `120` | Per-IP limit for `/api` requests per minute |
 | `WARM_COINS` | `10` | How many top coins' detail payloads to keep pre-fetched (0 disables) |
+| `UNIVERSE_PAGES` | `2` | Pages of 250 coins kept in the in-memory universe (1–4) |
 | `TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so the rate limiter/logs use the first `X-Forwarded-For` hop |
 | `MAX_SSE_CLIENTS` | `500` | Maximum concurrent `/api/stream` connections (503 + Retry-After beyond) |
 | `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |

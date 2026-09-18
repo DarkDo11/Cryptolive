@@ -2,26 +2,21 @@ import { fetchUpstream, COINGECKO_BASE, cacheKey } from './upstream.js';
 
 export const VS_CURRENCIES = ['usd', 'eur', 'gbp', 'rub', 'jpy', 'cny', 'cad', 'aud', 'chf', 'krw', 'inr', 'brl', 'try', 'uah', 'pln', 'kzt', 'btc', 'eth'];
 
+const universePages = Number(process.env.UNIVERSE_PAGES || 2);
+export const UNIVERSE_PAGES = Number.isInteger(universePages) && universePages >= 1 && universePages <= 4 ? universePages : 2;
+
 export async function getUniverse(ctx) {
-  const url1 = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=1h,24h,7d`;
-  const url2 = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=2&sparkline=true&price_change_percentage=1h,24h,7d`;
-
-  let page1, page2;
-  try {
-    const res = await ctx.cache.get(cacheKey(url1), 60_000, () => fetchUpstream(url1));
-    page1 = res.value;
-  } catch (err) {
-    throw err;
+  const rows = [];
+  for (let page = 1; page <= UNIVERSE_PAGES; page++) {
+    const url = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${page}&sparkline=true&price_change_percentage=1h,24h,7d`;
+    try {
+      const res = await ctx.cache.get(cacheKey(url), 60_000, () => fetchUpstream(url));
+      rows.push(...res.value);
+    } catch (err) {
+      if (page === 1) throw err;
+    }
   }
 
-  try {
-    const res = await ctx.cache.get(cacheKey(url2), 60_000, () => fetchUpstream(url2));
-    page2 = res.value;
-  } catch (err) {
-    page2 = [];
-  }
-
-  const rows = page1.concat(page2);
   const byId = new Map();
   for (const row of rows) {
     byId.set(row.id, row);
@@ -62,7 +57,7 @@ export function convertRow(row, ratio) {
   return copy;
 }
 
-export function marketsFromUniverse({ universe, ratio, ids, page, perPage }) {
+export function marketsFromUniverse({ universe, ratio, ids, page, perPage, order = 'market_cap_desc' }) {
   if (ids) {
     const rows = ids.map(id => universe.byId.get(id)).filter(Boolean);
     if (rows.length !== ids.length) return null;
@@ -71,10 +66,31 @@ export function marketsFromUniverse({ universe, ratio, ids, page, perPage }) {
     const start = (page - 1) * perPage;
     const end = page * perPage;
     if (end > universe.rows.length) {
-      if (universe.rows.length >= 500) return null;
+      if (universe.rows.length >= UNIVERSE_PAGES * 250) return null;
       if (start >= universe.rows.length) return null;
     }
-    return universe.rows.slice(start, end).map(r => convertRow(r, ratio));
+    const [field, direction] = {
+      market_cap_desc: ['market_cap', 'desc'],
+      market_cap_asc: ['market_cap', 'asc'],
+      volume_desc: ['total_volume', 'desc'],
+      volume_asc: ['total_volume', 'asc'],
+      price_change_percentage_24h_desc: ['price_change_percentage_24h', 'desc'],
+      price_change_percentage_24h_asc: ['price_change_percentage_24h', 'asc'],
+      id_asc: ['id', 'asc'],
+      id_desc: ['id', 'desc']
+    }[order];
+    const rows = universe.rows.slice().sort((a, b) => {
+      const aValue = a[field];
+      const bValue = b[field];
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+      const compared = typeof aValue === 'string'
+        ? aValue.localeCompare(bValue)
+        : aValue - bValue;
+      return direction === 'asc' ? compared : -compared;
+    });
+    return rows.slice(start, end).map(r => convertRow(r, ratio));
   }
 }
 

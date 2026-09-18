@@ -4,7 +4,7 @@ import { TtlCache } from '../server/cache.js';
 
 const universeRows = (page) => Array.from({ length: 250 }, (_, i) => {
   const n = (page - 1) * 250 + i + 1;
-  return { id: 'coin' + n, symbol: 's' + n, name: 'Coin ' + n, image: 'img' + n, current_price: n, market_cap: 1000 - n, market_cap_rank: n };
+  return { id: 'coin' + n, symbol: 's' + n, name: 'Coin ' + n, image: 'img' + n, current_price: n, market_cap: 1000 - n, market_cap_rank: n, total_volume: n === 500 ? null : n * 10 };
 });
 
 globalThis.fetch = async (url) => {
@@ -75,6 +75,21 @@ test('routes: handleApi 400 on /api/markets?per_page=999', async () => {
   } catch (err) {
     assert.strictEqual(err.status, 400);
   }
+});
+
+test('routes: /api/markets serves ordered volume rows from the universe', async () => {
+  const res = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?order=volume_desc&per_page=3'), { cache: new TtlCache() });
+
+  assert.strictEqual(res.status, 200);
+  assert.strictEqual(res.headers['X-Cache'], 'universe');
+  assert.deepStrictEqual(JSON.parse(res.body).map(r => r.total_volume), [4990, 4980, 4970]);
+});
+
+test('routes: /api/markets rejects an invalid order', async () => {
+  await assert.rejects(
+    handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?order=volume_sideways'), { cache: new TtlCache() }),
+    (err) => err.status === 400
+  );
 });
 
 test('routes: /api/markets supports CSV output from the universe', async () => {
