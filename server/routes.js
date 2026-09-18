@@ -1,5 +1,6 @@
 import { COINGECKO_BASE, fetchUpstream, badRequest, cacheKey } from './upstream.js';
 import { getUniverse, getFx, marketsFromUniverse, similarFromUniverse, searchUniverse, coinFromUniverse, enrichFromUniverse, VS_CURRENCIES } from './universe.js';
+import { toCsv } from './csv.js';
 
 const FNG_BASE = process.env.UPSTREAM_FNG || 'https://api.alternative.me/fng/';
 
@@ -24,11 +25,42 @@ function parseCompactUsd(value) {
 
 export async function handleApi(req, res, url, ctx) {
   const path = url.pathname;
+  const format = url.searchParams.get('format') || 'json';
+  if (!['json', 'csv'].includes(format)) badRequest('Invalid format');
   let targetUrl = '';
   let ttlMs = 0;
   let transform = (data) => data;
+  let csvColumns = null;
+  let csvFilename = '';
+  let csvRows = (value) => value?.rows || value;
   // Optional degraded-mode producer used when the upstream call fails and nothing is cached.
   let fallback = null;
+
+  const respond = (value, headersExtra) => {
+    const cacheStatus = headersExtra['X-Cache'];
+    if (format === 'csv') {
+      if (!csvColumns) badRequest('CSV not available for this route');
+      return {
+        status: 200,
+        cache: cacheStatus,
+        headers: {
+          ...headersExtra,
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="cryptolive-${csvFilename}.csv"`
+        },
+        body: `\uFEFF${toCsv(csvRows(value), csvColumns)}`
+      };
+    }
+    return {
+      status: 200,
+      cache: cacheStatus,
+      headers: {
+        ...headersExtra,
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify(value)
+    };
+  };
 
   const getVs = () => {
     const vs = url.searchParams.get('vs') || 'usd';
@@ -106,16 +138,10 @@ export async function handleApi(req, res, url, ctx) {
         market_cap_rank: coin.market_cap_rank
       };
     }).filter(Boolean).sort((a, b) => b.score - a.score);
-    return {
-      status: 200,
-      cache: 'universe',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
+    return respond(rows, {
         'X-Cache': 'universe',
         'Cache-Control': 'public, max-age=30'
-      },
-      body: JSON.stringify(rows)
-    };
+    });
   } else if (path === '/api/trending') {
     targetUrl = `${COINGECKO_BASE}/search/trending`;
     ttlMs = 300 * 1000;
@@ -160,6 +186,28 @@ export async function handleApi(req, res, url, ctx) {
       };
     };
   } else if (path === '/api/markets') {
+    csvColumns = [
+      { key: 'market_cap_rank', header: 'rank' },
+      { key: 'id', header: 'id' },
+      { key: 'symbol', header: 'symbol' },
+      { key: 'name', header: 'name' },
+      { key: 'current_price', header: 'price' },
+      { key: 'market_cap', header: 'market_cap' },
+      { key: 'fully_diluted_valuation', header: 'fully_diluted_valuation' },
+      { key: 'total_volume', header: 'total_volume' },
+      { key: 'high_24h', header: 'high_24h' },
+      { key: 'low_24h', header: 'low_24h' },
+      { key: 'price_change_percentage_24h', header: 'price_change_percentage_24h' },
+      { key: 'price_change_percentage_1h_in_currency', header: 'price_change_percentage_1h_in_currency' },
+      { key: 'price_change_percentage_7d_in_currency', header: 'price_change_percentage_7d_in_currency' },
+      { key: 'circulating_supply', header: 'circulating_supply' },
+      { key: 'total_supply', header: 'total_supply' },
+      { key: 'max_supply', header: 'max_supply' },
+      { key: 'ath', header: 'ath' },
+      { key: 'atl', header: 'atl' },
+      { key: 'last_updated', header: 'last_updated' }
+    ];
+    csvFilename = 'markets';
     const vs = getVs();
     const { page, per_page } = getPageParams();
     const ids = getIds();
@@ -173,16 +221,10 @@ export async function handleApi(req, res, url, ctx) {
         const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
         const rows = marketsFromUniverse({ universe: uni, ratio: fx[vs] ?? null, ids: ids ? ids.split(',') : null, page, perPage: per_page });
         if (rows && typeof fx[vs] === 'number' && Number.isFinite(fx[vs])) {
-          return {
-            status: 200,
-            cache: 'universe',
-            headers: {
-              'Content-Type': 'application/json; charset=utf-8',
+          return respond(rows, {
               'X-Cache': 'universe',
               'Cache-Control': 'public, max-age=60'
-            },
-            body: JSON.stringify(rows)
-          };
+          });
         }
       } catch (err) {
         // Fall through to existing upstream logic
@@ -220,28 +262,43 @@ export async function handleApi(req, res, url, ctx) {
       const vs = getVs();
       const [uni, fx] = await Promise.all([getUniverse(ctx), getFx(ctx)]);
       const rows = similarFromUniverse({ universe: uni, ratio: fx[vs] ?? null, id: coinId, limit: 8 });
-      return {
-        status: 200,
-        cache: 'universe',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
+      return respond(rows, {
           'X-Cache': 'universe',
           'Cache-Control': 'public, max-age=60'
-        },
-        body: JSON.stringify(rows)
-      };
+      });
     } else if (subRoute === 'chart') {
       const vs = getVs();
       const days = url.searchParams.get('days');
       if (!ALLOWED_DAYS_CHART.has(days)) badRequest('Invalid days');
       targetUrl = `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=${vs}&days=${days}`;
       ttlMs = days === '1' ? 120 * 1000 : 900 * 1000;
+      csvColumns = [
+        { key: 'time', header: 'time' },
+        { key: 'price', header: 'price' },
+        { key: 'market_cap', header: 'market_cap' },
+        { key: 'volume', header: 'volume' }
+      ];
+      csvFilename = `${coinId}-chart-${days}d`;
+      csvRows = (data) => (data.prices || []).map((point, index) => ({
+        time: new Date(point[0]).toISOString(),
+        price: point[1],
+        market_cap: data.market_caps?.[index]?.[1],
+        volume: data.total_volumes?.[index]?.[1]
+      }));
     } else if (subRoute === 'ohlc') {
       const vs = getVs();
       const days = url.searchParams.get('days');
       if (!ALLOWED_DAYS_OHLC.has(days)) badRequest('Invalid days');
       targetUrl = `${COINGECKO_BASE}/coins/${coinId}/ohlc?vs_currency=${vs}&days=${days}`;
       ttlMs = 300 * 1000;
+      csvColumns = [
+        { key: row => new Date(row[0]).toISOString(), header: 'time' },
+        { key: row => row[1], header: 'open' },
+        { key: row => row[2], header: 'high' },
+        { key: row => row[3], header: 'low' },
+        { key: row => row[4], header: 'close' }
+      ];
+      csvFilename = `${coinId}-ohlc-${days}d`;
     } else if (subRoute === 'tickers') {
       const page = intParam('page', 1, 1, 100);
       targetUrl = `${COINGECKO_BASE}/coins/${coinId}/tickers?page=${page}&order=volume_desc&depth=false&include_exchange_logo=true`;
@@ -295,6 +352,14 @@ export async function handleApi(req, res, url, ctx) {
       }))
     });
   } else if (path === '/api/categories') {
+    csvColumns = [
+      { key: 'id', header: 'id' },
+      { key: 'name', header: 'name' },
+      { key: 'market_cap', header: 'market_cap' },
+      { key: 'market_cap_change_24h', header: 'market_cap_change_24h' },
+      { key: 'volume_24h', header: 'volume_24h' }
+    ];
+    csvFilename = 'categories';
     targetUrl = `${COINGECKO_BASE}/coins/categories?order=market_cap_desc`;
     ttlMs = 600 * 1000;
     transform = (data) => {
@@ -312,6 +377,17 @@ export async function handleApi(req, res, url, ctx) {
       });
     };
   } else if (path === '/api/exchanges') {
+    csvColumns = [
+      { key: 'id', header: 'id' },
+      { key: 'name', header: 'name' },
+      { key: 'trust_score', header: 'trust_score' },
+      { key: 'trust_score_rank', header: 'trust_score_rank' },
+      { key: 'year_established', header: 'year_established' },
+      { key: 'country', header: 'country' },
+      { key: 'trade_volume_24h_btc', header: 'trade_volume_24h_btc' },
+      { key: 'url', header: 'url' }
+    ];
+    csvFilename = 'exchanges';
     const { page, per_page } = getPageParams();
     targetUrl = `${COINGECKO_BASE}/exchanges?per_page=${per_page}&page=${page}`;
     ttlMs = 600 * 1000;
@@ -391,16 +467,10 @@ export async function handleApi(req, res, url, ctx) {
             }
           }
         }
-        return {
-          status: 200,
-          cache: 'universe',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
+        return respond(result, {
             'X-Cache': 'universe',
             'Cache-Control': 'public, max-age=60'
-          },
-          body: JSON.stringify(result)
-        };
+        });
       }
     } catch (err) {
       // Fall through
@@ -429,16 +499,10 @@ export async function handleApi(req, res, url, ctx) {
       { code: "btc", symbol: "₿", name: "Bitcoin" },
       { code: "eth", symbol: "Ξ", name: "Ethereum" }
     ];
-    return {
-      status: 200,
-      cache: 'hit',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
+    return respond(currencies, {
         'X-Cache': 'hit',
         'Cache-Control': 'public, max-age=3600'
-      },
-      body: JSON.stringify(currencies)
-    };
+    });
   } else {
     const e = new Error('Not Found');
     e.status = 404;
@@ -458,14 +522,8 @@ export async function handleApi(req, res, url, ctx) {
   // Fallback payloads are already in the public shape; transforms only apply to raw upstream data.
   const finalValue = cacheStatus === 'fallback' ? value : transform(value);
   
-  return {
-    status: 200,
-    cache: cacheStatus,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'X-Cache': cacheStatus,
-      'Cache-Control': `public, max-age=${Math.floor(ttlMs / 1000)}`
-    },
-    body: JSON.stringify(finalValue)
-  };
+  return respond(finalValue, {
+    'X-Cache': cacheStatus,
+    'Cache-Control': `public, max-age=${Math.floor(ttlMs / 1000)}`
+  });
 }

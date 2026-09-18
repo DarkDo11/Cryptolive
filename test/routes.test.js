@@ -77,6 +77,23 @@ test('routes: handleApi 400 on /api/markets?per_page=999', async () => {
   }
 });
 
+test('routes: /api/markets supports CSV output from the universe', async () => {
+  const res = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?format=csv&per_page=2'), { cache: new TtlCache() });
+
+  assert.strictEqual(res.status, 200);
+  assert.ok(res.headers['Content-Type'].startsWith('text/csv'));
+  assert.ok(res.body.startsWith('\uFEFFrank,id,symbol,name,price,'));
+  const lines = res.body.split('\r\n');
+  assert.strictEqual(lines.length, 3);
+  assert.ok(lines[1].includes('coin1'));
+});
+
+test('routes: rejects unavailable and invalid output formats', async () => {
+  const cache = new TtlCache();
+  await assert.rejects(handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/currencies?format=csv'), { cache }), (e) => e.status === 400);
+  await assert.rejects(handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?format=xml'), { cache }), (e) => e.status === 400);
+});
+
 test('routes: handleApi /api/fng mapping', async () => {
   const req = { method: 'GET' };
   const url = new URL('http://localhost/api/fng');

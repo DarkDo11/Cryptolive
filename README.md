@@ -109,6 +109,8 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /healthz` | — | — | Health JSON: version, uptime, memory, cache counters, upstream counters/cooldown, live feed state (rendered by `/status`) |
 | `GET /metrics` | — | — | Prometheus text metrics (cache, upstream, live feed, HTTP totals) |
 
+Tabular endpoints (`/api/markets`, `/api/coin/:id/ohlc`, `/api/coin/:id/chart`, `/api/exchanges`, `/api/categories`) also accept `?format=csv` and return a UTF-8 CSV download.
+
 ### Live Price Stream (`/api/stream`)
 
 Server-Sent Events endpoint streaming real-time price updates:

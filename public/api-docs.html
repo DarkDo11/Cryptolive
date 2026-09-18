@@ -52,6 +52,7 @@
           </table>
         </div>
         <div class="card-body muted small" data-i18n-html="apiDocs.notes">Every response carries <code>X-Cache</code> (<code>hit</code>, <code>miss</code>, <code>stale</code>, <code>universe</code>, <code>fallback</code>) and <code>Cache-Control</code>. While the data provider is in cooldown the API answers <code>503</code> with <code>Retry-After</code>; per-IP limits answer <code>429</code> with <code>X-RateLimit-Remaining</code>. Currency codes for <code>vs</code>: see <code>/api/currencies</code>.</div>
+        <div class="card-body muted small" style="padding-top:0">Tabular endpoints (<code>/api/markets</code>, <code>/api/coin/:id/ohlc</code>, <code>/api/coin/:id/chart</code>, <code>/api/exchanges</code>, <code>/api/categories</code>) also accept <code>?format=csv</code> and return a UTF-8 CSV download. <button type="button" class="btn btn-ghost btn-sm try-btn" data-url="/api/markets?format=csv&amp;per_page=5">Try CSV</button></div>
       </section>
 
       <div>
