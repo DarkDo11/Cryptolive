@@ -26,6 +26,27 @@
         <a class="btn btn-primary" href="/" style="margin-top: 16px;" data-i18n="notFound.back">Back to markets</a>
       </div>
     </section>
+    <section class="card" style="margin-top:16px">
+      <div class="card-body">
+        <p class="muted" data-i18n="notFound.searchHint">Try searching for a coin, category or exchange:</p>
+        <form id="nfSearchForm" class="try-form" style="margin-top:8px">
+          <input class="input" id="nfSearch" type="search" data-i18n-placeholder="notFound.searchPlaceholder" placeholder="Search…" autocomplete="off">
+          <button class="btn btn-primary" type="submit">→</button>
+        </form>
+        <div id="nfResults" class="highlight-list" style="margin-top:12px"></div>
+      </div>
+    </section>
+    <section class="card" style="margin-top:16px">
+      <div class="card-head" data-i18n="notFound.popular">Popular right now</div>
+      <div id="nfTrending" class="highlight-list"></div>
+    </section>
+    <nav class="nf-links" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap">
+      <a class="btn btn-ghost btn-sm" href="/" data-i18n="nav.markets">Markets</a>
+      <a class="btn btn-ghost btn-sm" href="/trending" data-i18n="nav.trending">Trending</a>
+      <a class="btn btn-ghost btn-sm" href="/heatmap" data-i18n="nav.heatmap">Heatmap</a>
+      <a class="btn btn-ghost btn-sm" href="/exchanges" data-i18n="nav.exchanges">Exchanges</a>
+      <a class="btn btn-ghost btn-sm" href="/portfolio" data-i18n="nav.portfolio">Portfolio</a>
+    </nav>
   </main>
   <div id="app-footer"></div>
 </body>

@@ -94,9 +94,9 @@ test('browser stores', () => {
   ]);
 
   const bitcoin = { coinId: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' };
-  store.portfolio.add({ ...bitcoin, type: 'buy', amount: 1, price: 60000 });
-  store.portfolio.add({ ...bitcoin, type: 'buy', amount: 1, price: 70000 });
-  store.portfolio.add({ ...bitcoin, type: 'sell', amount: 0.5, price: 80000 });
+  store.portfolio.add({ ...bitcoin, type: 'buy', amount: 1, price: 60000, date: 1 });
+  store.portfolio.add({ ...bitcoin, type: 'buy', amount: 1, price: 70000, date: 2 });
+  store.portfolio.add({ ...bitcoin, type: 'sell', amount: 0.5, price: 80000, date: 3 });
 
   const transactions = store.portfolio.list();
   assert.equal(transactions.length, 3);
@@ -108,8 +108,12 @@ test('browser stores', () => {
     image: undefined,
     amount: 1.5,
     costBasisUsd: 97500,
-    avgPriceUsd: 65000
+    avgPriceUsd: 65000,
+    avgCostUsd: 65000
   }]);
+  assert.equal(store.portfolio.realized().totalRealizedUsd, 0.5 * (80000 - 65000));
+  assert.equal(store.portfolio.realized().byCoin.bitcoin.soldAmount, 0.5);
+  assert.equal(store.portfolio.holdings()[0].avgCostUsd, 65000);
 
   const id = transactions[0].id;
   store.portfolio.update(id, { amount: 2 });

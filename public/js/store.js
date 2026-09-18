@@ -129,6 +129,39 @@ export const portfolio = {
     safeSet('cryptolive:portfolio', []);
     window.dispatchEvent(new Event('portfolio:change'));
   },
+  realized() {
+    const byCoin = {};
+    const txs = this.list()
+      .map((tx, index) => ({ tx, index }))
+      .sort((a, b) => (Number(a.tx.date) - Number(b.tx.date)) || (a.index - b.index));
+
+    for (const { tx } of txs) {
+      if (!byCoin[tx.coinId]) {
+        byCoin[tx.coinId] = { realizedUsd: 0, soldAmount: 0 };
+      }
+      const result = byCoin[tx.coinId];
+      const amt = Number(tx.amount) || 0;
+      const price = Number(tx.price) || 0;
+      if (tx.type === 'buy') {
+        const held = result.held || 0;
+        result.avg = ((result.avg || 0) * held + amt * price) / (held + amt);
+        result.held = held + amt;
+      } else if (tx.type === 'sell') {
+        const soldAmount = Math.max(0, Math.min(amt, result.held || 0));
+        result.realizedUsd += soldAmount * (price - (result.avg || 0));
+        result.soldAmount += soldAmount;
+        result.held = (result.held || 0) - amt;
+      }
+    }
+
+    let totalRealizedUsd = 0;
+    for (const result of Object.values(byCoin)) {
+      totalRealizedUsd += result.realizedUsd;
+      delete result.avg;
+      delete result.held;
+    }
+    return { totalRealizedUsd, byCoin };
+  },
   holdings() {
     const txs = this.list();
     const map = new Map();
@@ -156,6 +189,23 @@ export const portfolio = {
       }
     }
     
+    const avgCosts = {};
+    const datedTxs = txs
+      .map((tx, index) => ({ tx, index }))
+      .sort((a, b) => (Number(a.tx.date) - Number(b.tx.date)) || (a.index - b.index));
+    for (const { tx } of datedTxs) {
+      const current = avgCosts[tx.coinId] || { held: 0, avg: 0 };
+      const amt = Number(tx.amount) || 0;
+      const price = Number(tx.price) || 0;
+      if (tx.type === 'buy') {
+        current.avg = (current.avg * current.held + amt * price) / (current.held + amt);
+        current.held += amt;
+      } else if (tx.type === 'sell') {
+        current.held -= amt;
+      }
+      avgCosts[tx.coinId] = current;
+    }
+
     const result = [];
     for (const h of map.values()) {
       if (h.amount > 0 || h.totalBuyAmount > 0) {
@@ -168,7 +218,8 @@ export const portfolio = {
           image: h.image,
           amount: h.amount,
           costBasisUsd,
-          avgPriceUsd
+          avgPriceUsd,
+          avgCostUsd: avgCosts[h.coinId].avg
         });
       }
     }

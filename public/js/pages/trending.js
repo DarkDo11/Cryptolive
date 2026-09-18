@@ -119,7 +119,7 @@ function renderCoins() {
     html += `<td class="col-change24h">${changeBadge(c.change24h, `data-live-change="${escapeHtml(c.id)}"`)}</td>`;
     html += `<td class="col-volume">${fmtCurrency((c.volume_usd || 0) * fx, cur, { compact: false })}</td>`;
     html += `<td class="col-marketCap">${fmtCurrency((c.market_cap_usd || 0) * fx, cur, { compact: false })}</td>`;
-    html += `<td class="col-sparkline"><img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt=""></td>`;
+    html += `<td class="col-sparkline">${c.sparkline_url ? `<img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt="">` : '<span class="muted">—</span>'}</td>`;
     
     html += `</tr>`;
   });
@@ -149,7 +149,7 @@ function renderCategories() {
     html += `<td>${escapeHtml(String(c.coins_count))}</td>`;
     html += `<td class="col-marketCap">${fmtCompact((c.market_cap_usd || 0) * fx, cur)}</td>`;
     html += `<td class="col-change24h">${changeBadge(c.change24h)}</td>`;
-    html += `<td class="col-sparkline"><img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt=""></td>`;
+    html += `<td class="col-sparkline">${c.sparkline_url ? `<img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt="">` : '<span class="muted">—</span>'}</td>`;
     html += `</tr>`;
   });
   categoriesTbody.innerHTML = html;
@@ -180,7 +180,7 @@ function renderNfts() {
     html += `<td class="price-cell col-price">${escapeHtml(floorStr)}</td>`;
     html += `<td class="col-change24h">${changeBadge(c.change24h)}</td>`;
     html += `<td class="col-volume">${escapeHtml(String(c.volume_24h || '—'))}</td>`;
-    html += `<td class="col-sparkline"><img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt=""></td>`;
+    html += `<td class="col-sparkline">${c.sparkline_url ? `<img class="sparkline-img" src="${escapeHtml(c.sparkline_url)}" loading="lazy" referrerpolicy="no-referrer" alt="">` : '<span class="muted">—</span>'}</td>`;
     html += `</tr>`;
   });
   nftsTbody.innerHTML = html;

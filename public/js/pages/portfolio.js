@@ -230,6 +230,9 @@ async function load() {
   rows.sort((a, b) => b.value - a.value);
 
   const totalPnl = totalValue - totalCost;
+  const realizedUsd = portfolio.realized().totalRealizedUsd;
+  const realized = realizedUsd * fx;
+  const hasSells = portfolio.list().some(tx => tx.type === 'sell');
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
   
   sumContainer.innerHTML = `
@@ -250,11 +253,19 @@ async function load() {
     </div>
     <div class="card" style="flex:1; min-width:200px">
       <div class="card-body">
-        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.total_p_l')}</div>
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.unrealized_p_l')}</div>
         <div style="display:flex; align-items:center; gap:8px">
           <span style="font-size:1.2rem; font-weight:600" id="totalPnlVal">${fmtCurrency(Math.abs(totalPnl), cur)}</span>
           ${changeBadge(totalPnlPct, 'id="totalPnlBadge"')}
         </div>
+      </div>
+    </div>
+    <div class="card" style="flex:1; min-width:200px">
+      <div class="card-body">
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.realized_p_l')}</div>
+        ${hasSells
+          ? `<span style="font-size:1.2rem; font-weight:600; color: var(--${realized >= 0 ? 'green' : 'red'})">${realized >= 0 ? '+' : '−'}${fmtCurrency(Math.abs(realized), cur)}</span>`
+          : '<span style="font-size:1.2rem; font-weight:600; color:var(--muted)">—</span>'}
       </div>
     </div>
     <div class="card" style="flex:1; min-width:120px">
