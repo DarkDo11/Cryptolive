@@ -340,6 +340,7 @@ export default {
   'trending.sub': "Wonach der Markt gerade sucht — wird alle 5 Minuten aktualisiert.",
   'trending.title': "Trends auf Cryptolive",
   'watchlist.title': "Meine Watchlist",
+  'watchlist.rowActions': "Aktionen",
   'watchlist.share': "Link teilen",
   'watchlist.shareCopied': "Link kopiert — jeder, der ihn öffnet, kann diese Münzen zu seiner Watchlist hinzufügen",
   'watchlist.shareCopyManual': "Kopieren Sie diesen Link:",

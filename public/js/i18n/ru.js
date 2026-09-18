@@ -340,6 +340,7 @@ export default {
   'trending.sub': "Что ищет рынок прямо сейчас — обновляется каждые 5 минут.",
   'trending.title': "В тренде на Cryptolive",
   'watchlist.title': "Моё избранное",
+  'watchlist.rowActions': "Действия",
   'watchlist.share': "Поделиться",
   'watchlist.shareCopied': "Ссылка скопирована — по ней можно добавить эти монеты в своё избранное",
   'watchlist.shareCopyManual': "Скопируйте ссылку:",
