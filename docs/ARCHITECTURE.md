@@ -396,6 +396,21 @@ Client:
 - Alerts: conditions `change_up` / `change_down` with `percent` (checked against tick `c` / `usd_24h_change`); `describeCondition()` / `describeTarget()` helpers.
 - a11y: skip link, `aria-label` on header selects, toast stack is `role=status aria-live=polite`.
 
+## 4d. Fourth iteration (testable app, ops, engagement)
+
+Server:
+- `server/app.js` — `createApp({ cache, live, popular, publicDir, options })` builds the request handler (no listening, no timers); `server/server.js` is the process entrypoint (cache persistence incl. `popular` snapshot, warm-up loops, shutdown). `test/app.test.js` runs real HTTP requests against an ephemeral port.
+- `X-Request-Id` on every response (echoed when valid), `LOG_FORMAT=json` structured access logs, `TRUST_PROXY` gate for `X-Forwarded-For`, `MAX_SSE_CLIENTS` cap, HEAD `/api/*` goes through validation, strict integer query params, upstream timeout covers body reads, WebSocket reconnect timers are cancelled when idle.
+- API responses carry weak ETags (`If-None-Match` → 304); static compressible files are compressed once per (path, etag, encoding) and cached (`createCompressionCache`).
+- `/api/popular` + `server/popular.js` — per-instance coin-page view counts with 24 h half-life decay (bots/prefetch excluded), persisted with the cache snapshot.
+- `/metrics` — Prometheus text format (`server/metrics.js`), optional `METRICS_TOKEN`; `/api/search` coins are enriched from the universe; `WARM_COINS` keeps top coin details warm.
+
+Client:
+- `api.get` retries once after upstream 503 (but not the service worker's offline 503); `api.markets` chunks >100 ids; fx ratios are remembered in localStorage; client cache bounded.
+- Service worker `cryptolive-v4`: network-first `/api/*` GETs cached in `cryptolive-api-v1` for offline reads (`X-Offline: 1` → `api:offline-data` event → banner).
+- Markets: expandable 7-day chart rows, compare-selection bar, CSV export, watchlist tab fetches all watched ids. Portfolio: transaction editing, realized P&L (moving-average cost), privacy mode, value history chart. Alerts: percent-change and repeating rules. Trending: "Most viewed on Cryptolive" tab. Exchanges: search/sort/CEX-DEX filter; exchange pages with sortable pairs. 404 page with search + trending. Keyboard shortcuts. Status, API docs pages.
+- `scripts/check.mjs` (run by `npm test`) — syntax, inline handlers, escaped template literals, i18n parity and unknown keys, `t` shadowing.
+
 ## 5. Non-functional
 - No inline event handlers; escape all interpolated text (`escapeHtml`). Images: `loading="lazy"`,
   `referrerpolicy="no-referrer"`, fallback to a lettered circle on error.
