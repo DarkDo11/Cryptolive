@@ -64,6 +64,8 @@ test('format utilities', () => {
 
 test('translations and locale selection', () => {
   localStorage.clear();
+  assert.equal(i18n.dateLocale(), 'en-US');
+  assert.ok(i18n.LANGS.every(({ code, label, locale }) => code && label && locale));
   assert.equal(i18n.t('nav.markets'), 'Markets');
 
   store.settings.set({ lang: 'ru' });

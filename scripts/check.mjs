@@ -2,7 +2,7 @@
 //  - syntax errors in any server/public JS module (node --check)
 //  - inline event handlers in HTML/JS templates (blocked by the CSP: script-src 'self')
 //  - escaped template literals (\` / \${) that would render literally
-//  - i18n keys used in JS/HTML that are missing from en.js, and ru.js keys missing vs en.js
+//  - i18n keys used in JS/HTML that are missing from en.js, and dictionary coverage vs en.js
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
@@ -64,10 +64,37 @@ for (const file of js.filter(f => f.includes('/public/'))) {
 }
 
 // i18n coverage
-const en = (await import(pathToFileURL(path.join(root, 'public/js/i18n/en.js')))).default;
-const ru = (await import(pathToFileURL(path.join(root, 'public/js/i18n/ru.js')))).default;
-for (const key of Object.keys(en)) if (!(key in ru)) problems.push(`i18n: ru.js is missing '${key}'`);
-for (const key of Object.keys(ru)) if (!(key in en)) problems.push(`i18n: ru.js has extra key '${key}'`);
+const i18nDir = path.join(root, 'public/js/i18n');
+const dictionaryFiles = (await readdir(i18nDir)).filter(file => file.endsWith('.js')).sort();
+const dictionaries = new Map();
+for (const file of dictionaryFiles) {
+  dictionaries.set(file, (await import(pathToFileURL(path.join(i18nDir, file)))).default);
+}
+const en = dictionaries.get('en.js');
+const i18nSource = await readFile(path.join(root, 'public/js/i18n.js'), 'utf8');
+const langsBlock = i18nSource.match(/export\s+const\s+LANGS\s*=\s*\[([\s\S]*?)\];/)?.[1] || '';
+const langCodes = new Set([...langsBlock.matchAll(/\bcode\s*:\s*['"]([^'"]+)['"]/g)].map(match => match[1]));
+const placeholderSet = value => new Set(typeof value === 'string'
+  ? [...value.matchAll(/\{([^{}]+)\}/g)].map(match => match[1])
+  : []);
+const sameSet = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
+
+for (const [file, dictionary] of dictionaries) {
+  const code = path.basename(file, '.js');
+  const imported = new RegExp(`import\\s+${code}\\s+from\\s+['"]\\./i18n/${file}['"]`).test(i18nSource);
+  if (!imported || !langCodes.has(code)) problems.push(`i18n: ${code} not registered in public/js/i18n.js`);
+  if (file === 'en.js') continue;
+  for (const key of Object.keys(en)) {
+    if (!(key in dictionary)) problems.push(`i18n: ${file} is missing '${key}'`);
+    else if (!sameSet(placeholderSet(en[key]), placeholderSet(dictionary[key]))) {
+      problems.push(`i18n: ${file} '${key}' placeholders differ`);
+    }
+  }
+  for (const key of Object.keys(dictionary)) if (!(key in en)) problems.push(`i18n: ${file} has extra key '${key}'`);
+}
+for (const code of langCodes) {
+  if (!dictionaries.has(`${code}.js`)) problems.push(`i18n: ${code} has no dictionary file`);
+}
 const keyRe = /\bt\(\s*['"]([a-zA-Z0-9_.]+)['"]/g;
 const attrRe = /data-i18n(?:-[a-z]+)?="([a-zA-Z0-9_.]+)"/g;
 for (const file of [...js.filter(f => f.includes('/public/') && !f.endsWith('/i18n.js')), ...html]) {

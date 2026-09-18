@@ -1,10 +1,14 @@
+// To add a language:
+//  - create ./i18n/<code>.js with every key from en.js
+//  - import it below
+//  - add it to LANGS and dicts
 // Minimal i18n: a flat dictionary per language, `t(key, params)` lookups with {param} interpolation,
 // and `applyTranslations(root)` for static markup annotated with data-i18n attributes.
 import { settings } from './store.js';
 
 export const LANGS = [
-  { code: 'en', label: 'English' },
-  { code: 'ru', label: 'Русский' }
+  { code: 'en', label: 'English', locale: 'en-US' },
+  { code: 'ru', label: 'Русский', locale: 'ru-RU' }
 ];
 
 // Dictionaries live in ./i18n/<lang>.js (plain objects). English is the source of truth: a missing
@@ -17,8 +21,12 @@ const dicts = { en, ru };
 export function getLang() {
   const saved = settings.get().lang;
   if (saved && dicts[saved]) return saved;
-  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
-  return dicts[nav] ? nav : 'en';
+  const browserLangs = [...(navigator.languages || []), navigator.language || 'en'];
+  for (const language of browserLangs) {
+    const code = language.split('-')[0].toLowerCase();
+    if (dicts[code]) return code;
+  }
+  return 'en';
 }
 
 export function setLang(lang) {
@@ -40,7 +48,7 @@ export function t(key, params) {
 
 /** Locale used for Intl date formatting (numbers stay en-US for consistency of crypto prices). */
 export function dateLocale() {
-  return getLang() === 'ru' ? 'ru-RU' : 'en-US';
+  return LANGS.find(l => l.code === getLang())?.locale || 'en-US';
 }
 
 /**
