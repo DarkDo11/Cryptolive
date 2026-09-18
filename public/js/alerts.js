@@ -34,7 +34,7 @@ function setStorage(data) {
 
 export const alerts = {
   list: () => getStorage(),
-  active: () => getStorage().filter(a => !a.triggeredAt),
+  active: () => getStorage().filter(a => a.repeat || !a.triggeredAt),
   add: (rule) => {
     const list = getStorage();
     list.push({
@@ -70,9 +70,13 @@ export function startAlertEngine({ notify }) {
   const checkAlerts = (pricesObj) => {
     const list = getStorage();
     let changed = false;
+    const now = Date.now();
     
     list.forEach(alert => {
-      if (alert.triggeredAt) return;
+      if (alert.triggeredAt) {
+        if (!alert.repeat) return;
+        if (now - alert.triggeredAt < 3600000) return;
+      }
       const priceInfo = pricesObj[alert.coinId];
       if (!priceInfo) return;
       
@@ -96,9 +100,12 @@ export function startAlertEngine({ notify }) {
       }
 
       if (isMatch) {
-        alert.triggeredAt = Date.now();
+        alert.triggeredAt = now;
         alert.triggeredPrice = p;
         alert.triggeredChange = c;
+        if (alert.repeat) {
+          alert.fireCount = (alert.fireCount || 0) + 1;
+        }
         changed = true;
         
         if (engineNotify) engineNotify(msg, 'success');
@@ -199,6 +206,13 @@ function buildAlertModal() {
             <div class="field full-width">
               <label>${t('js.note_optional')}</label>
               <input type="text" class="input" id="alertNote">
+            </div>
+            <div class="field full-width">
+              <label style="display:flex; align-items:center; gap:8px">
+                <input type="checkbox" id="alertRepeat"> 
+                <span>${t('alerts.repeat')}</span>
+              </label>
+              <p class="muted" style="margin:4px 0 0; font-size:0.8rem">${t('alerts.repeatHint')}</p>
             </div>
           </form>
           <div id="alertError" style="color:var(--red); font-size:0.9rem; margin-top:12px; display:none"></div>
@@ -405,7 +419,8 @@ async function saveAlert(e) {
     condition,
     price: priceUsd,
     percent: percent,
-    note
+    note,
+    repeat: qs('#alertRepeat').checked
   });
 
   if (engineNotify) engineNotify(t('js.alert_saved'), 'success');

@@ -144,6 +144,36 @@ test('reports health and component status', async () => {
   assert.equal(body.live.connected, false);
 });
 
+test('serves Prometheus metrics', async () => {
+  const res = await request(server, '/metrics');
+  assert.equal(res.status, 200);
+  assert.match(res.headers['content-type'], /^text\/plain/);
+  assert.match(res.body, /cryptolive_uptime_seconds/);
+  assert.match(res.body, /cryptolive_http_requests_total\{status="2xx"\}/);
+});
+
+test('protects Prometheus metrics with an optional token', async (t) => {
+  const app = await createApp({
+    cache: new TtlCache(),
+    live,
+    publicDir: fileURLToPath(new URL('../public/', import.meta.url)),
+    options: { logLevel: 'silent', metricsToken: 'secret' }
+  });
+  const tokenServer = app.server;
+  await new Promise((resolve, reject) => {
+    tokenServer.once('error', reject);
+    tokenServer.listen(0, '127.0.0.1', resolve);
+  });
+  t.after(() => new Promise(resolve => tokenServer.close(resolve)));
+
+  const unauthorized = await request(tokenServer, '/metrics');
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.headers['www-authenticate'], 'Bearer');
+
+  const authorized = await request(tokenServer, '/metrics', { Authorization: 'Bearer secret' });
+  assert.equal(authorized.status, 200);
+});
+
 test('returns API ETags and handles conditional requests', async () => {
   const first = await request(server, '/api/currencies');
   assert.equal(first.status, 200);

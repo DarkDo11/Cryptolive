@@ -427,6 +427,7 @@ function renderTable() {
 
   renderCoinTable(marketsTable, filtered, {
     fx,
+    expandable: true,
     sortKey,
     sortDir,
     columns: cols,

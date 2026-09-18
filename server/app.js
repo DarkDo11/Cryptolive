@@ -9,6 +9,7 @@ import { createCompressionCache, send, weakEtag, etagMatches } from './compress.
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
 import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
+import { createRequestCounters, renderMetrics } from './metrics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -65,6 +66,8 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
   // Only honour X-Forwarded-For behind a reverse proxy we control; otherwise clients could spoof their IP.
   const trustProxy = options.trustProxy ?? (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true');
   const maxSseClients = options.maxSseClients ?? (parseInt(process.env.MAX_SSE_CLIENTS || '500', 10) || 500);
+  const metricsEnabled = options.metricsEnabled ?? process.env.METRICS !== '0';
+  const metricsToken = options.metricsToken ?? (process.env.METRICS_TOKEN || '');
   const startTime = options.startTime ?? Date.now();
   const version = options.version === undefined
     ? await fs.readFile(path.resolve(__dirname, '../package.json'), 'utf8')
@@ -73,6 +76,7 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
   const resolvedPublicDir = path.resolve(publicDir ?? DEFAULT_PUBLIC_DIR);
   const rateLimiter = createRateLimiter({ windowMs: 60_000, max: apiRateLimit });
   const compressionCache = createCompressionCache();
+  const requestCounters = createRequestCounters();
 
   function setSecurityHeaders(res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -155,6 +159,27 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
         return;
       }
 
+      if (pathname === '/metrics' && metricsEnabled) {
+        if (metricsToken && req.headers.authorization !== `Bearer ${metricsToken}`) {
+          statusCode = 401;
+          send(req, res, 401, { 'Content-Type': 'text/plain; charset=utf-8', 'WWW-Authenticate': 'Bearer' }, 'Unauthorized');
+          return;
+        }
+        const body = renderMetrics({
+          cacheStats: cache.stats(),
+          upstream: upstreamStatus(),
+          live: live.status(),
+          memory: process.memoryUsage(),
+          uptimeSeconds: Math.floor((Date.now() - startTime) / 1000),
+          requestCounters: requestCounters.snapshot()
+        });
+        send(req, res, 200, {
+          'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+          'Cache-Control': 'no-store'
+        }, body);
+        return;
+      }
+
       if (pathname.startsWith('/api/')) {
         const ip = clientIp(req, trustProxy);
         const rl = rateLimiter.check(ip);
@@ -162,6 +187,7 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
 
         if (!rl.ok) {
           const resetSecs = Math.ceil(rl.resetMs / 1000);
+          statusCode = 429;
           res.setHeader('Retry-After', resetSecs);
           send(req, res, 429, { 'Content-Type': 'application/json' }, JSON.stringify({ error: 'Too many requests' }));
           return;
@@ -289,9 +315,10 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
       }
       res.end(JSON.stringify({ error: 'Internal Server Error' }));
     } finally {
-      if (pathname !== '/api/stream' && logLevel !== 'silent') {
+      if (pathname !== '/api/stream') {
         const ms = Date.now() - startMs;
-        if (logFormat === 'json') {
+        requestCounters.record(statusCode, ms);
+        if (logLevel !== 'silent' && logFormat === 'json') {
           console.log(JSON.stringify({
             ts: new Date().toISOString(),
             level: 'info',
@@ -306,7 +333,7 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
             ip: clientIp(req, trustProxy),
             ua: req.headers['user-agent'] || ''
           }));
-        } else {
+        } else if (logLevel !== 'silent') {
           console.log(`${req.method} ${req.url} ${statusCode} ${ms}ms ${cacheStatus} id=${id}`);
         }
       }

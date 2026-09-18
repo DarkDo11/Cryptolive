@@ -5,10 +5,10 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 ## Features
 
 - **Overview**: Market Overview dashboard featuring a Fear & Greed gauge + 30-day history, market dominance doughnut, top sectors bar chart, market breadth, and a watchlist snapshot.
-- **Markets**: Global stats bar (total market cap, 24h volume, BTC/ETH dominance, Fear & Greed Index), trending and top gainers/losers highlight cards, sortable top-N coin table with 7-day sparklines, quick filter tabs (All, Watchlist, Gainers, Losers), per-page selector (50/100/250), and live price update flashes; tick up to 4 coins to jump into Compare; CSV export of the current view (also on Watchlist and Portfolio transactions).
+- **Markets**: Global stats bar (total market cap, 24h volume, BTC/ETH dominance, Fear & Greed Index), trending and top gainers/losers highlight cards, sortable top-N coin table with 7-day sparklines, quick filter tabs (All, Watchlist, Gainers, Losers), per-page selector (50/100/250), and live price update flashes; expandable 7-day chart per row; tick up to 4 coins to jump into Compare; CSV export of the current view (also on Watchlist and Portfolio transactions).
 - **Coin Detail**: Interactive line (with a volume histogram) and candlestick charts with timeframe ranges (24h to Max) and logarithmic scale toggle, price vs. market cap toggle, key stats (circulating/total/max supply, volume/market cap), ATH/ATL metrics with percentage change and dates, 24h low/high range bar, mini-converter, multi-timeframe price performance, historical data table + CSV export, exchange tickers with trust scores and trade links, coin description, official links, a "Similar coins" card (rank neighbours with live prices) and a "Set alert" button. Coin pages are served with per-coin `<title>`, description, canonical and Open Graph tags filled server-side from the universe snapshot, and the sitemap lists every coin in the universe.
 - **Compare**: Up to 4 coins side-by-side comparison with a normalized performance chart.
-- **Alerts**: Price alerts (above/below rules checked against the live stream + 60 s polling fallback) triggering toasts and browser Notifications; triggered alerts can be re-armed; stored in `localStorage`; besides above/below price targets, alerts can fire on 24h percent change (≥ +X% / ≤ −X%).
+- **Alerts**: Price alerts (above/below rules checked against the live stream + 60 s polling fallback) triggering toasts and browser Notifications; triggered alerts can be re-armed; stored in `localStorage`; besides above/below price targets, alerts can fire on 24h percent change (≥ +X% / ≤ −X%); optional repeating alerts re-arm themselves after firing (1 h cooldown).
 - **Watchlist**: Track favorite coins locally via `localStorage` with JSON import and export capability.
 - **Portfolio**: Transaction-based portfolio tracker with buy/sell logging, holdings balances, average buy price, profit & loss (P&L) tracking, asset allocation doughnut chart, a portfolio value vs. invested history chart (7d/30d/90d), a privacy mode that blurs all balances, realized P&L (average-cost accounting) next to unrealized P&L, transaction editing, and JSON/CSV export. Coin pages link straight into it (`/portfolio?add=<id>`) and into Compare.
 - **Converter**: Real-time crypto↔crypto, crypto↔fiat, and fiat↔fiat conversions with URL state synchronization (`?from=&to=&amount=`) and quick-pick popular conversions; an "in all currencies" table for the selected asset, shareable URLs (`?from=coin:bitcoin&to=fiat:eur&amount=1`) with a copy-link button.
@@ -76,6 +76,8 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |
 | `CACHE_FILE` | `.cache/cache.json` | On-disk cache snapshot file path (empty disables) |
 | `PUBLIC_URL` | `http://localhost:8080` | Base URL used in `/sitemap.xml` |
+| `METRICS` | `1` | Set to `0` to disable the Prometheus endpoint `/metrics` |
+| `METRICS_TOKEN` | unset | When set, `/metrics` requires `Authorization: Bearer <token>` |
 
 ## API
 
@@ -105,6 +107,7 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/simple-price` | `ids`, `vs` | 60s | Simple prices and 24h change (served from universe if cached) |
 | `GET /api/currencies` | — | 3600s (static) | Supported display currencies (18: fiat + BTC/ETH) |
 | `GET /healthz` | — | — | Health JSON: version, uptime, memory, cache counters, upstream counters/cooldown, live feed state (rendered by `/status`) |
+| `GET /metrics` | — | — | Prometheus text metrics (cache, upstream, live feed, HTTP totals) |
 
 ### Live Price Stream (`/api/stream`)
 

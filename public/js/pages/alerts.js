@@ -27,7 +27,7 @@ async function load() {
   const cur = settings.get().currency || 'usd';
   const allAlerts = alerts.list();
   
-  const activeAlerts = allAlerts.filter(a => !a.triggeredAt).sort((a, b) => b.createdAt - a.createdAt);
+  const activeAlerts = allAlerts.filter(a => a.repeat || !a.triggeredAt).sort((a, b) => b.createdAt - a.createdAt);
   const triggeredAlerts = allAlerts.filter(a => a.triggeredAt).sort((a, b) => b.triggeredAt - a.triggeredAt);
   
   const clearBtn = qs('#clearAlertsBtn');
@@ -80,6 +80,7 @@ async function load() {
           </td>
           <td>
             <span class="chip ${isUp ? 'is-up' : 'is-down'}">${escapeHtml(describeCondition(a).toUpperCase())}</span>
+            ${a.repeat ? `<span class="chip">${t('alerts.repeatBadge')}</span>` : ''}
           </td>
           <td>${escapeHtml(targetStr)}</td>
           <td class="price-cell" data-live-price="${escapeHtml(a.coinId)}" data-price-usd="${priceUsd}">${currentPrice > 0 ? fmtCurrency(currentPrice, cur) : '—'}</td>
@@ -140,7 +141,7 @@ async function load() {
             <span class="chip ${isUp ? 'is-up' : 'is-down'}">${escapeHtml(describeCondition(a).toUpperCase())}</span>
           </td>
           <td>${escapeHtml(targetStr)}</td>
-          <td>${fmtDateTime(a.triggeredAt)}</td>
+          <td>${fmtDateTime(a.triggeredAt)}${a.repeat && a.fireCount > 1 ? ` ×${a.fireCount}` : ''}</td>
           <td>${isChange && typeof a.triggeredChange === 'number' ? fmtPercent(a.triggeredChange) : fmtCurrency(triggeredPrice, cur)}</td>
           <td style="text-align:right">
             <div style="display:flex; justify-content:flex-end; gap:8px">

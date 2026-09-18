@@ -76,9 +76,11 @@ export function renderCoinTable(container, coins, opts = {}) {
     sparkline: { label: t('table.sparkline'), sort: null, cls: 'col-sparkline' }
   };
 
+  let totalColumnCount = (opts.selectable ? 1 : 0) + (opts.showStar !== false ? 1 : 0);
   columns.forEach(colKey => {
     const h = heads[colKey];
     if (h) {
+      totalColumnCount++;
       if (opts.sortable !== false && h.sort) {
         let cls = 'is-sortable' + (h.cls ? ' ' + h.cls : '');
         let aria = 'none';
@@ -119,6 +121,10 @@ export function renderCoinTable(container, coins, opts = {}) {
       if (colKey === 'rank') {
         tbody += `<td class="col-num">${c.rank != null ? escapeHtml(String(c.rank)) : '-'}</td>`;
       } else if (colKey === 'coin') {
+        let btn = '';
+        if (opts.expandable && c.sparkline?.length && !columns.includes('sparkline')) {
+          btn = `<button type="button" class="expand-btn" data-expand="${coinId}" aria-expanded="false" aria-label="${t('markets.expandChart')}" title="${t('markets.expandChart')}">▾</button>`;
+        }
         tbody += `
           <td class="col-coin is-sticky">
             <a class="asset-cell" href="/coin/${coinId}">
@@ -128,6 +134,7 @@ export function renderCoinTable(container, coins, opts = {}) {
                 <span class="asset-symbol">${coinSymbol}</span>
               </span>
             </a>
+            ${btn}
           </td>`;
       } else if (colKey === 'price') {
         tbody += `<td class="price-cell" data-live-price="${coinId}" data-price-usd="${priceUsd}">${fmtCurrency(c.price, cur)}</td>`;
@@ -142,10 +149,17 @@ export function renderCoinTable(container, coins, opts = {}) {
       } else if (colKey === 'marketCap') {
         tbody += `<td class="col-marketCap">${fmtCurrency(c.marketCap, cur, { compact: false })}</td>`;
       } else if (colKey === 'sparkline') {
-        tbody += `<td class="col-sparkline">${sparklineSvg(c.sparkline, (c.change7d || 0) >= 0)}</td>`;
+        let btn = '';
+        if (opts.expandable && c.sparkline?.length) {
+          btn = `<button type="button" class="expand-btn" data-expand="${coinId}" aria-expanded="false" aria-label="${t('markets.expandChart')}" title="${t('markets.expandChart')}">▾</button>`;
+        }
+        tbody += `<td class="col-sparkline">${sparklineSvg(c.sparkline, (c.change7d || 0) >= 0)}${btn}</td>`;
       }
     });
     tbody += '</tr>';
+    if (opts.expandable) {
+      tbody += `<tr class="detail-row" data-detail-for="${coinId}" hidden><td colspan="${totalColumnCount}"><div class="detail-inner"></div></td></tr>`;
+    }
   });
 
   container.innerHTML = `
@@ -200,7 +214,49 @@ export function renderCoinTable(container, coins, opts = {}) {
       return;
     }
 
-    if (e.target.closest('a, button, .select-box, .col-select')) {
+    const expandBtn = e.target.closest('.expand-btn');
+    if (expandBtn && container.contains(expandBtn)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = expandBtn.dataset.expand;
+      const row = container.querySelector(`tr.detail-row[data-detail-for="${id}"]`);
+      if (row) {
+        const isExpanded = expandBtn.getAttribute('aria-expanded') === 'true';
+        if (isExpanded) {
+          row.hidden = true;
+          expandBtn.setAttribute('aria-expanded', 'false');
+          expandBtn.setAttribute('title', t('markets.expandChart'));
+          expandBtn.setAttribute('aria-label', t('markets.expandChart'));
+        } else {
+          row.hidden = false;
+          expandBtn.setAttribute('aria-expanded', 'true');
+          expandBtn.setAttribute('title', t('markets.collapseChart'));
+          expandBtn.setAttribute('aria-label', t('markets.collapseChart'));
+          
+          const inner = row.querySelector('.detail-inner');
+          if (!inner.innerHTML.trim()) {
+            const c = coins.find(x => String(x.id) === id);
+            if (c && c.sparkline) {
+              const isUp = (c.change7d || 0) >= 0;
+              const min = Math.min(...c.sparkline);
+              const max = Math.max(...c.sparkline);
+              inner.innerHTML = `
+                <div class="detail-caption">
+                  <span>7d: ${changeBadge(c.change7d)}</span>
+                  <span title="7d low">↓ ${fmtCurrency(min, cur)}</span>
+                  <span title="7d high">↑ ${fmtCurrency(max, cur)}</span>
+                </div>
+                <div class="detail-chart">
+                  ${sparklineSvg(c.sparkline, isUp, { width: 720, height: 140 }).replace('<svg ', '<svg preserveAspectRatio="none" ')}
+                </div>`;
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    if (e.target.closest('a, button, .select-box, .col-select, .detail-row')) {
       return;
     }
 
