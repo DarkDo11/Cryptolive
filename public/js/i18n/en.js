@@ -310,6 +310,7 @@ export default {
   'trending.mostViewed': "Most viewed on Cryptolive",
   'trending.mostViewedHint': "Coin pages opened by visitors of this instance in the last 7 days",
   'trending.views': "{n} views",
+  'trending.viewsHead': "Views",
   'trending.noViews': "No views recorded yet",
   'trending.collection': "Collection",
   'trending.floor': "Floor Price",

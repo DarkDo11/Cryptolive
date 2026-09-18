@@ -87,6 +87,35 @@ export async function handleApi(req, res, url, ctx) {
         }))
       };
     };
+  } else if (path === '/api/popular') {
+    const limit = intParam('limit', 10, 1, 50);
+    const popular = ctx.popular?.top(limit) || [];
+    const universe = await getUniverse(ctx).catch(() => null);
+    const rows = popular.map(entry => {
+      const coin = universe?.byId.get(entry.id);
+      if (!coin) return null;
+      return {
+        id: coin.id,
+        name: coin.name,
+        symbol: coin.symbol,
+        image: coin.image,
+        views: entry.views,
+        score: entry.score,
+        price_usd: coin.current_price,
+        change24h: coin.price_change_percentage_24h,
+        market_cap_rank: coin.market_cap_rank
+      };
+    }).filter(Boolean).sort((a, b) => b.score - a.score);
+    return {
+      status: 200,
+      cache: 'universe',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-Cache': 'universe',
+        'Cache-Control': 'public, max-age=30'
+      },
+      body: JSON.stringify(rows)
+    };
   } else if (path === '/api/trending') {
     targetUrl = `${COINGECKO_BASE}/search/trending`;
     ttlMs = 300 * 1000;

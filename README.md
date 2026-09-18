@@ -17,6 +17,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Categories**: Market sectors table sorted by market cap with 24h changes and top 3 coins preview; drill down to explore category-specific coin markets.
 - **Exchanges**: Directory of the top 250 exchanges with search, sorting (trust rank / volume / age / name), a CEX/DEX filter, trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
+- **Most viewed on Cryptolive** — per-instance view counts of coin pages (decayed, persisted with the cache snapshot).
 - **Settings**: theme (dark / light / system), display currency, language, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.
 - **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; an offline banner when the network drops; installable PWA (web manifest + service worker: app shell precache, network-first API responses cached for offline reading); responsive mobile-friendly design.
@@ -89,6 +90,7 @@ All endpoints serve JSON and return `X-Cache` (`hit`, `miss`, `stale`, `universe
 | `GET /api/global` | — | 120s | Global market stats (market cap, volume, BTC/ETH dominance) |
 | `GET /api/fng` | — | 600s | Fear & Greed Index current value and 30-day historical points |
 | `GET /api/trending` | — | 300s | Trending coins from CoinGecko search |
+| `GET /api/popular` | `limit` | 30s | Most viewed coin pages on this instance (decayed score, half-life 24 h), enriched from the universe |
 | `GET /api/markets` | `vs`, `page`, `per_page`, `ids`, `category`, `order` | 60s | Market coin list with sparklines; served from universe when applicable |
 | `GET /api/coin/:id` | `:id` | 120s | Coin metadata, market stats, ATH/ATL, description, and links |
 | `GET /api/coin/:id/chart` | `vs`, `days` (1, 7, 30, 90, 365, max) | 120s (1d) / 900s | Historical price, market cap, and volume series |

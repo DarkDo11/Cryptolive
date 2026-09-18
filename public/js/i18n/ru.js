@@ -310,6 +310,7 @@ export default {
   'trending.mostViewed': "Самые просматриваемые на Cryptolive",
   'trending.mostViewedHint': "Страницы монет, открытые посетителями этого сервиса за последние 7 дней",
   'trending.views': "Просмотров: {n}",
+  'trending.viewsHead': "Просмотры",
   'trending.noViews': "Просмотров пока нет",
   'trending.collection': "Коллекция",
   'trending.floor': "Мин. цена",

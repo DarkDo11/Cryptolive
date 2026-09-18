@@ -5,6 +5,7 @@ import { createApp } from './app.js';
 import { TtlCache } from './cache.js';
 import { coinDetailUrl, COIN_DETAIL_TTL_MS } from './routes.js';
 import { createLive } from './live.js';
+import { createPopular } from './popular.js';
 import { getUniverse, getFx } from './universe.js';
 import { cacheKey, fetchUpstream, upstreamStatus } from './upstream.js';
 
@@ -18,6 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const cache = new TtlCache(500);
 const live = createLive();
+const popular = createPopular();
 
 // Optional on-disk cache snapshot: survives restarts (and CoinGecko cooldowns). Empty CACHE_FILE disables it.
 const CACHE_FILE = process.env.CACHE_FILE === undefined
@@ -28,7 +30,9 @@ async function restoreCache() {
   if (!CACHE_FILE) return;
   try {
     const raw = await fs.readFile(CACHE_FILE, 'utf8');
-    const n = cache.restore(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const n = cache.restore(parsed);
+    if (parsed.popular) popular.restore(parsed.popular);
     if (n) console.log(`Restored ${n} cache entries from ${CACHE_FILE}`);
   } catch (err) {
     if (err.code !== 'ENOENT') console.warn('Cache restore failed:', err.message);
@@ -40,18 +44,19 @@ async function persistCache() {
   if (!CACHE_FILE) return;
   try {
     const snap = cache.snapshot();
-    if (snap.entries.length === lastSnapshotSize && snap.entries.length === 0) return;
+    const popularSnap = popular.snapshot();
+    if (snap.entries.length === lastSnapshotSize && snap.entries.length === 0 && popularSnap.entries.length === 0) return;
     lastSnapshotSize = snap.entries.length;
     await fs.mkdir(path.dirname(CACHE_FILE), { recursive: true });
     const tmp = `${CACHE_FILE}.tmp`;
-    await fs.writeFile(tmp, JSON.stringify(snap));
+    await fs.writeFile(tmp, JSON.stringify({ ...snap, popular: popularSnap }));
     await fs.rename(tmp, CACHE_FILE);
   } catch (err) {
     console.warn('Cache persist failed:', err.message);
   }
 }
 
-const { server } = await createApp({ cache, live });
+const { server } = await createApp({ cache, live, popular });
 
 function shutdown() {
   console.log('Shutting down gracefully...');

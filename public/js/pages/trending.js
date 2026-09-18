@@ -2,7 +2,7 @@ import { initLayout, qs, qsa } from '../layout.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
 import { changeBadge, skeletonRows, emptyState } from '../components.js';
-import { fmtCurrency, fmtCompact, escapeHtml } from '../format.js';
+import { fmtCurrency, fmtCompact, escapeHtml, fmtNumber } from '../format.js';
 import { settings, watchlist } from '../store.js';
 import { t } from '../i18n.js';
 
@@ -12,25 +12,33 @@ const tabsContainer = qs('#trendingTabs');
 const tabCoins = qs('#tabCoins');
 const tabCategories = qs('#tabCategories');
 const tabNfts = qs('#tabNfts');
+const tabViewed = qs('#tabViewed');
 
 const coinsTbody = qs('#coinsTable tbody');
 const categoriesTbody = qs('#categoriesTable tbody');
 const nftsTbody = qs('#nftsTable tbody');
+const viewedTbody = qs('#viewedTable tbody');
+const viewedHead = qs('#viewedHead');
+
 
 let fx = 1;
 let trendingData = null;
 let unsubLive = null;
 let refreshTimer = null;
 let activeTab = 'coins';
+let viewedDataLoaded = false;
 
 function updateHash() {
   window.location.hash = activeTab;
 }
 
 function readHash() {
+  const params = new URLSearchParams(window.location.search);
+  const qTab = params.get('tab');
   const h = window.location.hash.replace('#', '');
-  if (['coins', 'categories', 'nfts'].includes(h)) {
-    activeTab = h;
+  const targetTab = qTab || h;
+  if (['coins', 'categories', 'nfts', 'viewed'].includes(targetTab)) {
+    activeTab = targetTab;
   } else {
     activeTab = 'coins';
   }
@@ -44,6 +52,11 @@ function updateTabsUI() {
   tabCoins.style.display = activeTab === 'coins' ? '' : 'none';
   tabCategories.style.display = activeTab === 'categories' ? '' : 'none';
   tabNfts.style.display = activeTab === 'nfts' ? '' : 'none';
+  if (tabViewed) tabViewed.style.display = activeTab === 'viewed' ? '' : 'none';
+
+  if (activeTab === 'viewed' && !viewedDataLoaded) {
+    loadViewed();
+  }
 }
 
 tabsContainer.addEventListener('click', (e) => {
@@ -60,6 +73,47 @@ function showSkeletons() {
     categoriesTbody.innerHTML = skeletonRows(15, 6);
     nftsTbody.innerHTML = skeletonRows(15, 6);
   }
+}
+
+async function loadViewed() {
+  viewedDataLoaded = true;
+  if (!viewedTbody.innerHTML) {
+    viewedTbody.innerHTML = skeletonRows(15, 5);
+  }
+  try {
+    const rows = await api.popular(20);
+    renderViewed(rows);
+  } catch (err) {
+    console.error('Viewed load error', err);
+    viewedTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red); padding: 24px;">${escapeHtml(err.message || 'Error loading')}</td></tr>`;
+  }
+}
+
+function renderViewed(rows) {
+  if (!rows || rows.length === 0) {
+    viewedTbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center">${t('trending.noViews')}</td></tr>`;
+    return;
+  }
+  const cur = settings.get().currency || 'usd';
+  let html = '';
+  rows.forEach((r, i) => {
+    html += `<tr data-coin-id="${escapeHtml(r.id)}" style="cursor:pointer">`;
+    html += `<td>${i + 1}</td>`;
+    html += `<td>
+      <a class="asset-cell" href="/coin/${encodeURIComponent(r.id)}">
+        <img class="asset-logo" src="${escapeHtml(r.image || '')}" alt="" loading="lazy" referrerpolicy="no-referrer">
+        <span class="asset-copy">
+          <span class="asset-name">${escapeHtml(r.name)}</span>
+          <span class="asset-symbol">${escapeHtml(String(r.symbol||'').toUpperCase())}</span>
+        </span>
+      </a>
+    </td>`;
+    html += `<td class="price-cell" data-live-price="${escapeHtml(r.id)}" data-price-usd="${r.price_usd}">${fmtCurrency(r.price_usd * fx, cur)}</td>`;
+    html += `<td>${changeBadge(r.change24h, `data-live-change="${escapeHtml(r.id)}"`)}</td>`;
+    html += `<td>${fmtNumber(r.views, { max: 0 })}</td>`;
+    html += `</tr>`;
+  });
+  viewedTbody.innerHTML = html;
 }
 
 function renderError(err) {
@@ -206,6 +260,8 @@ async function loadData() {
     if (!unsubLive) {
       unsubLive = live.subscribe((tick) => {
         applyLiveTick(tabCoins, tick, fx);
+        const viewedTable = qs('#viewedTable');
+        if (viewedTable) applyLiveTick(viewedTable, tick, fx);
       });
     }
   } catch (err) {
@@ -215,7 +271,7 @@ async function loadData() {
 }
 
 // Delegated events for coins table
-qs('#coinsTable').addEventListener('click', (e) => {
+const handleRowClick = (e) => {
   const starBtn = e.target.closest('button.star-btn');
   if (starBtn) {
     e.preventDefault();
@@ -241,7 +297,11 @@ qs('#coinsTable').addEventListener('click', (e) => {
       location.href = `/coin/${id}`;
     }
   }
-});
+};
+
+qs('#coinsTable').addEventListener('click', handleRowClick);
+const viewedTable = qs('#viewedTable');
+if (viewedTable) viewedTable.addEventListener('click', handleRowClick);
 
 function scheduleRefresh() {
   clearTimeout(refreshTimer);
@@ -263,6 +323,9 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('currency:change', async () => {
   trendingData = null; // show skeletons while reloading
   await loadData();
+  if (activeTab === 'viewed') {
+    loadViewed();
+  }
 });
 
 readHash();

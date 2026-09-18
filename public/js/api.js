@@ -89,6 +89,7 @@ export const api = {
   global() { return this.get('/global'); },
   fng() { return this.get('/fng'); },
   trending() { return this.get('/trending'); },
+  popular(limit = 10) { return this.get('/popular', { limit }); },
   
   async markets(opts = {}) {
     const vs = settings.get().currency || 'usd';

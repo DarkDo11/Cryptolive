@@ -56,7 +56,7 @@ function clientIp(req, trustProxy) {
   return req.socket.remoteAddress;
 }
 
-export async function createApp({ cache, live, publicDir, options = {} }) {
+export async function createApp({ cache, live, popular, publicDir, options = {} }) {
   const logLevel = options.logLevel ?? (process.env.LOG_LEVEL || 'info');
   const logFormat = options.logFormat ?? (process.env.LOG_FORMAT || 'text');
   const publicUrl = options.publicUrl ?? (process.env.PUBLIC_URL || 'http://localhost:8080');
@@ -167,7 +167,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
         }
 
         try {
-          const result = await handleApi(req, res, url, { cache });
+          const result = await handleApi(req, res, url, { cache, popular });
           statusCode = result.status;
           cacheStatus = result.cache;
           if (req.method === 'HEAD') {
@@ -259,7 +259,14 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
       if (req.method !== 'HEAD') {
         content = await fs.readFile(filePath);
         if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
+          const purpose = String(req.headers['x-purpose'] || '').toLowerCase();
+          const secPurpose = String(req.headers['sec-purpose'] || '').toLowerCase();
+          const userAgent = String(req.headers['user-agent'] || '');
+          const countView = purpose !== 'prefetch' && !secPurpose.includes('prefetch') &&
+            !/bot|crawl|spider|slurp|preview/i.test(userAgent);
+          const universe = countView ? getUniverse({ cache }).catch(() => null) : null;
           content = await decorateCoinPage(content.toString('utf8'), coinPageId, { cache, publicUrl });
+          if ((await universe)?.byId.has(coinPageId)) popular?.hit(coinPageId);
         } else if (exchangePageId && /^[a-z0-9_-]{1,60}$/.test(exchangePageId)) {
           content = await decorateExchangePage(content.toString('utf8'), exchangePageId, { cache, publicUrl });
         }

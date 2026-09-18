@@ -27,6 +27,7 @@
       <div class="tab is-active" data-tab="coins" data-i18n="search.coins">Coins</div>
       <div class="tab" data-tab="categories" data-i18n="search.categories">Categories</div>
       <div class="tab" data-tab="nfts" data-i18n="trending.nfts">NFTs</div>
+      <div class="tab" data-tab="viewed" data-i18n="trending.mostViewed">Most viewed on Cryptolive</div>
     </div>
 
     <div id="tabCoins">
@@ -88,6 +89,24 @@
             <tbody></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <div id="tabViewed" style="display: none;">
+      <p class="muted small" data-i18n="trending.mostViewedHint" style="margin: 0 0 12px"></p>
+      <div class="table-frame">
+        <table class="data-table is-plain" id="viewedTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-i18n="table.coin">Coin</th>
+              <th data-i18n="table.price">Price</th>
+              <th data-i18n="table.change24h">24h %</th>
+              <th id="viewedHead" data-i18n="trending.viewsHead">Views</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
 

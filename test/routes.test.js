@@ -132,6 +132,28 @@ test('routes: /api/search enriches upstream coins from the universe', async () =
   assert.strictEqual(body.coins[1].price_usd, null);
 });
 
+test('routes: /api/popular validates limit and enriches known coins from the universe', async () => {
+  const cache = new TtlCache();
+  await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/coin/coin1/similar'), { cache });
+  const popular = { top: () => [
+    { id: 'coin3', score: 2, views: 2 },
+    { id: 'nope', score: 1, views: 1 }
+  ] };
+
+  const res = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/popular'), { cache, popular });
+  assert.strictEqual(res.status, 200);
+  assert.strictEqual(res.headers['X-Cache'], 'universe');
+  const rows = JSON.parse(res.body);
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].id, 'coin3');
+  assert.strictEqual(rows[0].price_usd, 3);
+  assert.strictEqual(rows[0].views, 2);
+
+  await assert.rejects(handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/popular?limit=0'), { cache, popular }), (e) => e.status === 400);
+  const empty = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/popular'), { cache });
+  assert.deepStrictEqual(JSON.parse(empty.body), []);
+});
+
 test('routes: pagination parameters are validated strictly', async () => {
   const cache = new TtlCache();
   for (const q of ['page=-1', 'page=abc', 'per_page=0', 'per_page=12abc', 'page=0']) {
