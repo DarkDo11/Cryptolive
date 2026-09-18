@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080b0f">
+  <title>About · Cryptolive</title>
+  <meta name="description" content="About Cryptolive">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme-boot.js"></script>
+  <script type="module" src="/js/pages/about.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="shell" id="main">
+    <div class="hero" style="margin-bottom:24px">
+      <h1 data-i18n="about.title">About</h1>
+      <p class="hero-sub" data-i18n="about.sub">About Cryptolive</p>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head" data-i18n="about.whatHead">What it is</div>
+        <div class="card-body" data-i18n-html="about.whatText"></div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="about.dataHead">Data sources</div>
+        <div class="card-body" data-i18n-html="about.dataText"></div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="about.privacyHead">Privacy</div>
+        <div class="card-body" data-i18n-html="about.privacyText"></div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="about.apiHead">Open API</div>
+        <div class="card-body" data-i18n-html="about.apiText"></div>
+      </div>
+      <div class="card">
+        <div class="card-head" data-i18n="about.hostHead">Self-hosting</div>
+        <div class="card-body" data-i18n-html="about.hostText"></div>
+      </div>
+      <div class="card">
+        <div class="card-body" data-i18n-html="about.shortcutsText"></div>
+      </div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+</body>
+</html>

@@ -527,4 +527,18 @@ export default {
   'nav.currency': "Währung",
   'nav.language': "Sprache",
   'nav.skip': "Zum Inhalt springen",
+  'about.title': "Über",
+  'about.sub': "Über Cryptolive",
+  'about.whatHead': "Was es ist",
+  'about.whatText': "Cryptolive ist ein leichter Krypto-Tracker. Er bietet Märkte, Münzseiten, Watchlist, Portfolio, Alarme, Heatmap, Vergleich, Umrechner, Börsen, 4 Sprachen, 18 Währungen und funktioniert als PWA (offline).",
+  'about.dataHead': "Datenquellen",
+  'about.dataText': "CoinGecko für Marktdaten (gecacht 60 s–15 min), Binance WebSocket für Live-Preise von ~60 Top-Assets, alternative.me für den Fear & Greed Index; Preise sind informativ, keine Finanzberatung.",
+  'about.privacyHead': "Datenschutz",
+  'about.privacyText': "Keine Konten, kein Tracking, keine Cookies; Watchlist, Portfolio, Alarme und Einstellungen bleiben nur im localStorage des Browsers; Backups über Einstellungen; der Server speichert nur aggregierte Aufrufe pro Coin-Seite (keine IPs gespeichert).",
+  'about.apiHead': "Offene API",
+  'about.apiText': "Siehe <a href=\"/api-docs\">API-Dokumentation</a> für Details, CSV-Export und Ratenbegrenzungen.",
+  'about.hostHead': "Self-Hosting",
+  'about.hostText': "Node 22, keine Abhängigkeiten, Docker, Umgebungsvariablen im GitHub-Stil; Link zum <a href=\"/status\">Status</a>.",
+  'about.shortcutsText': "Drücken Sie überall <kbd>?</kbd> für Tastaturkürzel.",
+  'footer.about': "Über"
 };

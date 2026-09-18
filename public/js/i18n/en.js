@@ -527,4 +527,18 @@ export default {
   'nav.currency': "Currency",
   'nav.language': "Language",
   'nav.skip': "Skip to content",
+  'about.title': "About",
+  'about.sub': "About Cryptolive",
+  'about.whatHead': "What it is",
+  'about.whatText': "Cryptolive is a lightweight cryptocurrency tracker. It features markets, coin pages, a watchlist, portfolio, alerts, a heatmap, compare, a converter, exchanges, 4 languages, 18 currencies, and is fully functional as a PWA (offline).",
+  'about.dataHead': "Data sources",
+  'about.dataText': "CoinGecko for market data (cached 60 s–15 min), Binance WebSocket for live prices of ~60 top assets, alternative.me for the Fear & Greed index; prices are informational, not financial advice.",
+  'about.privacyHead': "Privacy",
+  'about.privacyText': "No accounts, no tracking, no cookies; watchlist, portfolio, alerts and settings live only in the browser's localStorage; backups via Settings; the server keeps aggregate view counts per coin page (no IPs stored).",
+  'about.apiHead': "Open API",
+  'about.apiText': "Check the <a href=\"/api-docs\">API documentation</a> for details, CSV export, and rate limits.",
+  'about.hostHead': "Self-hosting",
+  'about.hostText': "Node 22, zero dependencies, Docker, GitHub-style env vars; link to <a href=\"/status\">status</a>.",
+  'about.shortcutsText': "Press <kbd>?</kbd> anywhere for keyboard shortcuts.",
+  'footer.about': "About"
 };

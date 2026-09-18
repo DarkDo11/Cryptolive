@@ -526,5 +526,19 @@ export default {
   'nav.more': "Más",
   'nav.currency': "Moneda",
   'nav.language': "Idioma",
-  'nav.skip': "Saltar al contenido"
+  'nav.skip': "Saltar al contenido",
+  'about.title': "Acerca de",
+  'about.sub': "Acerca de Cryptolive",
+  'about.whatHead': "Qué es",
+  'about.whatText': "Cryptolive es un rastreador de criptomonedas ligero. Cuenta con mercados, páginas de monedas, lista de seguimiento, cartera, alertas, mapa de calor, comparación, conversor, exchanges, 4 idiomas, 18 monedas y funciona como PWA (sin conexión).",
+  'about.dataHead': "Fuentes de datos",
+  'about.dataText': "CoinGecko para datos de mercado (caché de 60 s a 15 min), Binance WebSocket para precios en vivo de ~60 activos principales, alternative.me para el índice de miedo y codicia; los precios son informativos, no un asesoramiento financiero.",
+  'about.privacyHead': "Privacidad",
+  'about.privacyText': "Sin cuentas, sin rastreo, sin cookies; la lista de seguimiento, la cartera, las alertas y la configuración viven solo en el localStorage del navegador; copias de seguridad a través de Configuración; el servidor mantiene recuentos agregados de vistas por página de moneda (no se almacenan direcciones IP).",
+  'about.apiHead': "API Abierta",
+  'about.apiText': "Consulta la <a href=\"/api-docs\">documentación de la API</a> para detalles, exportación CSV y límites de tasa.",
+  'about.hostHead': "Autohospedaje",
+  'about.hostText': "Node 22, sin dependencias, Docker, variables de entorno al estilo GitHub; enlace al <a href=\"/status\">estado</a>.",
+  'about.shortcutsText': "Presiona <kbd>?</kbd> en cualquier lugar para atajos de teclado.",
+  'footer.about': "Acerca de"
 };
