@@ -76,7 +76,7 @@ export function renderCoinTable(container, coins, opts = {}) {
     sparkline: { label: t('table.sparkline'), sort: null, cls: 'col-sparkline' }
   };
 
-  let totalColumnCount = (opts.selectable ? 1 : 0) + (opts.showStar !== false ? 1 : 0);
+  let totalColumnCount = (opts.selectable ? 1 : 0) + (opts.showStar !== false ? 1 : 0) + (opts.actions ? 1 : 0);
   columns.forEach(colKey => {
     const h = heads[colKey];
     if (h) {
@@ -94,6 +94,9 @@ export function renderCoinTable(container, coins, opts = {}) {
       }
     }
   });
+  if (opts.actions) {
+    thead += `<th class="col-actions">${opts.actionsLabel || ''}</th>`;
+  }
   thead += '</tr>';
 
   let tbody = '';
@@ -160,6 +163,10 @@ export function renderCoinTable(container, coins, opts = {}) {
         tbody += `<td class="col-sparkline">${sparklineSvg(c.sparkline, (c.change7d || 0) >= 0)}${btn}</td>`;
       }
     });
+    if (opts.actions) {
+      const btns = opts.actions.map(a => `<button type="button" class="btn btn-ghost btn-sm row-action ${a.className || ''}" data-action="${a.key}" data-id="${coinId}" title="${escapeHtml(a.label)}" aria-label="${escapeHtml(a.label)}">${a.icon || escapeHtml(a.label)}</button>`).join('');
+      tbody += `<td class="col-actions"><div class="row-actions">${btns}</div></td>`;
+    }
     tbody += '</tr>';
     if (opts.expandable) {
       tbody += `<tr class="detail-row" data-detail-for="${coinId}" hidden><td colspan="${totalColumnCount}"><div class="detail-inner"></div></td></tr>`;
@@ -256,6 +263,19 @@ export function renderCoinTable(container, coins, opts = {}) {
             }
           }
         }
+      }
+      return;
+    }
+
+    const rowAction = e.target.closest('.row-action');
+    if (rowAction && container.contains(rowAction)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const action = rowAction.dataset.action;
+      const id = rowAction.dataset.id;
+      const coin = coins.find(x => String(x.id) === id);
+      if (coin && opts.onAction) {
+        opts.onAction(action, id, coin);
       }
       return;
     }

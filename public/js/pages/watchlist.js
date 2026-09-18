@@ -5,6 +5,12 @@ import { renderCoinTable, emptyState, skeletonRows, sortCoins, changeBadge } fro
 import { watchlist, settings } from '../store.js';
 import { fmtCurrency, fmtPercent, fmtCompact, escapeHtml, toCsv, downloadCsv } from '../format.js';
 import { t } from '../i18n.js';
+import { openAlertModal } from '../alerts.js';
+
+const BELL_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+const PLUS_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+const BARS_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>`;
+const X_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
 initLayout({ active: 'watchlist' });
 
@@ -74,6 +80,25 @@ async function loadData() {
       sortKey,
       sortDir,
       fx,
+      actionsLabel: t('watchlist.rowActions'),
+      actions: [
+        { key: 'alert', label: t('js.set_alert'), icon: BELL_SVG },
+        { key: 'portfolio', label: t('js.add_to_portfolio'), icon: PLUS_SVG },
+        { key: 'compare', label: t('js.compare'), icon: BARS_SVG },
+        { key: 'remove', label: t('js.delete'), icon: X_SVG, className: 'is-danger' }
+      ],
+      onAction: (action, id, coin) => {
+        if (action === 'alert') {
+          openAlertModal({ coinId: id, symbol: coin.symbol, name: coin.name, image: coin.image, priceUsd: coin.price / (Number.isFinite(fx) && fx > 0 ? fx : 1) });
+        } else if (action === 'portfolio') {
+          location.href = '/portfolio?add=' + encodeURIComponent(id);
+        } else if (action === 'compare') {
+          location.href = '/compare?coins=' + encodeURIComponent(id);
+        } else if (action === 'remove') {
+          watchlist.remove(id);
+          toast(t('js.asset_removed'), { type: 'success' });
+        }
+      },
       onSort: (key) => {
         if (sortKey === key) {
           sortDir = sortDir === 'asc' ? 'desc' : 'asc';
@@ -108,6 +133,25 @@ function renderData() {
     sortKey,
     sortDir,
     fx,
+    actionsLabel: t('watchlist.rowActions'),
+    actions: [
+      { key: 'alert', label: t('js.set_alert'), icon: BELL_SVG },
+      { key: 'portfolio', label: t('js.add_to_portfolio'), icon: PLUS_SVG },
+      { key: 'compare', label: t('js.compare'), icon: BARS_SVG },
+      { key: 'remove', label: t('js.delete'), icon: X_SVG, className: 'is-danger' }
+    ],
+    onAction: (action, id, coin) => {
+      if (action === 'alert') {
+        openAlertModal({ coinId: id, symbol: coin.symbol, name: coin.name, image: coin.image, priceUsd: coin.price / (Number.isFinite(fx) && fx > 0 ? fx : 1) });
+      } else if (action === 'portfolio') {
+        location.href = '/portfolio?add=' + encodeURIComponent(id);
+      } else if (action === 'compare') {
+        location.href = '/compare?coins=' + encodeURIComponent(id);
+      } else if (action === 'remove') {
+        watchlist.remove(id);
+        toast(t('js.asset_removed'), { type: 'success' });
+      }
+    },
     onSort: (key) => {
       if (sortKey === key) {
         sortDir = sortDir === 'asc' ? 'desc' : 'asc';

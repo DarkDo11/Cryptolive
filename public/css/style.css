@@ -1451,3 +1451,10 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 .section-nav a { flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
 .section-nav a:hover { color: var(--text); background: var(--panel-soft); }
 .section-nav a.is-active { color: var(--blue); background: var(--blue-soft); }
+
+.col-actions { width: 1%; white-space: nowrap; text-align: right; }
+.row-actions { display: inline-flex; gap: 2px; }
+.row-action { padding: 4px 6px; color: var(--muted); }
+.row-action:hover { color: var(--text); }
+.row-action.is-danger:hover { color: var(--red); }
+@media (max-width: 780px) { .row-actions { gap: 0; } }
