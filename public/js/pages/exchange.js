@@ -31,6 +31,7 @@ let pairsData = [];
 let chartInstance = null;
 let chartFetchToken = 0;
 let controlsReady = false;
+let pairSort = { key: 'volume_usd', dir: 'desc' };
 
 async function load() {
   const cur = settings.get().currency || 'usd';
@@ -73,6 +74,7 @@ async function load() {
   if (!controlsReady) {
     controlsReady = true;
     setupPairsFilter();
+    setupPairsSort();
     setupChartControls();
   }
   renderChart(qs('#volRange .range-btn.is-active').dataset.days);
@@ -158,8 +160,27 @@ function renderPairs(filter = '') {
     list = list.filter(p => `${p.base}/${p.target}`.toLowerCase().includes(q));
   }
   
-  list.sort((a, b) => (b.volume_usd || 0) - (a.volume_usd || 0));
-  // CoinGecko omits per-ticker trust scores on the exchange endpoint for most venues; drop the column then.
+  list.sort((a, b) => {
+    let va, vb;
+    if (pairSort.key === 'pair') {
+      va = `${a.base}/${a.target}`;
+      vb = `${b.base}/${b.target}`;
+    } else {
+      va = a[pairSort.key];
+      vb = b[pairSort.key];
+    }
+    
+    const mult = pairSort.dir === 'asc' ? 1 : -1;
+    
+    if (pairSort.key === 'pair') {
+      return va.localeCompare(vb) * mult;
+    } else {
+      if (va == null) va = -Infinity;
+      if (vb == null) vb = -Infinity;
+      return (va > vb ? 1 : va < vb ? -1 : 0) * mult;
+    }
+  });
+
   const showTrust = pairsData.some(p => p.trust_score);
   
   if (list.length === 0) {
@@ -167,14 +188,24 @@ function renderPairs(filter = '') {
     return;
   }
   
+  const getTh = (label, key) => {
+    let sortSuffix = '';
+    let aria = 'none';
+    if (pairSort.key === key) {
+      sortSuffix = pairSort.dir === 'asc' ? ' ▲' : ' ▼';
+      aria = pairSort.dir === 'asc' ? 'ascending' : 'descending';
+    }
+    return `<th data-sort="${key}" aria-sort="${aria}" style="cursor:pointer">${label}${sortSuffix}</th>`;
+  };
+  
   let html = `<div class="table-frame"><table class="data-table is-plain">
     <thead>
       <tr>
         <th>#</th>
-        <th>${t('exchange.pair')}</th>
-        <th>${t('js.price')}</th>
-        <th>${t('exchange.volume24h')}</th>
-        <th>${t('exchange.spread')}</th>
+        ${getTh(t('exchange.pair'), 'pair')}
+        ${getTh(t('js.price'), 'last_usd')}
+        ${getTh(t('exchange.volume24h'), 'volume_usd')}
+        ${getTh(t('exchange.spread'), 'spread')}
         ${showTrust ? `<th style="text-align:center">${t('exchange.trust')}</th>` : ''}
         <th></th>
       </tr>
@@ -218,6 +249,22 @@ function setupPairsFilter() {
   inp.addEventListener('input', debounce((e) => {
     renderPairs(e.target.value);
   }, 150));
+}
+
+function setupPairsSort() {
+  const tbody = qs('#pairsBody');
+  tbody.addEventListener('click', (e) => {
+    const th = e.target.closest('th[data-sort]');
+    if (!th) return;
+    const key = th.dataset.sort;
+    if (pairSort.key === key) {
+      pairSort.dir = pairSort.dir === 'desc' ? 'asc' : 'desc';
+    } else {
+      pairSort.key = key;
+      pairSort.dir = key === 'pair' ? 'asc' : 'desc';
+    }
+    renderPairs(qs('#pairFilter').value);
+  });
 }
 
 function setupChartControls() {

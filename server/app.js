@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleApi } from './routes.js';
 import { getUniverse } from './universe.js';
-import { send, weakEtag, etagMatches } from './compress.js';
+import { createCompressionCache, send, weakEtag, etagMatches } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
 import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
@@ -72,6 +72,7 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
     : options.version;
   const resolvedPublicDir = path.resolve(publicDir ?? DEFAULT_PUBLIC_DIR);
   const rateLimiter = createRateLimiter({ windowMs: 60_000, max: apiRateLimit });
+  const compressionCache = createCompressionCache();
 
   function setSecurityHeaders(res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -276,7 +277,10 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
         'Content-Type': contentType,
         'Cache-Control': cacheControl,
         'ETag': etag
-      }, content);
+      }, content, dynamicHead ? undefined : {
+        cacheKey: filePath + '|' + etag,
+        compressionCache
+      });
     } catch (err) {
       console.error(`Unhandled request error id=${id}`, err);
       statusCode = 500;

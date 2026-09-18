@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import zlib from 'node:zlib';
-import { send, weakEtag, etagMatches } from '../server/compress.js';
+import { createCompressionCache, send, weakEtag, etagMatches } from '../server/compress.js';
 
 test('weakEtag: deterministic weak tag based on body', () => {
   const etag = weakEtag('hello');
@@ -68,4 +68,41 @@ test('compress: passthrough when small', () => {
   assert.strictEqual(writtenCode, 200);
   assert.strictEqual(writtenHeaders['Content-Encoding'], undefined);
   assert.strictEqual(writtenBody.toString(), smallBody);
+});
+
+test('compress: caches compressed bodies by key and encoding', () => {
+  const cache = createCompressionCache();
+  const originalGet = cache.get;
+  let getCalls = 0;
+  cache.get = (...args) => {
+    getCalls++;
+    return originalGet(...args);
+  };
+  const body = 'cache me'.repeat(200);
+
+  const compress = (encoding) => {
+    let writtenBody;
+    const req = { headers: { 'accept-encoding': encoding }, method: 'GET' };
+    const res = {
+      writeHead() {},
+      end(value) {
+        writtenBody = value;
+      }
+    };
+    send(req, res, 200, { 'Content-Type': 'text/css' }, body, {
+      cacheKey: '/style.css|etag',
+      compressionCache: cache
+    });
+    return writtenBody;
+  };
+
+  const firstGzip = compress('gzip');
+  const secondGzip = compress('gzip');
+  assert.deepStrictEqual(secondGzip, firstGzip);
+  assert.strictEqual(getCalls, 2);
+  assert.strictEqual(cache.size, 1);
+
+  const brotli = compress('br');
+  assert.strictEqual(cache.size, 2);
+  assert.strictEqual(zlib.brotliDecompressSync(brotli).toString(), body);
 });

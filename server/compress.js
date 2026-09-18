@@ -26,7 +26,28 @@ function isCompressible(contentType) {
     contentType.startsWith('application/manifest+json');
 }
 
-export function send(req, res, statusCode, headers, body) {
+export function createCompressionCache({ maxEntries = 200 } = {}) {
+  const entries = new Map();
+
+  return {
+    get(key, encoding) {
+      return entries.get(`${key}|${encoding}`);
+    },
+    set(key, encoding, buffer) {
+      const cacheKey = `${key}|${encoding}`;
+      entries.delete(cacheKey);
+      entries.set(cacheKey, buffer);
+      while (entries.size > maxEntries) {
+        entries.delete(entries.keys().next().value);
+      }
+    },
+    get size() {
+      return entries.size;
+    }
+  };
+}
+
+export function send(req, res, statusCode, headers, body, { cacheKey, compressionCache } = {}) {
   let outBody = typeof body === 'string' ? Buffer.from(body) : body;
   
   const accept = req.headers['accept-encoding'] || '';
@@ -36,14 +57,25 @@ export function send(req, res, statusCode, headers, body) {
   if (outBody && outBody.length >= 1024 && isCompressible(contentType)) {
     if (accept.includes('br')) {
       encoding = 'br';
-      outBody = zlib.brotliCompressSync(outBody, {
-        [zlib.constants.BROTLI_PARAM_QUALITY]: 4
-      });
     } else if (accept.includes('gzip')) {
       encoding = 'gzip';
-      outBody = zlib.gzipSync(outBody, {
-        level: 6
-      });
+    }
+
+    if (encoding) {
+      const cached = cacheKey !== undefined && compressionCache
+        ? compressionCache.get(cacheKey, encoding) : undefined;
+      if (cached !== undefined) {
+        outBody = cached;
+      } else {
+        outBody = encoding === 'br'
+          ? zlib.brotliCompressSync(outBody, {
+            [zlib.constants.BROTLI_PARAM_QUALITY]: 4
+          })
+          : zlib.gzipSync(outBody, { level: 6 });
+        if (cacheKey !== undefined && compressionCache) {
+          compressionCache.set(cacheKey, encoding, outBody);
+        }
+      }
     }
   }
 

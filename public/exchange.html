@@ -47,7 +47,10 @@
         <section class="card" id="pairsCard" style="margin-top:16px">
           <div class="card-head">
             <h3 data-i18n="exchange.pairs">Top trading pairs</h3>
-            <input class="input" id="pairFilter" type="search" data-i18n-placeholder="exchange.filterPairs" placeholder="Filter pairs" style="max-width:220px">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="muted small" data-i18n="exchange.sortHint">Click a column to sort</span>
+              <input class="input" id="pairFilter" type="search" data-i18n-placeholder="exchange.filterPairs" placeholder="Filter pairs" style="max-width:220px">
+            </div>
           </div>
           <div id="pairsBody" style="padding:0"></div>
         </section>

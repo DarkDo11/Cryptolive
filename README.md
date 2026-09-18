@@ -13,9 +13,9 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Portfolio**: Transaction-based portfolio tracker with buy/sell logging, holdings balances, average buy price, profit & loss (P&L) tracking, asset allocation doughnut chart, a portfolio value vs. invested history chart (7d/30d/90d), a privacy mode that blurs all balances, realized P&L (average-cost accounting) next to unrealized P&L, transaction editing, and JSON/CSV export. Coin pages link straight into it (`/portfolio?add=<id>`) and into Compare.
 - **Converter**: Real-time crypto↔crypto, crypto↔fiat, and fiat↔fiat conversions with URL state synchronization (`?from=&to=&amount=`) and quick-pick popular conversions; an "in all currencies" table for the selected asset, shareable URLs (`?from=coin:bitcoin&to=fiat:eur&amount=1`) with a copy-link button.
 - **Heatmap**: Squarified treemap visualization sized by Market Cap or 24h Volume, color-coded by 1h, 24h, or 7d price change percentage with responsive resizing; a Sectors mode renders category market caps as tiles (24h change colouring) linking into the category view.
-- **Gainers & Losers**: Highlights top 20 gainers and top 20 losers across 1h, 24h, and 7d horizons (minimum $50k volume filter).
+- **Gainers & Losers**: Highlights top 20 gainers and top 20 losers across 1h, 24h, and 7d horizons (minimum $50k volume filter); plus highest-volume and most-volatile (24h range) boards.
 - **Categories**: Market sectors table sorted by market cap with 24h changes and top 3 coins preview; drill down to explore category-specific coin markets.
-- **Exchanges**: Directory of the top 250 exchanges with search, sorting (trust rank / volume / age / name), a CEX/DEX filter, trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable list of top trading pairs.
+- **Exchanges**: Directory of the top 250 exchanges with search, sorting (trust rank / volume / age / name), a CEX/DEX filter, trust scores, country of origin, 24h BTC volume, and direct links; each exchange has its own page (`/exchange/:id`) with a BTC volume chart, info card and a filterable, sortable list of top trading pairs.
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Most viewed on Cryptolive** — per-instance view counts of coin pages (decayed, persisted with the cache snapshot).
 - **Settings**: theme (dark / light / system), display currency, language, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
@@ -128,7 +128,9 @@ literals, and i18n keys: RU/EN parity plus every `t('…')` / `data-i18n` key mu
 - `TtlCache`: hit/miss, coalescing of concurrent fetchers, stale-while-revalidate, stale-on-error
 - Universe: `convertRow` currency conversion, `marketsFromUniverse` paging / ids lookups, `similarFromUniverse`, `searchUniverse`
 - Per-IP rate limiter windows
-- Response compression (gzip when accepted, passthrough for small bodies)
+- Response compression (gzip when accepted, passthrough for small bodies, per-asset compression cache)
+- Live SSE broadcaster (`test/live.test.js`, fake WebSocket + mock timers): hello/tick frames, snapshots, idle disconnect, reconnect backoff
+- Popularity tracker (decay, eviction, snapshot/restore)
 - Server-side coin page SEO decoration (`decorateCoinPage`)
 - API routes with a stubbed `fetch`: `/api/currencies`, parameter validation (400), Fear & Greed mapping, `/api/coin/:id/similar`, `/api/exchange/:id` (+ volume), `/api/search` universe fallback under 429
 - HTTP integration tests (`test/app.test.js`): static routing, clean URLs, 404, coin page SEO tags, `/healthz`, API ETag/304, universe-served markets, validation errors, sitemap, per-IP rate limit, 405, static caching, path traversal
