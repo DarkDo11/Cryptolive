@@ -28,6 +28,7 @@ if (!coinId) {
   qs('#notFound').hidden = false;
 } else {
   initLayout({ active: '' });
+  setupSectionNav();
   load();
 
   window.addEventListener('currency:change', async () => {
@@ -926,4 +927,43 @@ function updateLiveChartPoint(tick) {
   
   // also update time label slightly if we wanted, but not required
   chartInstance.update('none');
+}
+
+function setupSectionNav() {
+  const nav = qs('#coinSectionNav');
+  if (!nav) return;
+
+  const links = qsa('a', nav);
+
+  nav.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link || !nav.contains(link)) return;
+    const href = link.getAttribute('href');
+    if (!href || !href.startsWith('#')) return;
+    const id = href.slice(1);
+    const target = document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', '#' + id);
+  });
+
+  if (typeof IntersectionObserver === 'undefined') return;
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach((link) => {
+          link.classList.toggle('is-active', link.getAttribute('href') === `#${id}`);
+        });
+      }
+    }
+  }, { rootMargin: '-40% 0px -55% 0px' });
+
+  const sectionIds = ['statsCard', 'chartCard', 'marketsCard', 'historyCard', 'aboutCard'];
+  for (const id of sectionIds) {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  }
 }

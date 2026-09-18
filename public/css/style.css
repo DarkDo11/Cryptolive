@@ -1444,3 +1444,10 @@ body.is-private #allocChart, body.is-private #historyChart { filter: blur(7px); 
 
 /* Offline banner */
 .offline-banner { position: sticky; top: 0; z-index: 60; padding: 8px 16px; text-align: center; font-size: 0.85rem; font-weight: 600; background: var(--amber); color: #1a1200; }
+
+.coin-layout .card { scroll-margin-top: 64px; }
+.section-nav { position: sticky; top: 0; z-index: 30; display: flex; gap: 4px; overflow-x: auto; margin: 0 0 16px; padding: 6px 0; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.section-nav::-webkit-scrollbar { display: none; }
+.section-nav a { flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+.section-nav a:hover { color: var(--text); background: var(--panel-soft); }
+.section-nav a.is-active { color: var(--blue); background: var(--blue-soft); }
