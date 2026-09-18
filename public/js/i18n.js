@@ -9,7 +9,8 @@ import { settings } from './store.js';
 export const LANGS = [
   { code: 'en', label: 'English', locale: 'en-US' },
   { code: 'ru', label: 'Русский', locale: 'ru-RU' },
-  { code: 'es', label: 'Español', locale: 'es-ES' }
+  { code: 'es', label: 'Español', locale: 'es-ES' },
+  { code: 'de', label: 'Deutsch', locale: 'de-DE' }
 ];
 
 // Dictionaries live in ./i18n/<lang>.js (plain objects). English is the source of truth: a missing
@@ -17,8 +18,9 @@ export const LANGS = [
 import en from './i18n/en.js';
 import ru from './i18n/ru.js';
 import es from './i18n/es.js';
+import de from './i18n/de.js';
 
-const dicts = { en, ru, es };
+const dicts = { en, ru, es, de };
 
 export function getLang() {
   const saved = settings.get().lang;
