@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cryptolive-v4';
+const CACHE_NAME = 'cryptolive-v5';
 const API_CACHE = 'cryptolive-api-v1';
 
 const PRECACHE_URLS = [
@@ -10,6 +10,10 @@ const PRECACHE_URLS = [
   '/js/api.js',
   '/js/components.js',
   '/js/format.js',
+  '/js/i18n.js',
+  '/js/i18n/en.js',
+  '/js/i18n/ru.js',
+  '/js/i18n/es.js',
   '/js/layout.js',
   '/js/live.js',
   '/js/store.js',

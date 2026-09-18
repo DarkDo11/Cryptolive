@@ -8,15 +8,17 @@ import { settings } from './store.js';
 
 export const LANGS = [
   { code: 'en', label: 'English', locale: 'en-US' },
-  { code: 'ru', label: 'Русский', locale: 'ru-RU' }
+  { code: 'ru', label: 'Русский', locale: 'ru-RU' },
+  { code: 'es', label: 'Español', locale: 'es-ES' }
 ];
 
 // Dictionaries live in ./i18n/<lang>.js (plain objects). English is the source of truth: a missing
 // Russian key falls back to English, a missing English key falls back to the key itself.
 import en from './i18n/en.js';
 import ru from './i18n/ru.js';
+import es from './i18n/es.js';
 
-const dicts = { en, ru };
+const dicts = { en, ru, es };
 
 export function getLang() {
   const saved = settings.get().lang;
