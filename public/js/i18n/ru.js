@@ -104,6 +104,7 @@ export default {
   'search.coins': 'Монеты',
   'search.exchanges': 'Биржи',
   'search.noResults': 'Ничего не найдено',
+  'search.pages': "Страницы",
   'shortcuts.title': "Горячие клавиши",
   'shortcuts.search': "Открыть поиск",
   'shortcuts.help': "Показать эту справку",

@@ -104,6 +104,7 @@ export default {
   'search.coins': 'Coins',
   'search.exchanges': 'Exchanges',
   'search.noResults': 'No results found',
+  'search.pages': "Pages",
   'shortcuts.title': "Keyboard shortcuts",
   'shortcuts.search': "Open search",
   'shortcuts.help': "Show this help",

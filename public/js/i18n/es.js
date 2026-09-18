@@ -104,6 +104,7 @@ export default {
   'search.coins': 'Monedas',
   'search.exchanges': 'Exchanges',
   'search.noResults': 'No se encontraron resultados',
+  'search.pages': "Páginas",
   'shortcuts.title': "Atajos de teclado",
   'shortcuts.search': "Abrir búsqueda",
   'shortcuts.help': "Mostrar esta ayuda",
