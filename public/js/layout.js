@@ -294,6 +294,13 @@ async function populateCurrencies(selectEl) {
         return;
       }
   
+      const PAGES = [{ url: '/', key: 'nav.markets' }, { url: '/overview', key: 'nav.overview' }, { url: '/trending', key: 'nav.trending' }, { url: '/heatmap', key: 'nav.heatmap' }, { url: '/gainers-losers', key: 'nav.gainersLosers' }, { url: '/categories', key: 'nav.categories' }, { url: '/exchanges', key: 'nav.exchanges' }, { url: '/watchlist', key: 'nav.watchlist' }, { url: '/portfolio', key: 'nav.portfolio' }, { url: '/converter', key: 'nav.converter' }, { url: '/compare', key: 'nav.compare' }, { url: '/alerts', key: 'nav.alerts' }, { url: '/settings', key: 'nav.settings' }, { url: '/status', key: 'status.title' }, { url: '/api-docs', key: 'apiDocs.title' }];
+      const qLower = q.toLowerCase();
+      const pageMatches = PAGES.map(p => ({ ...p, label: t(p.key) }))
+        .filter(p => p.label.toLowerCase().includes(qLower) || p.url.substring(1).startsWith(qLower))
+        .slice(0, 3);
+      const pageSection = [t('search.pages'), pageMatches, (m, i) => `<a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}"><span>${escapeHtml(m.label)}</span><span class="chip">${escapeHtml(m.url)}</span></a>`];
+
       try {
         const searchCur = settings.get().currency || 'usd';
         const searchFx = await api.fxRatio().catch(() => 1);
@@ -326,10 +333,12 @@ async function populateCurrencies(selectEl) {
               <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
               <span>${escapeHtml(m.name)}</span>
             </a>
-          `]
+          `],
+          pageSection
         ]);
       } catch (e) {
         console.error(e);
+        if (seq === searchSeq && pageMatches.length > 0) renderItems([pageSection]);
       }
     }, 250);
 

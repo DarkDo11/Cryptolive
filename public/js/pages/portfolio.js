@@ -284,11 +284,20 @@ async function load() {
     </div>
   `;
 
+  const realizedByCoin = portfolio.realized().byCoin;
+
   if (rows.length === 0) {
     container.innerHTML = emptyState(t('js.no_holdings'), t('js.add_a_transaction_to_get_started'));
   } else {
     let tbody = '';
     rows.forEach(r => {
+      const real = realizedByCoin[r.coinId];
+      const hasSells = real && real.soldAmount > 0;
+      const realVal = hasSells ? real.realizedUsd * fx : 0;
+      const realHtml = hasSells 
+        ? `<span style="color: var(--${realVal >= 0 ? 'green' : 'red'})">${realVal >= 0 ? '+' : '−'}${fmtCurrency(Math.abs(realVal), cur)}</span>`
+        : `<span style="color:var(--muted)">—</span>`;
+
       tbody += `
         <tr data-coin-id="${escapeHtml(r.coinId)}">
           <td>
@@ -310,6 +319,7 @@ async function load() {
             <div data-live-pnl="${escapeHtml(r.coinId)}" data-cost="${r.cost}">${fmtCurrency(Math.abs(r.pnl), cur)}</div>
             <div data-live-pnl-pct="${escapeHtml(r.coinId)}">${changeBadge(r.pnlPct)}</div>
           </td>
+          <td>${realHtml}</td>
           <td>${changeBadge(r.change24h, `data-live-change="${escapeHtml(r.coinId)}"`)}</td>
           <td>
             <div style="display:flex; gap:4px; justify-content:flex-end">
@@ -331,6 +341,7 @@ async function load() {
               <th>${t('js.holdings')}</th>
               <th>${t('js.avg_buy_price')}</th>
               <th>${t('js.p_l')}</th>
+              <th>${t('js.realized_p_l')}</th>
               <th>${t('js.24h')}</th>
               <th style="text-align:right">${t('js.actions')}</th>
             </tr>

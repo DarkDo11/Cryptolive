@@ -1,0 +1,29 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: if [ -f package-lock.json ]; then npm ci --ignore-scripts; fi
+      - run: npm test
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t cryptolive:ci .
+      - run: docker run -d -p 8080:8080 --name cryptolive cryptolive:ci
+      - run: |
+          for i in {1..20}; do
+            if curl -s http://localhost:8080/healthz | grep -q '"ok":true'; then
+              docker stop cryptolive
+              exit 0
+            fi
+            sleep 3
+          done
+          docker stop cryptolive
+          exit 1
