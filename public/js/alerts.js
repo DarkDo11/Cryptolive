@@ -85,7 +85,7 @@ export function startAlertEngine({ notify }) {
         if (!Number.isFinite(p)) return;
         isMatch = alert.condition === 'above' ? p >= alert.price : p <= alert.price;
         if (isMatch) {
-          msg = `${alert.symbol.toUpperCase()} is ${alert.condition} ${fmtCurrency(alert.price, 'usd')} — now ${fmtCurrency(p, 'usd')}`;
+          msg = t('js.price_alert_msg', { symbol: alert.symbol.toUpperCase(), condition: alert.condition === 'above' ? t('js.above').toLowerCase() : t('js.below').toLowerCase(), target: fmtCurrency(alert.price, 'usd'), price: fmtCurrency(p, 'usd') });
         }
       } else if (alert.condition === 'change_up' || alert.condition === 'change_down') {
         if (!Number.isFinite(c)) return;
@@ -104,7 +104,7 @@ export function startAlertEngine({ notify }) {
         if (engineNotify) engineNotify(msg, 'success');
         
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          new Notification('Cryptolive Alert', { body: msg, icon: alert.image });
+          new Notification(t('js.cryptolive_alert'), { body: msg, icon: alert.image });
         }
       }
     });
@@ -230,13 +230,16 @@ function buildAlertModal() {
   const searchInp = qs('#alertCoinSearch');
   const dd = qs('#alertCoinDropdown');
   
+  let searchSeq = 0;
   const doSearch = debounce(async (q) => {
+    const seq = ++searchSeq;
     if (!q) { dd.style.display = 'none'; return; }
     try {
       const res = await api.search(q);
+      if (seq !== searchSeq) return;
       const coins = res.coins || [];
       if (coins.length === 0) {
-        dd.innerHTML = `<div class="autocomplete-item" style="color:var(--muted)">No coins found</div>`;
+        dd.innerHTML = `<div class="autocomplete-item" style="color:var(--muted)">${t('js.no_coins_found')}</div>`;
       } else {
         dd.innerHTML = coins.map(c => `
           <div class="autocomplete-item alert-coin-item" data-id="${escapeHtml(c.id)}" data-symbol="${escapeHtml(c.symbol)}" data-name="${escapeHtml(c.name)}" data-thumb="${escapeHtml(c.thumb)}">
@@ -364,7 +367,7 @@ async function saveAlert(e) {
   errEl.style.display = 'none';
 
   if (!selectedCoin) {
-    errEl.textContent = 'Please select a coin';
+    errEl.textContent = t('js.please_select_a_coin');
     errEl.style.display = 'block';
     return;
   }
@@ -378,18 +381,19 @@ async function saveAlert(e) {
 
   if (condition === 'change_up' || condition === 'change_down') {
     if (!val || val <= 0 || val > 1000) {
-      errEl.textContent = 'Invalid percentage (must be > 0 and ≤ 1000)';
+      errEl.textContent = t('js.invalid_percentage');
       errEl.style.display = 'block';
       return;
     }
     percent = val;
   } else {
     if (!val || val <= 0) {
-      errEl.textContent = 'Invalid price';
+      errEl.textContent = t('js.invalid_price');
       errEl.style.display = 'block';
       return;
     }
     const fx = await api.fxRatio();
+    if (!Number.isFinite(fx) || fx <= 0) { errEl.textContent = t('js.fx_unavailable'); errEl.style.display = 'block'; return; }
     priceUsd = val / fx;
   }
 
@@ -404,7 +408,7 @@ async function saveAlert(e) {
     note
   });
 
-  if (engineNotify) engineNotify('Alert saved', 'success');
+  if (engineNotify) engineNotify(t('js.alert_saved'), 'success');
   closeAlertModal();
   
   if (typeof Notification !== 'undefined' && Notification.permission === 'default') {

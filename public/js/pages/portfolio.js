@@ -199,6 +199,7 @@ async function load() {
   let totalValue = 0;
   let totalCost = 0;
   let total24hChangeAbs = 0;
+  let totalPrevValue = 0;
 
   const rows = holdings.map(h => {
     const m = marketMap[h.coinId];
@@ -214,6 +215,7 @@ async function load() {
     totalValue += value;
     totalCost += cost;
     total24hChangeAbs += change24hAbs;
+    totalPrevValue += value - change24hAbs;
 
     return {
       ...h,
@@ -247,7 +249,7 @@ async function load() {
         <div style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">${t('js.24h_change')}</div>
         <div style="display:flex; align-items:center; gap:8px">
           <span style="font-size:1.2rem; font-weight:600" id="total24hVal">${fmtCurrency(Math.abs(total24hChangeAbs), cur)}</span>
-          ${changeBadge(totalValue > 0 ? (total24hChangeAbs/totalValue)*100 : 0, 'id="total24hBadge"')}
+          ${changeBadge(totalPrevValue > 0 ? (total24hChangeAbs / totalPrevValue) * 100 : 0, 'id="total24hBadge"')}
         </div>
       </div>
     </div>
@@ -548,7 +550,7 @@ function buildModal() {
             <img src="${escapeHtml(c.thumb)}" width="20" height="20" style="border-radius:50%">
             <span>${escapeHtml(c.name)}</span>
             <span style="color:var(--muted); font-size:0.8rem">${escapeHtml(c.symbol)}</span>
-            <span style="margin-left:auto; color:var(--muted); font-size:0.8rem">#${c.market_cap_rank||'-'}</span>
+            <span style="margin-left:auto; color:var(--muted); font-size:0.8rem">#${c.rank||'-'}</span>
           </div>
         `).join('');
       }
@@ -803,9 +805,27 @@ async function init() {
       try {
         const arr = JSON.parse(ev.target.result);
         if (Array.isArray(arr)) {
-          portfolio.clear();
-          arr.forEach(tx => portfolio.add(tx));
-          toast(t('js.portfolio_imported'), {type:'success'});
+          const validTxs = [];
+          for (const item of arr) {
+            if (!item.coinId || !/^[a-z0-9-]{1,100}$/.test(item.coinId)) continue;
+            if (item.type !== 'buy' && item.type !== 'sell') continue;
+            if (!Number.isFinite(item.amount) || item.amount <= 0) continue;
+            if (!Number.isFinite(item.price) || item.price < 0) continue;
+            
+            const date = Number.isFinite(item.date) ? item.date : Date.now();
+            const symbol = typeof item.symbol === 'string' ? item.symbol.slice(0, 64) : '';
+            const name = typeof item.name === 'string' ? item.name.slice(0, 64) : '';
+            const note = typeof item.note === 'string' ? item.note.slice(0, 200) : '';
+            
+            validTxs.push({ ...item, date, symbol, name, note });
+          }
+          if (validTxs.length > 0) {
+            portfolio.clear();
+            validTxs.forEach(tx => portfolio.add(tx));
+            toast(t('js.portfolio_imported'), {type:'success'});
+          } else {
+            toast(t('js.invalid_import'), {type:'error'});
+          }
         }
       } catch (err) {
         toast(t('js.invalid_json_file'), {type:'error'});
@@ -861,6 +881,7 @@ function recomputeLiveTotals(tick) {
   let tVal = 0;
   let tCost = 0;
   let t24hAbs = 0;
+  let tPrev = 0;
   let anyChanged = false;
 
   qsa('tr[data-coin-id]', container).forEach(tr => {
@@ -891,7 +912,9 @@ function recomputeLiveTotals(tick) {
       tCost += cost;
       
       const change24h = tick.prices[id] ? tick.prices[id].c : (Number(qs(`[data-live-change="${id}"]`, tr)?.textContent.replace(/[^0-9.-]/g, '')) || 0);
-      t24hAbs += val - (val / (1 + change24h / 100));
+      const abs24h = val - (val / (1 + change24h / 100));
+      t24hAbs += abs24h;
+      tPrev += val - abs24h;
     }
   });
 
@@ -904,7 +927,7 @@ function recomputeLiveTotals(tick) {
     const dv = qs('#total24hVal');
     if (dv) dv.textContent = fmtCurrency(Math.abs(t24hAbs), cur);
     const db = qs('#total24hBadge');
-    if (db) db.outerHTML = changeBadge(tVal > 0 ? (t24hAbs/tVal)*100 : 0, 'id="total24hBadge"');
+    if (db) db.outerHTML = changeBadge(tPrev > 0 ? (t24hAbs / tPrev) * 100 : 0, 'id="total24hBadge"');
     
     const pv = qs('#totalPnlVal');
     if (pv) pv.textContent = fmtCurrency(Math.abs(tPnl), cur);

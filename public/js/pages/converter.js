@@ -11,6 +11,13 @@ let coinsMap = {}; // coinId -> price_usd
 let allFiats = []; // stores fiats array
 let lastUpdate = Date.now();
 let rateInterval;
+let fxCur = 1;
+
+function safeFx(v) {
+  const cur = settings.get().currency || 'usd';
+  if (Number.isFinite(v) && v > 0) return v;
+  return cur === 'usd' ? 1 : (fxCur > 0 ? fxCur : 1);
+}
 
 async function loadData() {
   try {
@@ -112,7 +119,7 @@ async function init() {
   const isValidAsset = (val) => {
     if (!val) return false;
     const [type, id] = val.split(':');
-    if (type === 'fiat') return data.fiats.some(f => f.code === id);
+    if (type === 'fiat') return id !== 'btc' && id !== 'eth' && data.fiats.some(f => f.code === id);
     if (type === 'coin') return data.markets.some(m => m.id === id);
     return false;
   };
@@ -120,6 +127,8 @@ async function init() {
   // Accept both `coin:bitcoin` and the older bare-id form (`bitcoin`, `usd`).
   const normalizeAsset = (val) => {
     if (!val) return null;
+    if (val === 'btc') return 'coin:bitcoin';
+    if (val === 'eth') return 'coin:ethereum';
     if (val.includes(':')) return isValidAsset(val) ? val : null;
     if (data.fiats.some(f => f.code === val)) return `fiat:${val}`;
     if (data.markets.some(m => m.id === val)) return `coin:${val}`;
@@ -168,6 +177,7 @@ async function init() {
     
     let html = `<div class="table-frame"><table class="data-table is-plain"><tbody>`;
     allFiats.forEach(f => {
+      if (f.code === 'btc' || f.code === 'eth') return;
       const toStr = 'fiat:' + f.code;
       if (fStr === toStr) return;
       const formatted = fmtCurrency(convert(amount, fStr, toStr), f.code);
@@ -230,34 +240,45 @@ async function init() {
 
   const popIds = ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple'];
   const popMarkets = data.markets.filter(m => popIds.includes(m.id)).sort((a,b) => popIds.indexOf(a.id) - popIds.indexOf(b.id));
-  const cur = settings.get().currency || 'usd';
-  const fxCur = fxRates[cur] || 1;
   
-  let popHtml = '';
-  popMarkets.forEach(m => {
-    const val = m.current_price * fxCur;
-    popHtml += `
-      <tr>
-        <td style="text-align:left">
-          <a class="asset-cell" href="/coin/${escapeHtml(m.id)}">
-            <img src="${escapeHtml(m.image)}" width="24" height="24" style="border-radius:50%">
-            <span class="asset-copy">
-              <span class="asset-name">1 ${escapeHtml(m.symbol.toUpperCase())}</span>
-            </span>
-          </a>
-        </td>
-        <td class="price-cell" data-live-price="${escapeHtml(m.id)}" data-price-usd="${m.current_price}">${fmtCurrency(val, cur)}</td>
-        <td>${changeBadge(m.price_change_percentage_24h, `data-live-change="${escapeHtml(m.id)}"`)}</td>
-      </tr>
+  async function renderPopular() {
+    const cur = settings.get().currency || 'usd';
+    fxCur = safeFx(fxRates[cur]);
+    
+    let popHtml = '';
+    popMarkets.forEach(m => {
+      const val = m.current_price * fxCur;
+      popHtml += `
+        <tr>
+          <td style="text-align:left">
+            <a class="asset-cell" href="/coin/${escapeHtml(m.id)}">
+              <img src="${escapeHtml(m.image)}" width="24" height="24" style="border-radius:50%">
+              <span class="asset-copy">
+                <span class="asset-name">1 ${escapeHtml(m.symbol.toUpperCase())}</span>
+              </span>
+            </a>
+          </td>
+          <td class="price-cell" data-live-price="${escapeHtml(m.id)}" data-price-usd="${m.current_price}">${fmtCurrency(val, cur)}</td>
+          <td>${changeBadge(m.price_change_percentage_24h, `data-live-change="${escapeHtml(m.id)}"`)}</td>
+        </tr>
+      `;
+    });
+    qs('#popularTable').innerHTML = `
+      <div class="table-frame">
+        <table class="data-table is-plain">
+          <tbody>${popHtml}</tbody>
+        </table>
+      </div>
     `;
+  }
+
+  await renderPopular();
+
+  window.addEventListener('currency:change', async () => {
+    await renderPopular();
+    renderRates();
+    recompute('from');
   });
-  qs('#popularTable').innerHTML = `
-    <div class="table-frame">
-      <table class="data-table is-plain">
-        <tbody>${popHtml}</tbody>
-      </table>
-    </div>
-  `;
 
   live.subscribe(tick => {
     let changed = false;

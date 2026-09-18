@@ -28,8 +28,8 @@ async function loadData() {
     watchSummary.style.display = 'none';
     watchToolbar.style.display = 'none';
     watchTableContainer.innerHTML = emptyState(
-      'Your watchlist is empty',
-      'Click the ☆ star next to any coin to track it here'
+      t('js.your_watchlist_is_empty'),
+      t('js.click_star_hint')
     ) + `<div style="text-align: center; margin-top: 16px;"><a href="/" class="btn btn-primary">${t('js.browse_markets')}</a></div>`;
     if (unsubLive) {
       unsubLive();
@@ -179,12 +179,17 @@ qs('#importInput').addEventListener('change', (e) => {
     try {
       const data = JSON.parse(event.target.result);
       if (Array.isArray(data.ids)) {
-        data.ids.forEach(id => {
-          if (!watchlist.has(id)) {
-            watchlist.add(id);
-          }
-        });
-        toast(t('js.watchlist_imported_successfully'), { type: 'success' });
+        const validIds = data.ids.filter(id => typeof id === 'string' && /^[a-z0-9-]{1,100}$/.test(id));
+        if (validIds.length > 0) {
+          validIds.forEach(id => {
+            if (!watchlist.has(id)) {
+              watchlist.add(id);
+            }
+          });
+          toast(t('js.watchlist_imported_successfully'), { type: 'success' });
+        } else {
+          toast(t('js.invalid_import'), { type: 'error' });
+        }
       } else {
         throw new Error('Invalid format');
       }

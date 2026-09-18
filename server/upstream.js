@@ -40,7 +40,7 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
     try {
       counters.requests++;
       const resp = await fetch(targetUrl, fetchOptions);
-      clearTimeout(timeout);
+      // The timer stays armed until the body is consumed (see finally): a stalled body must not hold a slot.
       
       if (resp.status === 429) {
         counters.rateLimited++;
@@ -49,6 +49,7 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
         const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 2000;
         if (retries > 0 && waitMs <= 5000) {
           // Short back-off: retry once, the cache covers the rest.
+          clearTimeout(timeout);
           await new Promise(r => setTimeout(r, waitMs));
           return doFetch(retries - 1);
         }
@@ -64,11 +65,11 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
         throw err;
       }
       
+      const body = await resp.json();
       counters.ok++;
       counters.lastOkAt = Date.now();
-      return resp.json();
+      return body;
     } catch (err) {
-      clearTimeout(timeout);
       if (err.name === 'AbortError') {
         const e = new Error('Upstream Timeout');
         e.status = 504;
@@ -76,6 +77,8 @@ export const fetchUpstream = limit(async (targetUrl, options = {}) => {
       }
       if (!err.status) err.status = 502;
       throw err;
+    } finally {
+      clearTimeout(timeout);
     }
   };
   return doFetch();

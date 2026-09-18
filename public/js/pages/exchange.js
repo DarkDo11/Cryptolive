@@ -5,7 +5,12 @@ import { fmtCurrency, fmtNumber, fmtPercent, fmtDate, escapeHtml } from '../form
 import { emptyState, skeletonRows } from '../components.js';
 import { t } from '../i18n.js';
 
-const exId = decodeURIComponent(location.pathname.split('/')[2] || '');
+let exId = '';
+try {
+  exId = decodeURIComponent(location.pathname.split('/')[2] || '');
+} catch {
+  exId = '';
+}
 
 if (!exId) {
   qs('#exHeader').style.display = 'none';

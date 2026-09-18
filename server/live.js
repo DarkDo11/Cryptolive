@@ -70,6 +70,7 @@ export function createLive() {
   let tickTimer = null;
   let keepAliveTimer = null;
   let reconnectDelay = 1000;
+  let reconnectTimer = null;
   
   let connected = false;
   let latestPrices = {};   // pending delta since the last broadcast
@@ -106,7 +107,8 @@ export function createLive() {
   };
 
   const connect = () => {
-    if (ws) return;
+    reconnectTimer = null;
+    if (ws || subscribers.size === 0) return;
     ws = new WebSocket(getStreamUrl());
     
     ws.onopen = () => {
@@ -137,7 +139,8 @@ export function createLive() {
       connected = false;
       ws = null;
       if (subscribers.size > 0) {
-        setTimeout(connect, reconnectDelay);
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connect, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, 30000);
         reconnects++;
       }
@@ -166,6 +169,10 @@ export function createLive() {
     } else {
       if (!disconnectTimer) {
         disconnectTimer = setTimeout(() => {
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
           if (ws) {
             ws.close();
             ws = null;

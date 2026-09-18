@@ -70,6 +70,8 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `LOG_FORMAT` | `text` | Access-log format: `text` or `json` (one JSON object per line: ts, id, method, path, status, ms, cache, ip, ua) |
 | `API_RATE_LIMIT` | `120` | Per-IP limit for `/api` requests per minute |
 | `WARM_COINS` | `10` | How many top coins' detail payloads to keep pre-fetched (0 disables) |
+| `TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so the rate limiter/logs use the first `X-Forwarded-For` hop |
+| `MAX_SSE_CLIENTS` | `500` | Maximum concurrent `/api/stream` connections (503 + Retry-After beyond) |
 | `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |
 | `CACHE_FILE` | `.cache/cache.json` | On-disk cache snapshot file path (empty disables) |
 | `PUBLIC_URL` | `http://localhost:8080` | Base URL used in `/sitemap.xml` |

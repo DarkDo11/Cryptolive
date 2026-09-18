@@ -99,7 +99,7 @@ function renderHeader(active) {
           ${theme === 'light' ? '🌙' : '☀️'}
         </button>
         <div class="live-pill is-offline" id="liveStatus">
-          <div class="dot"></div> Live
+          <div class="dot"></div> ${t('js.live')}
         </div>
         <button class="nav-burger" id="navBurger" aria-label="${t('nav.menu')}">☰</button>
       </div>
@@ -243,7 +243,9 @@ async function populateCurrencies(selectEl) {
       updateActive();
     };
   
+    let searchSeq = 0;
     const doSearch = debounce(async (q) => {
+      const seq = ++searchSeq;
       if (!q) {
         try {
           const sections = [];
@@ -253,7 +255,7 @@ async function populateCurrencies(selectEl) {
               t('search.recent'),
               recent.map(c => ({...c, url: `/coin/${encodeURIComponent(c.id)}`, isCoin: true})),
               (m, i) => `
-                <a href="${m.url}" class="search-item" id="si-${i}">
+                <a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}">
                   <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
                   <span>${escapeHtml(m.name)}</span>
                   <span class="chip">${escapeHtml(m.symbol)}</span>
@@ -264,6 +266,7 @@ async function populateCurrencies(selectEl) {
           }
   
           const tr = await api.trending();
+          if (seq !== searchSeq) return;
           if (tr && tr.coins) {
             const mapped = tr.coins.map(c => ({
               name: c.name,
@@ -274,7 +277,7 @@ async function populateCurrencies(selectEl) {
               id: c.id
             }));
             sections.push([t('search.trending'), mapped, (m, i) => `
-              <a href="${m.url}" class="search-item" id="si-${i}">
+              <a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}">
                 <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
                 <span>${escapeHtml(m.name)}</span>
                 <span class="chip">${escapeHtml(m.symbol)}</span>
@@ -292,13 +295,14 @@ async function populateCurrencies(selectEl) {
         const searchCur = settings.get().currency || 'usd';
         const searchFx = await api.fxRatio().catch(() => 1);
         const res = await api.search(q);
-        const sCoins = (res.coins || []).slice(0, 8).map(c => ({...c, url: `/coin/${c.id}`, isCoin: true}));
-        const sCats = (res.categories || []).slice(0, 4).map(c => ({...c, url: `/categories?c=${c.id}`}));
+        if (seq !== searchSeq) return;
+        const sCoins = (res.coins || []).slice(0, 8).map(c => ({...c, url: `/coin/${encodeURIComponent(c.id)}`, isCoin: true}));
+        const sCats = (res.categories || []).slice(0, 4).map(c => ({...c, url: `/categories?c=${encodeURIComponent(c.id)}`}));
         const sExchs = (res.exchanges || []).slice(0, 4).map(c => ({...c, url: `/exchange/${encodeURIComponent(c.id)}`}));
         
         renderItems([
           [t('search.coins'), sCoins, (m, i) => `
-            <a href="${m.url}" class="search-item" id="si-${i}">
+            <a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}">
               <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
               <span>${escapeHtml(m.name)}</span>
               <span class="chip">${escapeHtml(m.symbol)}</span>
@@ -310,12 +314,12 @@ async function populateCurrencies(selectEl) {
             </a>
           `],
           [t('search.categories'), sCats, (m, i) => `
-            <a href="${m.url}" class="search-item" id="si-${i}">
+            <a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}">
               <span>${escapeHtml(m.name)}</span>
             </a>
           `],
           [t('search.exchanges'), sExchs, (m, i) => `
-            <a href="${m.url}" class="search-item" id="si-${i}">
+            <a href="${escapeHtml(m.url)}" class="search-item" id="si-${i}">
               <img src="${escapeHtml(m.thumb)}" width="24" height="24" style="border-radius:50%">
               <span>${escapeHtml(m.name)}</span>
             </a>

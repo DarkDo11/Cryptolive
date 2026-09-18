@@ -42,16 +42,19 @@ qsa('.try-btn').forEach((btn) => btn.addEventListener('click', () => {
 
 // SSE demo: listen for 10 seconds, print the first events.
 let es = null;
+let esTimeout = null;
 qs('#streamBtn').addEventListener('click', () => {
   const out = qs('#streamOutput');
   if (es) { es.close(); es = null; }
+  if (esTimeout) { clearTimeout(esTimeout); esTimeout = null; }
   out.hidden = false;
   out.textContent = '';
   let lines = 0;
   const log = (l) => { if (lines++ < 40) out.textContent += l + '\n'; };
   es = new EventSource('/api/stream');
+  const mine = es;
   es.addEventListener('hello', (e) => log('hello: ' + e.data.slice(0, 200) + (e.data.length > 200 ? '…' : '')));
   es.addEventListener('tick', (e) => log('tick:  ' + e.data.slice(0, 200) + (e.data.length > 200 ? '…' : '')));
   es.onerror = () => log('(connection error)');
-  setTimeout(() => { if (es) { es.close(); es = null; log('(closed after 10 s)'); } }, 10000);
+  esTimeout = setTimeout(() => { if (es === mine) { es.close(); es = null; log('(closed after 10 s)'); } }, 10000);
 });

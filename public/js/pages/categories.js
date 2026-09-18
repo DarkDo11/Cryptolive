@@ -27,6 +27,7 @@ let filterText = '';
 
 let detailUnsubLive = null;
 let currentCatId = null;
+let openSeq = 0;
 let detailCoinsData = [];
 let detailSortKey = 'marketCap';
 let detailSortDir = 'desc';
@@ -166,6 +167,7 @@ catSearch.addEventListener('input', debounce((e) => {
 }, 250));
 
 async function openCategory(id, isPopState = false) {
+  const seq = ++openSeq;
   if (!isPopState) {
     history.pushState({ catId: id }, '', `?c=${encodeURIComponent(id)}`);
   }
@@ -198,6 +200,7 @@ async function openCategory(id, isPopState = false) {
       api.fxRatio(),
       api.markets({ category: id, perPage: 100 })
     ]);
+    if (seq !== openSeq) return;
     
     fx = fxRatio;
     detailCoinsData = sortCoins(rows.map(normalizeCoin), detailSortKey, detailSortDir);
@@ -206,6 +209,7 @@ async function openCategory(id, isPopState = false) {
     
     detailUnsubLive = live.subscribe((tick) => applyLiveTick(catCoins, tick, fx));
   } catch (err) {
+    if (seq !== openSeq) return;
     console.error('Category detail error', err);
     catCoins.innerHTML = `
       <div style="padding: 32px; text-align: center;">
@@ -280,7 +284,8 @@ window.addEventListener('currency:change', async () => {
   if (!currentCatId) {
     await loadCategories();
   } else {
-    await Promise.all([loadCategories(), openCategory(currentCatId, true)]);
+    await loadCategories();
+    await openCategory(currentCatId, true);
   }
 });
 

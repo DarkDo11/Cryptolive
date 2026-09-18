@@ -130,7 +130,7 @@ export const portfolio = {
     window.dispatchEvent(new Event('portfolio:change'));
   },
   realized() {
-    const byCoin = {};
+    const byCoin = Object.create(null);
     const txs = this.list()
       .map((tx, index) => ({ tx, index }))
       .sort((a, b) => (Number(a.tx.date) - Number(b.tx.date)) || (a.index - b.index));
@@ -155,12 +155,12 @@ export const portfolio = {
     }
 
     let totalRealizedUsd = 0;
-    for (const result of Object.values(byCoin)) {
+    const out = {};
+    for (const [coinId, result] of Object.entries(byCoin)) {
       totalRealizedUsd += result.realizedUsd;
-      delete result.avg;
-      delete result.held;
+      out[coinId] = { realizedUsd: result.realizedUsd, soldAmount: result.soldAmount };
     }
-    return { totalRealizedUsd, byCoin };
+    return { totalRealizedUsd, byCoin: out };
   },
   holdings() {
     const txs = this.list();
@@ -189,7 +189,7 @@ export const portfolio = {
       }
     }
     
-    const avgCosts = {};
+    const avgCosts = Object.create(null);
     const datedTxs = txs
       .map((tx, index) => ({ tx, index }))
       .sort((a, b) => (Number(a.tx.date) - Number(b.tx.date)) || (a.index - b.index));
@@ -209,8 +209,10 @@ export const portfolio = {
     const result = [];
     for (const h of map.values()) {
       if (h.amount > 0 || h.totalBuyAmount > 0) {
-        const avgPriceUsd = h.totalBuyAmount > 0 ? (h.totalBuyCost / h.totalBuyAmount) : 0;
-        const costBasisUsd = avgPriceUsd * h.amount;
+        // Average cost of the position actually held (moving average; sells keep it, later buys blend in).
+        const avgCostUsd = avgCosts[h.coinId] ? avgCosts[h.coinId].avg : 0;
+        const avgPriceUsd = avgCostUsd;
+        const costBasisUsd = avgCostUsd * Math.max(0, h.amount);
         result.push({
           coinId: h.coinId,
           symbol: h.symbol,
@@ -219,7 +221,7 @@ export const portfolio = {
           amount: h.amount,
           costBasisUsd,
           avgPriceUsd,
-          avgCostUsd: avgCosts[h.coinId].avg
+          avgCostUsd
         });
       }
     }

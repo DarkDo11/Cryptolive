@@ -133,3 +133,22 @@ test('browser stores', () => {
   });
   store.settings.set({ lang: 'en' });
 });
+
+test('portfolio cost basis follows the moving average of the current position', () => {
+  localStorage.clear();
+  const btc = { coinId: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' };
+  store.portfolio.add({ ...btc, type: 'buy', amount: 1, price: 60000, date: 1 });
+  store.portfolio.add({ ...btc, type: 'sell', amount: 1, price: 80000, date: 2 });
+  store.portfolio.add({ ...btc, type: 'buy', amount: 1, price: 50000, date: 3 });
+  const [h] = store.portfolio.holdings();
+  assert.equal(h.amount, 1);
+  assert.equal(h.avgCostUsd, 50000);
+  assert.equal(h.costBasisUsd, 50000);
+  assert.equal(store.portfolio.realized().totalRealizedUsd, 20000);
+  // hostile ids must not touch Object.prototype
+  store.portfolio.add({ coinId: '__proto__', symbol: 'X', name: 'X', type: 'buy', amount: 1, price: 1, date: 4 });
+  store.portfolio.holdings(); store.portfolio.realized();
+  assert.equal(Object.prototype.avg, undefined);
+  assert.equal(Object.prototype.held, undefined);
+  store.portfolio.clear();
+});

@@ -132,6 +132,15 @@ test('routes: /api/search enriches upstream coins from the universe', async () =
   assert.strictEqual(body.coins[1].price_usd, null);
 });
 
+test('routes: pagination parameters are validated strictly', async () => {
+  const cache = new TtlCache();
+  for (const q of ['page=-1', 'page=abc', 'per_page=0', 'per_page=12abc', 'page=0']) {
+    await assert.rejects(handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?' + q), { cache }), (e) => e.status === 400);
+  }
+  const ok = await handleApi({ method: 'GET' }, {}, new URL('http://localhost/api/markets?page=2&per_page=2'), { cache });
+  assert.deepStrictEqual(JSON.parse(ok.body).map(r => r.id), ['coin3', 'coin4']);
+});
+
 test('routes: /api/search falls back to the universe when upstream is rate limited', async () => {
   const cache = new TtlCache();
   // Warm the universe first (as the server does at boot); the 429 then only affects /search.

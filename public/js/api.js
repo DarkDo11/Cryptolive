@@ -63,16 +63,30 @@ export const api = {
   fng() { return this.get('/fng'); },
   trending() { return this.get('/trending'); },
   
-  markets(opts = {}) {
+  async markets(opts = {}) {
     const vs = settings.get().currency || 'usd';
     const params = {
       vs,
       page: opts.page || 1,
       per_page: opts.perPage || 100
     };
-    if (opts.ids) params.ids = opts.ids;
     if (opts.category) params.category = opts.category;
     if (opts.order) params.order = opts.order;
+    
+    if (opts.ids) {
+      const idsArray = [...new Set(opts.ids.split(',').filter(Boolean))];
+      if (idsArray.length > 100) {
+        const chunks = [];
+        for (let i = 0; i < idsArray.length; i += 100) {
+          chunks.push(idsArray.slice(i, i + 100));
+        }
+        const results = await Promise.all(chunks.map(chunk => 
+          this.get('/markets', { ...params, ids: chunk.join(','), per_page: 250 })
+        ));
+        return results.flat();
+      }
+      params.ids = opts.ids;
+    }
     return this.get('/markets', params);
   },
 

@@ -18,6 +18,7 @@ let sortDir = 'asc';
 let filterText = '';
 let coins = []; // normalized
 let currentDisplayedCoins = [];
+let watchlistRows = [];
 let fx = 1;
 let globalData = null;
 let unsubLive = null;
@@ -202,6 +203,21 @@ qsa('.tab').forEach(t => {
     else if (tab === 'losers') { sortKey = 'change24h'; sortDir = 'asc'; }
     else if (tab === 'watchlist' || tab === 'all') { sortKey = 'rank'; sortDir = 'asc'; }
     
+    if (tab === 'watchlist') {
+      const ids = watchlist.list();
+      if (ids.length > 0) {
+        api.markets({ ids: ids.join(','), perPage: 250 })
+          .then(rows => {
+            watchlistRows = rows.map(normalizeCoin);
+            if (tab === 'watchlist') renderTable();
+          })
+          .catch(() => renderTable());
+        return; // wait for fetch
+      } else {
+        watchlistRows = [];
+      }
+    }
+    
     renderTable();
   });
 });
@@ -339,7 +355,20 @@ async function load() {
 }
 
 function renderTable() {
-  let filtered = [...coins];
+  let filtered;
+  if (tab === 'watchlist') {
+    const ids = watchlist.list();
+    const wMap = new Map();
+    watchlistRows.forEach(c => {
+      if (ids.includes(c.id)) wMap.set(c.id, c);
+    });
+    coins.forEach(c => {
+      if (ids.includes(c.id) && !wMap.has(c.id)) wMap.set(c.id, c);
+    });
+    filtered = Array.from(wMap.values());
+  } else {
+    filtered = [...coins];
+  }
 
   if (mcapFilter !== 'all') {
     filtered = filtered.filter(c => {
@@ -363,10 +392,7 @@ function renderTable() {
     });
   }
 
-  if (tab === 'watchlist') {
-    const ids = watchlist.list();
-    filtered = filtered.filter(c => ids.includes(c.id));
-  } else if (tab === 'gainers') {
+  if (tab === 'gainers') {
     filtered = filtered.filter(c => (c.change24h || 0) > 0);
   } else if (tab === 'losers') {
     filtered = filtered.filter(c => (c.change24h || 0) < 0);
@@ -454,7 +480,18 @@ window.addEventListener('currency:change', () => {
 
 window.addEventListener('watchlist:change', () => {
   if (tab === 'watchlist') {
-    renderTable();
+    const ids = watchlist.list();
+    if (ids.length > 0) {
+      api.markets({ ids: ids.join(','), perPage: 250 })
+        .then(rows => {
+          watchlistRows = rows.map(normalizeCoin);
+          if (tab === 'watchlist') renderTable();
+        })
+        .catch(() => renderTable());
+    } else {
+      watchlistRows = [];
+      renderTable();
+    }
   } else {
     // Re-render table just to update star icons
     renderTable();

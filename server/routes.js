@@ -36,12 +36,19 @@ export async function handleApi(req, res, url, ctx) {
     return vs;
   };
   
-  const getPageParams = () => {
-    let page = parseInt(url.searchParams.get('page')) || 1;
-    let perPage = parseInt(url.searchParams.get('per_page')) || 100;
-    if (perPage > 250) badRequest('per_page too large');
-    return { page, per_page: perPage };
+  const intParam = (name, def, min, max) => {
+    const raw = url.searchParams.get(name);
+    if (raw === null || raw === '') return def;
+    if (!/^\d{1,6}$/.test(raw)) badRequest(`Invalid ${name}`);
+    const n = parseInt(raw, 10);
+    if (n < min || n > max) badRequest(`Invalid ${name}`);
+    return n;
   };
+
+  const getPageParams = () => ({
+    page: intParam('page', 1, 1, 1000),
+    per_page: intParam('per_page', 100, 1, 250)
+  });
 
   const getIds = () => {
     const ids = url.searchParams.get('ids');
@@ -207,7 +214,7 @@ export async function handleApi(req, res, url, ctx) {
       targetUrl = `${COINGECKO_BASE}/coins/${coinId}/ohlc?vs_currency=${vs}&days=${days}`;
       ttlMs = 300 * 1000;
     } else if (subRoute === 'tickers') {
-      const page = parseInt(url.searchParams.get('page')) || 1;
+      const page = intParam('page', 1, 1, 100);
       targetUrl = `${COINGECKO_BASE}/coins/${coinId}/tickers?page=${page}&order=volume_desc&depth=false&include_exchange_logo=true`;
       ttlMs = 300 * 1000;
       transform = (data) => ({

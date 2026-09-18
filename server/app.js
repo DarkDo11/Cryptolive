@@ -48,8 +48,12 @@ const STATIC_ROUTES = {
 
 const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
-function clientIp(req) {
-  return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+function clientIp(req, trustProxy) {
+  if (trustProxy) {
+    const forwarded = req.headers['x-forwarded-for']?.split(',')[0].trim();
+    if (forwarded) return forwarded;
+  }
+  return req.socket.remoteAddress;
 }
 
 export async function createApp({ cache, live, publicDir, options = {} }) {
@@ -58,6 +62,9 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
   const publicUrl = options.publicUrl ?? (process.env.PUBLIC_URL || 'http://localhost:8080');
   const apiRateLimit = options.apiRateLimit ?? parseInt(process.env.API_RATE_LIMIT || '120', 10);
   const hsts = options.hsts ?? (process.env.ENABLE_HSTS === '1' || process.env.ENABLE_HSTS === 'true');
+  // Only honour X-Forwarded-For behind a reverse proxy we control; otherwise clients could spoof their IP.
+  const trustProxy = options.trustProxy ?? (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true');
+  const maxSseClients = options.maxSseClients ?? (parseInt(process.env.MAX_SSE_CLIENTS || '500', 10) || 500);
   const startTime = options.startTime ?? Date.now();
   const version = options.version === undefined
     ? await fs.readFile(path.resolve(__dirname, '../package.json'), 'utf8')
@@ -126,6 +133,11 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
           res.end();
           return;
         }
+        if (live.status().subscribers >= maxSseClients) {
+          statusCode = 503;
+          send(req, res, 503, { 'Content-Type': 'application/json', 'Retry-After': '30' }, JSON.stringify({ error: 'Too many live connections' }));
+          return;
+        }
         live.subscribe(res);
         req.on('close', () => live.unsubscribe(res));
         return;
@@ -143,7 +155,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
       }
 
       if (pathname.startsWith('/api/')) {
-        const ip = clientIp(req);
+        const ip = clientIp(req, trustProxy);
         const rl = rateLimiter.check(ip);
         res.setHeader('X-RateLimit-Remaining', rl.remaining);
 
@@ -154,14 +166,14 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
           return;
         }
 
-        if (req.method === 'HEAD') {
-          send(req, res, 200, {}, '');
-          return;
-        }
         try {
           const result = await handleApi(req, res, url, { cache });
           statusCode = result.status;
           cacheStatus = result.cache;
+          if (req.method === 'HEAD') {
+            send(req, res, result.status, result.headers, '');
+            return;
+          }
           if (result.status === 200 &&
               ((typeof result.body === 'string' && result.body.length > 0) ||
                (Buffer.isBuffer(result.body) && result.body.length > 0))) {
@@ -182,7 +194,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
           statusCode = err.status || 500;
           const headers = { 'Content-Type': 'application/json' };
           if (err.retryAfter) headers['Retry-After'] = String(err.retryAfter);
-          send(req, res, statusCode, headers, JSON.stringify({ error: err.message || 'Internal Server Error' }));
+          send(req, res, statusCode, headers, req.method === 'HEAD' ? '' : JSON.stringify({ error: err.message || 'Internal Server Error' }));
         }
         return;
       }
@@ -280,7 +292,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
             status: statusCode,
             ms,
             cache: cacheStatus,
-            ip: clientIp(req),
+            ip: clientIp(req, trustProxy),
             ua: req.headers['user-agent'] || ''
           }));
         } else {

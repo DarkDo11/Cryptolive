@@ -7,7 +7,12 @@ import { changeBadge, emptyState, skeletonRows, sparklineSvg } from '../componen
 import { openAlertModal } from '../alerts.js';
 import { t } from '../i18n.js';
 
-const coinId = decodeURIComponent(location.pathname.split('/')[2] || '');
+let coinId = '';
+try {
+  coinId = decodeURIComponent(location.pathname.split('/')[2] || '');
+} catch {
+  coinId = '';
+}
 
 let fx = 1;
 let coinData = null;
@@ -199,8 +204,16 @@ function renderHeader(data, md, cur) {
   });
   
   qs('#copyLinkBtn', headerEl).addEventListener('click', () => {
-    navigator.clipboard.writeText(location.href);
-    toast(t('js.link_copied_to_clipboard'), { type: 'success' });
+    const url = location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        toast(t('js.link_copied_to_clipboard'), { type: 'success' });
+      }).catch(() => {
+        prompt('', url);
+      });
+    } else {
+      prompt('', url);
+    }
   });
 }
 

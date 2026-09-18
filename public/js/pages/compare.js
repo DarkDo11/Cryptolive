@@ -7,6 +7,7 @@ import { changeBadge, emptyState, normalizeCoin } from '../components.js';
 import { t } from '../i18n.js';
 
 let ids = [];
+let loadSeq = 0;
 let coinsData = [];
 let chartInstance = null;
 let chartDays = '7';
@@ -72,9 +73,11 @@ function renderPicker() {
 }
 
 async function load() {
+  const seq = ++loadSeq;
+  const requested = [...ids];
   renderPicker();
   
-  if (ids.length === 0) {
+  if (requested.length === 0) {
     qs('#statsTable').innerHTML = emptyState(t('js.no_coins_selected'), t('js.add_coins_to_compare'));
     if (chartInstance) {
       chartInstance.destroy();
@@ -86,10 +89,12 @@ async function load() {
   qs('#statsTable').innerHTML = `<div class="skeleton" style="height:300px; width:100%"></div>`;
   
   try {
-    const rawMarkets = await api.markets({ ids: ids.join(','), perPage: 250 });
-    coinsData = ids.map(id => rawMarkets.find(m => m.id === id)).filter(Boolean).map(normalizeCoin);
+    const rawMarkets = await api.markets({ ids: requested.join(','), perPage: 250 });
+    if (seq !== loadSeq) return;
     
-    if (coinsData.length !== ids.length) {
+    coinsData = requested.map(id => rawMarkets.find(m => m.id === id)).filter(Boolean).map(normalizeCoin);
+    
+    if (coinsData.length !== requested.length) {
       ids = coinsData.map(c => c.id);
       updateUrl();
     }
@@ -97,6 +102,7 @@ async function load() {
     
     renderStatsTable();
     await loadChart();
+    if (seq !== loadSeq) return;
   } catch (e) {
     console.error(e);
     qs('#statsTable').innerHTML = `

@@ -151,7 +151,7 @@ function render() {
     
     const tooltipData = escapeHtml(JSON.stringify({
       name: c.name,
-      price: c.price == null ? null : c.price * fx,
+      price: c.price == null ? null : c.price,
       mcap: c.marketCap,
       change,
       id: c.id
