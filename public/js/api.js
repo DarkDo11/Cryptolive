@@ -9,6 +9,32 @@ class ApiError extends Error {
 }
 
 const cache = new Map();
+const CACHE_MAX = 200;
+// Drop expired entries and cap the size so unique searches don't accumulate for the page lifetime.
+function pruneCache(now) {
+  if (cache.size < CACHE_MAX) return;
+  for (const [key, entry] of cache) {
+    if (!entry.ts || now - entry.ts > 300000) cache.delete(key);
+  }
+  while (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+}
+
+// Last known fx ratios survive reloads so an offline/throttled first load still converts correctly.
+const FX_KEY = 'cryptolive:fx';
+function rememberFx(cur, ratio) {
+  try {
+    const all = JSON.parse(localStorage.getItem(FX_KEY) || '{}');
+    all[cur] = { ratio, ts: Date.now() };
+    localStorage.setItem(FX_KEY, JSON.stringify(all));
+  } catch { /* storage unavailable */ }
+}
+function recallFx(cur) {
+  try {
+    const entry = JSON.parse(localStorage.getItem(FX_KEY) || '{}')[cur];
+    // A week-old rate is still far better than mislabelling USD amounts.
+    return entry && Number.isFinite(entry.ratio) && Date.now() - entry.ts < 7 * 864e5 ? entry.ratio : null;
+  } catch { return null; }
+}
 
 // Offline awareness: the service worker marks responses it served from its cache with X-Offline: 1.
 let servedOffline = false;
@@ -35,6 +61,7 @@ export const api = {
     if (cached && (now - cached.ts) < 30000) {
       return cached.data;
     }
+    pruneCache(now);
 
     let res = await fetch(url);
     noteOffline(res);
@@ -126,13 +153,17 @@ export const api = {
       if (data.bitcoin && data.bitcoin.usd && data.bitcoin[cur]) {
         const ratio = data.bitcoin[cur] / data.bitcoin.usd;
         cache.set(cacheKey, { ts: now, ratio });
+        rememberFx(cur, ratio);
         return ratio;
       }
     } catch (e) {
       console.warn('Failed to fetch fx ratio', e);
     }
-    // Fall back to the last known ratio (even if expired); NaN tells callers to skip conversions.
-    return cached ? cached.ratio : NaN;
+    // Fall back to the last known ratio (this session, then a rate remembered from an earlier visit);
+    // NaN tells callers to skip conversions.
+    if (cached) return cached.ratio;
+    const remembered = recallFx(cur);
+    return remembered ?? NaN;
   }
 };
 
