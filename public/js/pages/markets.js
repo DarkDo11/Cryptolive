@@ -291,7 +291,8 @@ function renderHighlightRow(id, name, symbol, image, priceUsd, change24h) {
 let loadSeq = 0;
 async function load() {
   const seq = ++loadSeq;
-  marketsTable.innerHTML = `<div class="table-frame"><table class="data-table"><thead><tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead><tbody>${skeletonRows(10, 10)}</tbody></table></div>`;
+  // Keep the server-rendered table (data-ssr) visible until real data arrives; skeleton only on later reloads.
+  if (!marketsTable.dataset.ssr || marketsTable.dataset.ssrConsumed) marketsTable.innerHTML = `<div class="table-frame"><table class="data-table"><thead><tr><th></th><th>#</th><th>${t('js.coin')}</th><th>${t('js.price')}</th><th>1h %</th><th>${t('js.24h')}</th><th>7d %</th><th>${t('js.24h_volume')}</th><th>${t('js.market_cap')}</th><th>${t('js.last_7_days')}</th></tr></thead><tbody>${skeletonRows(10, 10)}</tbody></table></div>`;
   marketsPagination.innerHTML = '';
   updatedAt.textContent = t('markets.updating');
 
@@ -435,6 +436,7 @@ function renderTable() {
   const mandatoryCols = ['rank', 'coin', 'price', 'change24h'];
   const cols = canonicalCols.filter(c => mandatoryCols.includes(c) || columnsState.includes(c));
 
+  marketsTable.dataset.ssrConsumed = '1';
   renderCoinTable(marketsTable, filtered, {
     fx,
     expandable: true,

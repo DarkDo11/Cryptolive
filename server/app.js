@@ -8,7 +8,7 @@ import { getUniverse } from './universe.js';
 import { createCompressionCache, send, weakEtag, etagMatches } from './compress.js';
 import { createRateLimiter } from './ratelimit.js';
 import { upstreamStatus } from './upstream.js';
-import { decorateCoinPage, decorateExchangePage, getExchangeList } from './seo.js';
+import { decorateCoinPage, decorateExchangePage, decorateHomePage, getExchangeList } from './seo.js';
 import { createRequestCounters, renderMetrics } from './metrics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -279,7 +279,8 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
         ? decodeURIComponent(pathname.split('/')[2] || '') : null;
       const exchangePageId = targetFile === '/exchange.html' && pathname.startsWith('/exchange/')
         ? decodeURIComponent(pathname.split('/')[2] || '') : null;
-      const dynamicHead = coinPageId || exchangePageId;
+      const homePage = targetFile === '/index.html' && pathname === '/' && req.method === 'GET';
+      const dynamicHead = coinPageId || exchangePageId || homePage;
       const etag = `W/"${stat.size}-${mtimeHex}${dynamicHead ? '-' + Math.floor(Date.now() / 60000) : ''}"`;
 
       if (req.headers['if-none-match'] === etag) {
@@ -292,7 +293,9 @@ export async function createApp({ cache, live, popular, publicDir, options = {} 
       let countCoinView = false;
       if (req.method !== 'HEAD') {
         content = await fs.readFile(filePath);
-        if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
+        if (homePage) {
+          content = await decorateHomePage(content.toString('utf8'), { cache, publicUrl });
+        } else if (coinPageId && /^[a-z0-9-]{1,100}$/.test(coinPageId)) {
           const purpose = String(req.headers['x-purpose'] || '').toLowerCase();
           const secPurpose = String(req.headers['sec-purpose'] || '').toLowerCase();
           const userAgent = String(req.headers['user-agent'] || '');

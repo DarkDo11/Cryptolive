@@ -90,6 +90,8 @@ test('serves the home page with security headers', async () => {
   assert.equal(res.status, 200);
   assert.match(res.headers['content-type'], /^text\/html/);
   assert.match(res.body, /<title>/);
+  assert.match(res.body, /<div id="marketsTable" data-ssr="1">[\s\S]*\/coin\/bitcoin/);
+  assert.match(res.body, /<link rel="canonical" href="https:\/\/example\.test\/">/);
   assert.match(res.headers['content-security-policy'], /frame-ancestors 'none'/);
 });
 

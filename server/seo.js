@@ -2,6 +2,7 @@
 // filled from the universe snapshot so crawlers and link previews see real data without running JS.
 import { getUniverse } from './universe.js';
 import { fetchUpstream, COINGECKO_BASE, cacheKey } from './upstream.js';
+import { renderMarketsTable } from './ssr.js';
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -47,6 +48,21 @@ function applyHead(html, { title, description, canonical, image }) {
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeHtml(description)}">`)
     .replace('</head>', `${headTags({ title, description, canonical, image })}\n</head>`);
+}
+
+/**
+ * Home page: pre-render the markets table and always add a canonical link. Never throws.
+ */
+export async function decorateHomePage(html, { cache, publicUrl, timeoutMs = 1500 }) {
+  const canonical = `${String(publicUrl || '').replace(/\/$/, '')}/`;
+  let output = String(html).replace('</head>', `  <link rel="canonical" href="${escapeHtml(canonical)}">\n</head>`);
+  try {
+    const uni = await withTimeout(getUniverse({ cache }), timeoutMs);
+    if (Array.isArray(uni?.rows)) {
+      output = output.replace('<div id="marketsTable"></div>', `<div id="marketsTable" data-ssr="1">${renderMarketsTable(uni.rows)}</div>`);
+    }
+  } catch {}
+  return output;
 }
 
 /**
