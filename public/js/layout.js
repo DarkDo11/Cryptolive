@@ -51,9 +51,12 @@ function renderHeader(active) {
   let theme = settings.get().theme;
   if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
   
+  let landing = settings.get().landing || '/';
+  if (!['/', '/overview', '/trending', '/heatmap', '/watchlist', '/portfolio'].includes(landing)) landing = '/';
+  
   return `
     <div class="header-inner">
-      <a href="/" class="logo">
+      <a href="${landing}" class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--blue)">
           <rect width="24" height="24" rx="6"/>
           <path d="M16 12a4 4 0 11-8 0 4 4 0 018 0z" fill="#fff"/>
@@ -493,6 +496,17 @@ document.addEventListener('keydown', (e) => {
 });
 
 export function initLayout({ active = '' } = {}) {
+  try {
+    const s = settings.get();
+    if (location.pathname === '/' && s.landing && s.landing !== '/') {
+      const allowed = ['/overview', '/trending', '/heatmap', '/watchlist', '/portfolio'];
+      if (allowed.includes(s.landing) && sessionStorage.getItem('cryptolive:landed') !== '1') {
+        sessionStorage.setItem('cryptolive:landed', '1');
+        location.replace(s.landing);
+        return;
+      }
+    }
+  } catch(e) {}
   const headerContainer = qs('#app-header');
   if (headerContainer) {
     headerContainer.innerHTML = `
@@ -549,6 +563,8 @@ export function initLayout({ active = '' } = {}) {
     if (themeBtn) themeBtn.textContent = theme === 'light' ? '🌙' : '☀️';
     const curSel = qs('#currencySelect');
     if (curSel && s.currency && curSel.value !== s.currency) curSel.value = s.currency;
+    
+    document.documentElement.dataset.density = s.density === 'compact' ? 'compact' : 'comfortable';
   };
   applySettings(settings.get());
 

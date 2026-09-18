@@ -378,6 +378,12 @@ table.data-table tbody tr:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: -2px;
 }
+
+html[data-density="compact"] table.data-table td, html[data-density="compact"] table.data-table th { padding-top: 6px; padding-bottom: 6px; }
+html[data-density="compact"] table.data-table { font-size: 0.85rem; }
+html[data-density="compact"] .asset-logo { width: 20px; height: 20px; }
+html[data-density="compact"] .col-sparkline svg { height: 28px; }
+
 th.is-sortable[data-sort] {
   cursor: pointer;
   user-select: none;

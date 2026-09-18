@@ -10,6 +10,9 @@
       theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     }
     document.documentElement.dataset.theme = theme === "light" ? "light" : "dark";
+    if (settings.density === 'compact') {
+      document.documentElement.dataset.density = 'compact';
+    }
   } catch (e) {
     document.documentElement.dataset.theme = "dark";
   }

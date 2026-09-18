@@ -60,6 +60,20 @@ perPageSel.addEventListener('change', e => {
   settings.set({ perPage: Number(e.target.value) });
 });
 
+const densitySel = qs('#settingsDensity');
+densitySel.value = s.density || 'comfortable';
+densitySel.addEventListener('change', e => {
+  const density = e.target.value;
+  settings.set({ density });
+  document.documentElement.dataset.density = density;
+});
+
+const landingSel = qs('#settingsLanding');
+landingSel.value = s.landing || '/';
+landingSel.addEventListener('change', e => {
+  settings.set({ landing: e.target.value });
+});
+
 const hideHigh = qs('#settingsHideHighlights');
 hideHigh.checked = !s.hideHighlights;
 hideHigh.addEventListener('change', e => {

@@ -2,7 +2,7 @@ import { initLayout, setTitle, toast, qs, qsa, debounce } from '../layout.js';
 import { settings, portfolio } from '../store.js';
 import { api } from '../api.js';
 import { live, applyLiveTick } from '../live.js';
-import { fmtCurrency, fmtPercent, fmtCompact, fmtNumber, escapeHtml, fmtDate, toCsv, downloadCsv } from '../format.js';
+import { fmtCurrency, fmtPercent, fmtCompact, fmtNumber, escapeHtml, fmtDate, toCsv, downloadCsv, csvToObjects } from '../format.js';
 import { emptyState, changeBadge } from '../components.js';
 import { t } from '../i18n.js';
 
@@ -833,6 +833,93 @@ async function init() {
       e.target.value = '';
     };
     reader.readAsText(file);
+  });
+
+  qs('#importCsvInput').addEventListener('change', async e => {
+    const input = e.target;
+    const file = input.files[0];
+    if (!file) return;
+
+    let imported = 0;
+    const searchCache = new Map();
+    const normalizeHeader = header => header.toLowerCase().replace(/[\s()]/g, '');
+    const parseNumber = value => {
+      const str = String(value ?? '').trim();
+      if (!str) return NaN;
+      const normalized = (str.match(/,/g) || []).length === 1 && !str.includes('.') ? str.replace(',', '.') : str;
+      return Number(normalized);
+    };
+    const parseDate = value => {
+      const str = String(value ?? '').trim();
+      if (/^-?\d+(?:\.\d+)?$/.test(str)) {
+        const epoch = Number(str);
+        const date = Math.abs(epoch) < 1e12 ? epoch * 1000 : epoch;
+        return Number.isFinite(date) ? date : Date.now();
+      }
+      const date = Date.parse(str);
+      return Number.isNaN(date) ? Date.now() : date;
+    };
+
+    try {
+      const rows = csvToObjects(await file.text());
+      for (const row of rows) {
+        const values = Object.fromEntries(Object.entries(row).map(([key, value]) => [normalizeHeader(key), value]));
+        const get = (...headers) => {
+          for (const header of headers) {
+            const value = values[normalizeHeader(header)];
+            if (value != null && String(value).trim() !== '') return String(value).trim();
+          }
+          return '';
+        };
+
+        const rawCoinId = get('coin id', 'coinid', 'id', 'coin');
+        const inputSymbol = get('symbol', 'ticker');
+        const amount = parseNumber(get('amount', 'quantity', 'qty'));
+        const price = parseNumber(get('price (usd)', 'price', 'unit price'));
+        if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(price) || price < 0) continue;
+
+        const lowerCoinId = rawCoinId.toLowerCase();
+        const isName = /[A-Z\s]/.test(rawCoinId);
+        let coin = null;
+        let coinId = !isName && /^[a-z0-9-]{1,100}$/.test(lowerCoinId) ? lowerCoinId : '';
+        if (!coinId && inputSymbol) {
+          const cacheKey = inputSymbol.toLowerCase();
+          if (!searchCache.has(cacheKey)) {
+            try {
+              const result = await api.search(inputSymbol);
+              searchCache.set(cacheKey, (result.coins || []).find(item => String(item.symbol).toLowerCase() === cacheKey) || null);
+            } catch (err) {
+              searchCache.set(cacheKey, null);
+            }
+          }
+          coin = searchCache.get(cacheKey);
+          coinId = coin?.id || '';
+        }
+        if (!coinId) continue;
+
+        const typeValue = get('type', 'side').toLowerCase();
+        const type = ['sell', 's', 'sale'].includes(typeValue) ? 'sell' : 'buy';
+        portfolio.add({
+          coinId,
+          symbol: coin?.symbol || inputSymbol,
+          name: coin?.name || rawCoinId || coinId,
+          image: coin?.thumb,
+          type,
+          amount,
+          price,
+          date: parseDate(get('date', 'time', 'timestamp')),
+          note: get('note', 'notes', 'memo')
+        });
+        imported++;
+      }
+
+      if (imported > 0) toast(t('js.csv_imported', { n: imported }), { type: 'success' });
+      else toast(t('js.csv_invalid'), { type: 'error' });
+    } catch (err) {
+      toast(t('js.csv_invalid'), { type: 'error' });
+    } finally {
+      input.value = '';
+    }
   });
 
   document.addEventListener('click', e => {

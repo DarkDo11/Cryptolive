@@ -126,6 +126,57 @@ export function toCsv(headers, rows) {
   return [headers, ...rows].map(row => row.map(escapeCell).join(',')).join('\r\n');
 }
 
+/** Parse CSV text into rows, including RFC 4180 quoted fields. */
+export function parseCsv(text) {
+  const input = String(text ?? '').replace(/^\uFEFF/, '');
+  const rows = [];
+  let row = [];
+  let field = '';
+  let quoted = false;
+
+  const pushRow = () => {
+    row.push(field);
+    if (!(row.length === 1 && row[0] === '')) rows.push(row);
+    row = [];
+    field = '';
+  };
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (quoted) {
+      if (char === '"' && input[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        field += char;
+      }
+    } else if (char === '"' && field === '') {
+      quoted = true;
+    } else if (char === ',') {
+      row.push(field);
+      field = '';
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && input[i + 1] === '\n') i++;
+      pushRow();
+    } else {
+      field += char;
+    }
+  }
+
+  if (field !== '' || row.length > 0) pushRow();
+  return rows;
+}
+
+/** Parse CSV text and map each data row to the trimmed header names. */
+export function csvToObjects(text) {
+  const [headers, ...rows] = parseCsv(text);
+  if (!headers) return [];
+  const names = headers.map(header => header.trim());
+  return rows.map(row => Object.fromEntries(names.map((header, index) => [header, row[index] ?? ''])));
+}
+
 /** Trigger a browser download of `csv` as `filename`. */
 export function downloadCsv(filename, csv) {
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });

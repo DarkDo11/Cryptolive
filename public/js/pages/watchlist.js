@@ -16,6 +16,13 @@ const watchTableContainer = qs('#watchTable');
 let coinsData = [];
 let sortKey = 'marketCap';
 let sortDir = 'desc';
+
+const wSort = settings.get().watchlistSort;
+if (wSort && ['rank', 'name', 'price', 'change1h', 'change24h', 'change7d', 'volume', 'marketCap'].includes(wSort.key)) {
+  sortKey = wSort.key;
+  sortDir = wSort.dir === 'asc' ? 'asc' : 'desc';
+}
+
 let fx = 1;
 let unsubLive = null;
 let refreshTimer = null;
@@ -74,6 +81,7 @@ async function loadData() {
           sortKey = key;
           sortDir = 'desc';
         }
+        settings.set({ watchlistSort: { key: sortKey, dir: sortDir } });
         coinsData = sortCoins(coinsData, sortKey, sortDir);
         renderData();
       }
@@ -107,6 +115,7 @@ function renderData() {
         sortKey = key;
         sortDir = 'desc';
       }
+      settings.set({ watchlistSort: { key: sortKey, dir: sortDir } });
       coinsData = sortCoins(coinsData, sortKey, sortDir);
       renderData();
     }

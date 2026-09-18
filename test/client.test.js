@@ -62,6 +62,19 @@ test('format utilities', () => {
   assert.equal(format.escapeHtml('<a href="x">&\''), '&lt;a href=&quot;x&quot;&gt;&amp;&#39;');
 });
 
+test('CSV parsing and header mapping', () => {
+  const csv = '\uFEFF Date ,Note,Details\r\n2026-09-18,"Bought, today","He said ""yes"""\r\n2026-09-19,"line one\nline two",ok\r\n';
+  assert.deepEqual(format.parseCsv(csv), [
+    [' Date ', 'Note', 'Details'],
+    ['2026-09-18', 'Bought, today', 'He said "yes"'],
+    ['2026-09-19', 'line one\nline two', 'ok']
+  ]);
+  assert.deepEqual(format.csvToObjects(csv), [
+    { Date: '2026-09-18', Note: 'Bought, today', Details: 'He said "yes"' },
+    { Date: '2026-09-19', Note: 'line one\nline two', Details: 'ok' }
+  ]);
+});
+
 test('translations and locale selection', () => {
   localStorage.clear();
   assert.equal(i18n.dateLocale(), 'en-US');
