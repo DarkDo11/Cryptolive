@@ -432,6 +432,8 @@ function setupOfflineBanner() {
   };
   window.addEventListener('offline', show);
   window.addEventListener('online', () => hide(true));
+  window.addEventListener('api:offline-data', show);
+  window.addEventListener('api:online-data', () => hide(true));
   if (navigator.onLine === false) show();
 }
 setupOfflineBanner();

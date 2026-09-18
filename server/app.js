@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,8 +48,13 @@ const STATIC_ROUTES = {
 
 const CSP = "default-src 'self'; img-src 'self' https: data:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
+function clientIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+}
+
 export async function createApp({ cache, live, publicDir, options = {} }) {
   const logLevel = options.logLevel ?? (process.env.LOG_LEVEL || 'info');
+  const logFormat = options.logFormat ?? (process.env.LOG_FORMAT || 'text');
   const publicUrl = options.publicUrl ?? (process.env.PUBLIC_URL || 'http://localhost:8080');
   const apiRateLimit = options.apiRateLimit ?? parseInt(process.env.API_RATE_LIMIT || '120', 10);
   const hsts = options.hsts ?? (process.env.ENABLE_HSTS === '1' || process.env.ENABLE_HSTS === 'true');
@@ -75,8 +81,14 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
     let cacheStatus = '-';
     let statusCode = 200;
     let pathname = req.url || '/';
+    let query = '';
+    const incomingId = req.headers['x-request-id'];
+    const id = typeof incomingId === 'string' && /^[A-Za-z0-9._-]{1,128}$/.test(incomingId)
+      ? incomingId : randomUUID();
 
     try {
+      res.setHeader('X-Request-Id', id);
+
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         statusCode = 405;
         res.writeHead(405, { 'Allow': 'GET, HEAD' });
@@ -86,6 +98,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
 
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       pathname = url.pathname;
+      query = url.search;
 
       setSecurityHeaders(res);
 
@@ -130,7 +143,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
       }
 
       if (pathname.startsWith('/api/')) {
-        const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+        const ip = clientIp(req);
         const rl = rateLimiter.check(ip);
         res.setHeader('X-RateLimit-Remaining', rl.remaining);
 
@@ -246,7 +259,7 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
         'ETag': etag
       }, content);
     } catch (err) {
-      console.error('Unhandled request error', err);
+      console.error(`Unhandled request error id=${id}`, err);
       statusCode = 500;
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -255,7 +268,24 @@ export async function createApp({ cache, live, publicDir, options = {} }) {
     } finally {
       if (pathname !== '/api/stream' && logLevel !== 'silent') {
         const ms = Date.now() - startMs;
-        console.log(`${req.method} ${req.url} ${statusCode} ${ms}ms ${cacheStatus}`);
+        if (logFormat === 'json') {
+          console.log(JSON.stringify({
+            ts: new Date().toISOString(),
+            level: 'info',
+            msg: 'request',
+            id,
+            method: req.method,
+            path: pathname,
+            query,
+            status: statusCode,
+            ms,
+            cache: cacheStatus,
+            ip: clientIp(req),
+            ua: req.headers['user-agent'] || ''
+          }));
+        } else {
+          console.log(`${req.method} ${req.url} ${statusCode} ${ms}ms ${cacheStatus} id=${id}`);
+        }
       }
     }
   };

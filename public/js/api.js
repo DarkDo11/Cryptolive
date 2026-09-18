@@ -10,6 +10,15 @@ class ApiError extends Error {
 
 const cache = new Map();
 
+// Offline awareness: the service worker marks responses it served from its cache with X-Offline: 1.
+let servedOffline = false;
+function noteOffline(res) {
+  const offline = res.headers.get('X-Offline') === '1';
+  if (offline && !servedOffline) window.dispatchEvent(new CustomEvent('api:offline-data'));
+  if (!offline && servedOffline && res.ok) window.dispatchEvent(new CustomEvent('api:online-data'));
+  servedOffline = offline;
+}
+
 export const api = {
   async get(path, params = {}) {
     const query = new URLSearchParams();
@@ -28,14 +37,17 @@ export const api = {
     }
 
     let res = await fetch(url);
+    noteOffline(res);
     let data = null;
     try { data = await res.json(); } catch { data = null; }
 
     // Upstream cooldown (503 + Retry-After): wait once, bounded, and retry instead of failing the page.
-    if (res.status === 503) {
+    // The service worker's synthetic offline 503 ({error:'offline'}) is not worth retrying.
+    if (res.status === 503 && !(data && data.error === 'offline')) {
       const wait = Math.min(Math.max(parseInt(res.headers.get('Retry-After') || '5', 10) || 5, 2), 20) * 1000;
       await new Promise((r) => setTimeout(r, wait));
       res = await fetch(url);
+      noteOffline(res);
       try { data = await res.json(); } catch { data = null; }
     }
     

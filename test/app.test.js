@@ -93,6 +93,24 @@ test('serves the home page with security headers', async () => {
   assert.match(res.headers['content-security-policy'], /frame-ancestors 'none'/);
 });
 
+test('adds a request id to every response', async () => {
+  for (const requestPath of ['/', '/healthz', '/api/currencies', '/nope']) {
+    const res = await request(server, requestPath);
+    assert.equal(typeof res.headers['x-request-id'], 'string');
+    assert.ok(res.headers['x-request-id']);
+  }
+});
+
+test('echoes a valid request id', async () => {
+  const res = await request(server, '/', { 'X-Request-Id': 'my-trace-123' });
+  assert.equal(res.headers['x-request-id'], 'my-trace-123');
+});
+
+test('replaces an invalid request id with a UUID', async () => {
+  const res = await request(server, '/', { 'X-Request-Id': 'bad id!!' });
+  assert.match(res.headers['x-request-id'], /^[0-9a-f-]{36}$/);
+});
+
 test('supports clean URLs and the 404 page', async () => {
   const page = await request(server, '/watchlist');
   assert.equal(page.status, 200);

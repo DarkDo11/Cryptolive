@@ -1,4 +1,5 @@
-const CACHE_NAME = 'cryptolive-v3';
+const CACHE_NAME = 'cryptolive-v4';
+const API_CACHE = 'cryptolive-api-v1';
 
 const PRECACHE_URLS = [
   '/',
@@ -45,7 +46,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== API_CACHE) {
             return caches.delete(key);
           }
         })
@@ -59,7 +60,48 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   if (url.origin !== location.origin) return;
-  if (url.pathname.startsWith('/api/') || url.pathname === '/healthz' || url.pathname === '/sw.js') {
+  if (url.pathname === '/healthz' || url.pathname === '/sw.js') {
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    if (event.request.method !== 'GET' || url.pathname === '/api/stream') {
+      return;
+    }
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(API_CACHE).then(async (c) => {
+              await c.put(event.request, clone);
+              const keys = await c.keys();
+              if (keys.length > 150) {
+                for (let i = 0; i < keys.length - 150; i++) {
+                  await c.delete(keys[i]);
+                }
+              }
+            });
+          }
+          return res;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request, { cacheName: API_CACHE });
+          if (cached) {
+            const headers = new Headers(cached.headers);
+            headers.set('X-Offline', '1');
+            return new Response(await cached.arrayBuffer(), {
+              status: cached.status,
+              statusText: cached.statusText,
+              headers
+            });
+          }
+          return new Response(JSON.stringify({ error: 'offline' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+    );
     return;
   }
 

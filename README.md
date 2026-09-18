@@ -19,7 +19,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
 - **Trending**: CoinGecko's trending coins, categories and NFT collections with 7-day sparklines (`/trending`).
 - **Settings**: theme (dark / light / system), display currency, language, rows per page, live-flash reduction, browser notification permission, full JSON backup/restore of watchlist + portfolio + alerts, clear local data (`/settings`).
 - **Status page** (`/status`): public health dashboard — data-provider state and counters (requests, 429s, errors, cooldown), Binance feed state, cache hit ratio, server version/uptime/memory; auto-refreshes every 15 s from `/healthz`.
-- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; an offline banner when the network drops; installable PWA (web manifest + service worker for the app shell); responsive mobile-friendly design.
+- **Global Search & UI**: Command palette (`⌘K` or `/`) with recent searches, searching coins, categories, and exchanges; 18 display currencies (USD, EUR, GBP, RUB, JPY, CNY, CAD, AUD, CHF, KRW, INR, BRL, TRY, UAH, PLN, KZT, BTC, ETH); keyboard shortcuts (`?` for the cheat sheet, `g`+key navigation, `t` theme); **English / Russian interface** (switch in the header, `public/js/i18n/`); dark and light themes; an offline banner when the network drops; installable PWA (web manifest + service worker: app shell precache, network-first API responses cached for offline reading); responsive mobile-friendly design.
 
 ## Architecture
 
@@ -30,6 +30,7 @@ Cryptolive is a self-hosted, zero-dependency cryptocurrency market data service 
   - **Upstream Protection**: Upstream cooldown after a 429 (fails fast with 503 + Retry-After instead of hammering; cache serves stale). Global concurrency limiter (maximum 3 parallel requests).
   - **Degraded Mode**: Degraded coin payload from the universe (`X-Cache: fallback`, `partial: true`) so coin pages still render during throttling; `/api/search` likewise falls back to a name/symbol search over the universe. Throttled API responses carry `Retry-After`, and the browser client waits once (≤20 s) and retries before showing an error.
   - **API Rate Limiting**: Per-IP API rate limit (`API_RATE_LIMIT`, 429 + Retry-After, `X-RateLimit-Remaining`).
+  - **Request Tracing**: Every response carries an `X-Request-Id`, echoed when supplied by the client or generated otherwise.
   - **Warm cache**: the detail payloads of the top `WARM_COINS` coins are refreshed every 10 minutes (sequentially, skipped while the upstream is in cooldown), so popular coin pages are served from cache and survive throttling with full data.
   - **Optimization**: Brotli/gzip compression, weak ETags + 304, dynamic `/sitemap.xml` (`PUBLIC_URL`), `robots.txt`, web manifest, and `/healthz` (version, uptime, memory, cache counters + hit ratio, upstream counters and cooldown, live feed state).
 - **The Universe**: To minimize upstream queries, the server maintains an in-memory "universe" of the top 500 coins refreshed every 60 seconds (`universe.js`). Most `/api/markets` (default order) and `/api/simple-price` requests are fulfilled directly from this cache with server-side fiat/crypto currency conversion without hitting upstream.
@@ -66,6 +67,7 @@ Configuration options can be placed in a `.env` file (see `.env.example`). `dock
 | `UPSTREAM_COINGECKO` | `https://api.coingecko.com/api/v3` | Upstream CoinGecko API base URL |
 | `UPSTREAM_FNG` | `https://api.alternative.me/fng/` | Upstream Fear & Greed index API base URL |
 | `LOG_LEVEL` | `info` | Server logging level (`info`, `debug`, `silent`) |
+| `LOG_FORMAT` | `text` | Access-log format: `text` or `json` (one JSON object per line: ts, id, method, path, status, ms, cache, ip, ua) |
 | `API_RATE_LIMIT` | `120` | Per-IP limit for `/api` requests per minute |
 | `WARM_COINS` | `10` | How many top coins' detail payloads to keep pre-fetched (0 disables) |
 | `ENABLE_HSTS` | unset | Set to `1` when serving over HTTPS to send `Strict-Transport-Security` |
